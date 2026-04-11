@@ -3,10 +3,8 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>STARBITE Pro: Charging Manager</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     body.is-staff .admin-only { display: none !important; }
     :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --bg: #f4f7f6; --dark: #343a40; --gold: #ffd700; }
@@ -128,12 +126,18 @@
         </div>
 
         <div style="margin-top:15px; padding-top:15px; border-top:1px dashed #ccc;">
-            <label style="font-weight:bold; color:var(--dark); font-size:12px; display:block; margin-bottom:5px;">🏦 BANK ACCOUNT DETAILS (For Customer Portal Payments)</label>
+            <label style="font-weight:bold; color:var(--dark); font-size:12px; display:block; margin-bottom:5px;">🏦 BANK ACCOUNT DETAILS</label>
             <div style="display:flex; flex-wrap:wrap; gap:5px;">
                 <input type="text" id="setBankName" placeholder="Bank Name (e.g. Opay, Moniepoint)" style="flex:1; min-width:120px;">
                 <input type="text" id="setAccName" placeholder="Account Name (e.g. Starbite Shop)" style="flex:2; min-width:150px;">
                 <input type="number" id="setAccNumber" placeholder="Account Number" style="flex:2; min-width:150px; font-weight:bold; color:var(--primary);">
             </div>
+        </div>
+
+        <div style="margin-top:15px; padding-top:15px; border-top:1px dashed #ccc;">
+            <label style="font-weight:bold; color:var(--success); font-size:12px; display:block; margin-bottom:5px;">🌐 TRACKING WEBSITE URL (For WhatsApp Links & QR Codes)</label>
+            <input type="url" id="setTrackingUrl" placeholder="e.g. https://yourname.github.io/track/" style="font-weight:bold; color:var(--success); width:100%; font-size: 14px;">
+            <small style="color:#666;">Paste your live GitHub or Netlify link here.</small>
         </div>
 
         <button onclick="saveSettings()" class="btn-edit" style="margin-top: 15px;">💾 SAVE ALL SETTINGS</button>
@@ -175,7 +179,7 @@
             </div>
 
             <input type="text" id="custName" placeholder="Customer Name" style="color: #000; background: #fff;">
-            <div class="row"><input type="tel" id="custPhone" placeholder="Phone Number (Important for tracking)" style="flex:2; color: #000; background: #fff;"><select id="payStatus" style="flex:1; color: #000; background: #fff;"><option value="Later">Pay Later ⏳</option><option value="Now">Paid Now 💰</option></select></div>
+            <div class="row"><input type="tel" id="custPhone" placeholder="Phone Number (Important for WhatsApp)" style="flex:2; color: #000; background: #fff;"><select id="payStatus" style="flex:1; color: #000; background: #fff;"><option value="Later">Pay Later ⏳</option><option value="Now">Paid Now 💰</option></select></div>
             
             <div style="background:#f8d7da; padding:10px; border-radius:8px; margin-top:5px; margin-bottom:5px;">
                 <label style="font-size:12px; font-weight:bold; color:#721c24;">⚠️ Liability Check (Device Condition):</label>
@@ -342,10 +346,8 @@
     
     enableIndexedDbPersistence(db).catch(e => console.log("Offline mode error", e));
 
-    let ticketsData=[], secureTagsData={}, powerData={state:'ON', offAt:null}, editId=null, priceConfig={ph:200, pb:300, chFull:100, chUsb:50, chHead:50, maxSockets:50, loyalty:'ON', closeTime:'21:00', bankName:'', accName:'', accNumber:''}, currentSockets=[], html5QrCode=null, scannedPinMemory="", currentUserRole="staff", currentUserName="Staff";
+    let ticketsData=[], secureTagsData={}, powerData={state:'ON', offAt:null}, editId=null, priceConfig={ph:200, pb:300, chFull:100, chUsb:50, chHead:50, maxSockets:50, loyalty:'ON', closeTime:'21:00', bankName:'', accName:'', accNumber:'', trackingUrl:''}, currentSockets=[], scannedPinMemory="", currentUserRole="staff", currentUserName="Staff";
     window.lastAlertMin = null;
-    
-    // NEW: Track which customers we've honked for so we don't spam the sound
     window.notifiedOnTheWay = new Set();
 
     setInterval(() => { 
@@ -358,7 +360,6 @@
     const playBeep = () => { try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); osc.type='sine'; osc.frequency.setValueAtTime(800, ctx.currentTime); osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime+0.5); } catch(e){} };
     const playChaChing = () => { try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); osc.type='square'; osc.frequency.setValueAtTime(1200, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(2000, ctx.currentTime+0.1); osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime+0.2); } catch(e){} };
     
-    // NEW: Car Honk Sound
     const playHonk = () => { 
         try { 
             const ctx = new (window.AudioContext || window.webkitAudioContext)(); 
@@ -370,22 +371,35 @@
     function checkClosingTime() {
         if(!priceConfig.closeTime) return;
         const now = new Date();
+        const currentMins = now.getHours() * 60 + now.getMinutes();
         const [hours, mins] = priceConfig.closeTime.split(':').map(Number);
-        const closeTime = new Date();
-        closeTime.setHours(hours, mins, 0, 0);
+        const closeMins = hours * 60 + mins;
+        const isClosed = currentMins >= closeMins || currentMins < 420;
+        const minsUntilClose = closeMins - currentMins;
 
-        const diffMs = closeTime - now;
-        const diffMins = Math.round(diffMs / 60000);
+        const title = document.getElementById('alertTitle');
+        const body = document.getElementById('alertBody');
 
-        if (diffMins <= 30 && diffMins > 0) {
+        if (isClosed) { 
+            if(window.lastAlertMin !== 'CLOSED') {
+                 window.lastAlertMin = 'CLOSED';
+                 title.innerText = "Shop is Closed!";
+                 body.innerHTML = "We are currently closed. Please return during opening hours to pick up your device.";
+                 document.getElementById('modalClosingAlert').style.display = 'flex';
+            }
+            return;
+        }
+
+        if (minsUntilClose <= 30 && minsUntilClose > 0) {
             let threshold = null;
-            if (diffMins <= 30 && diffMins > 20) threshold = 30;
-            else if (diffMins <= 20 && diffMins > 10) threshold = 20;
-            else if (diffMins <= 10 && diffMins > 0) threshold = 10;
+            if (minsUntilClose <= 30 && minsUntilClose > 20) threshold = 30;
+            else if (minsUntilClose <= 20 && minsUntilClose > 10) threshold = 20;
+            else if (minsUntilClose <= 10 && minsUntilClose > 0) threshold = 10;
 
             if (threshold && window.lastAlertMin !== threshold) {
                 window.lastAlertMin = threshold;
-                document.getElementById('closeMinsLeft').innerText = diffMins;
+                title.innerText = "Shop Closes Soon!";
+                body.innerHTML = `We are closing in exactly <span style="font-size:22px; color:var(--danger);">${minsUntilClose}</span> minutes.<br><span style="color:#666; font-size:13px; font-weight:normal; display:block; margin-top:5px;">Please start wrapping up and reminding customers.</span>`;
                 document.getElementById('modalClosingAlert').style.display = 'flex';
                 playBeep();
             }
@@ -399,9 +413,35 @@
     window.removePhotoForm = () => { if(confirm("Remove image?")){ document.getElementById('devicePhotoData').value=''; document.getElementById('camPreview').style.display='none'; document.getElementById('btnStartCam').innerText='📷 Open Camera'; document.getElementById('btnDelPhoto').style.display='none'; } };
     window.deletePhoto = async (id) => { if(confirm("Permanently delete this photo?")) { try { await updateDoc(doc(db, "tickets", id), { photo: "" }); closeModal('modalScanMatch'); } catch(e) { alert(e.message); } } };
 
-    window.showTrackQR = (tag) => { const link = "https://trackingmydevice.netlify.app/?track=" + tag; document.getElementById('trackQRHolder').innerHTML = ''; new QRCode(document.getElementById('trackQRHolder'), {text: link, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H}); document.getElementById('modalTrackQR').style.display = 'flex'; };
-
     window.exportCSV = () => { let csv = "Date,Customer Name,Tag Number,Phone,Items,Price,Amount Paid,Status,Logged By,Collected By,Rating,Review,Conditions\n"; ticketsData.forEach(t => { let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); csv += `"${t.jsDate?t.jsDate.toLocaleDateString():''}","${(t.name||"").replace(/"/g, '""')}","${t.tag}","${t.phone||''}","${t.ph||0}📱 ${t.pb||0}🔋",${t.price},${amtPaid},"${t.collected?'Collected':(t.shelved?'Shelved':'Active')}","${t.staff||''}","${t.collectedBy||''}","${t.rating||''}","${(t.reviewText||'').replace(/"/g, '""')}","${(t.cond||[]).join(', ')}"\n`; }); const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))); link.setAttribute("download", `Starbite_Report_${new Date().toISOString().split('T')[0]}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); };
+
+    // --- NEW: SEND WHATSAPP MESSAGE FUNCTION ---
+    window.sendWhatsApp = (id) => {
+        const t = ticketsData.find(x => x.id === id);
+        if(!t || !t.phone || t.phone.length < 10) return alert("Please edit the ticket and add a valid phone number first!");
+        
+        let phone = t.phone.replace(/\D/g, ''); 
+        if(phone.startsWith('0')) phone = '234' + phone.substring(1);
+        else if(!phone.startsWith('234') && !phone.startsWith('+')) phone = '234' + phone;
+
+        let status = "";
+        if(t.shelved) status = "fully charged and ready for pickup on the shelf! ✅";
+        else if (t.shelfPh || t.shelfPb || t.shelfOt) status = "partially ready. Some of your items have been moved to the shelf! ⏳";
+        else status = "currently charging safely with us. ⚡";
+
+        let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0);
+        let bal = t.price - amtPaid;
+        let finText = bal > 0 ? `Total Bill: ₦${t.price}\nAmount Due: ₦${bal}` : `Total Bill: ₦${t.price} (Paid in Full ✅)`;
+
+        let base = priceConfig.trackingUrl || "https://trackingmydevice.netlify.app/";
+        if(!base.endsWith('/')) base += '/';
+        let link = base + "?track=" + t.tag;
+
+        let msg = `Hello ${t.name}! 👋\n\nThis is STARBITE Charging Shop.\nYour device (Tag #${t.tag}) is ${status}\n\n${finText}\n\nTrack your live charging progress here:\n${link}\n\nSee you soon!`;
+        
+        let url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+        window.open(url, '_blank');
+    };
 
     window.sendStaffChat = async () => {
         if(!editId) return; const inp = document.getElementById('staffChatInput'); const text = inp.value.trim(); if(!text) return;
@@ -435,9 +475,25 @@
         const snap = await getDoc(doc(db, "config", "prices")); 
         if (snap.exists()) { 
             const data = snap.data(); 
-            priceConfig = { ph: data.ph||200, pb: data.pb||300, chFull: data.chFull!==undefined?data.chFull:100, chUsb: data.chUsb!==undefined?data.chUsb:50, chHead: data.chHead!==undefined?data.chHead:50, maxSockets: data.maxSockets||50, loyalty: data.loyalty||'ON', closeTime: data.closeTime||'21:00', bankName: data.bankName||'', accName: data.accName||'', accNumber: data.accNumber||'' }; 
+            priceConfig = { 
+                ph: data.ph||200, pb: data.pb||300, chFull: data.chFull!==undefined?data.chFull:100, chUsb: data.chUsb!==undefined?data.chUsb:50, chHead: data.chHead!==undefined?data.chHead:50, 
+                maxSockets: data.maxSockets||50, loyalty: data.loyalty||'ON', closeTime: data.closeTime||'21:00', 
+                bankName: data.bankName||'', accName: data.accName||'', accNumber: data.accNumber||'', trackingUrl: data.trackingUrl||'' 
+            }; 
         } 
-        ['setPh','setPb','setChFull','setChUsb','setChHead', 'setMaxSockets', 'setLoyalty', 'setCloseTime', 'setBankName', 'setAccName', 'setAccNumber'].forEach((id, i) => { if(document.getElementById(id)) document.getElementById(id).value = Object.values(priceConfig)[i]; }); 
+        
+        document.getElementById('setPh').value = priceConfig.ph;
+        document.getElementById('setPb').value = priceConfig.pb;
+        document.getElementById('setChFull').value = priceConfig.chFull;
+        document.getElementById('setChUsb').value = priceConfig.chUsb;
+        document.getElementById('setChHead').value = priceConfig.chHead;
+        document.getElementById('setMaxSockets').value = priceConfig.maxSockets;
+        document.getElementById('setLoyalty').value = priceConfig.loyalty;
+        document.getElementById('setCloseTime').value = priceConfig.closeTime;
+        document.getElementById('setBankName').value = priceConfig.bankName;
+        document.getElementById('setAccName').value = priceConfig.accName;
+        document.getElementById('setAccNumber').value = priceConfig.accNumber;
+        if(document.getElementById('setTrackingUrl')) document.getElementById('setTrackingUrl').value = priceConfig.trackingUrl;
         autoCalc(); 
     }
     ['phCount', 'pbCount', 'chFullCount', 'chUsbCount', 'chHeadCount', 'otCount', 'otPrice'].forEach(id => { document.getElementById(id).addEventListener('input', autoCalc); });
@@ -515,7 +571,6 @@
         if(currentUserRole) { 
             render(); 
             if(document.getElementById('extendedForm').style.display === 'block') autoCalc(); 
-            if(editId) { const t = ticketsData.find(x=>x.id===editId); if(t) renderStaffChat(t.chats || []); }
         } 
     });
 
@@ -544,11 +599,8 @@
         } catch(e) { alert("Error: " + e.message); }
     };
     
-    // --- NEW: ACKNOWLEDGE ON THE WAY ALERT ---
     window.ackOnTheWay = async (id) => {
-        try { 
-            await updateDoc(doc(db, "tickets", id), { onTheWayAck: true }); 
-        } catch(e) { alert(e.message); }
+        try { await updateDoc(doc(db, "tickets", id), { onTheWayAck: true }); } catch(e) { alert(e.message); }
     };
 
     window.openShelf = (id) => {
@@ -613,7 +665,6 @@
             if(el) el.addEventListener('input', window.calcColValue);
         });
 
-        // Automatically acknowledge arrival when they process collection
         if(t.onTheWay && !t.onTheWayAck) ackOnTheWay(t.id);
 
         document.getElementById('mod-collect').style.display = 'flex';
@@ -740,11 +791,10 @@
         
         document.getElementById('valCash').innerText="₦"+stats.cash.toLocaleString(); document.getElementById('valPending').innerText="₦"+stats.pending.toLocaleString(); document.getElementById('valCount').innerHTML=`<span style="font-size:16px;">${stats.aPh}📱 ${stats.aPb}🔋 ${stats.aOt}📦</span>`; document.getElementById('countActive').innerText=active.length;
 
-        // --- NEW: TRIGGER ALARM FOR "ON THE WAY" CUSTOMERS ---
         active.forEach(t => {
             if(t.onTheWay && !t.onTheWayAck && !window.notifiedOnTheWay.has(t.id)) {
                 window.notifiedOnTheWay.add(t.id);
-                playHonk(); // BEEP BEEP!
+                playHonk(); 
             }
         });
     }
@@ -769,7 +819,6 @@
         
         let unreadBadge = t.hasUnread ? `<button onclick="startEdit('${t.id}')" style="background:var(--danger); color:white; width:100%; border:none; padding:10px; margin-bottom:10px; border-radius:8px; font-weight:bold; font-size:14px; cursor:pointer; animation: pulse 1.5s infinite; box-shadow: 0 4px 8px rgba(220,53,69,0.4);">💬 1 New Message! Click to Reply</button>` : '';
 
-        // --- NEW: ON THE WAY ALERT FOR STAFF ---
         let onTheWayBadge = (t.onTheWay && !t.onTheWayAck) ? `<div style="background:var(--warning); color:#000; padding:8px; text-align:center; font-weight:bold; border-radius:6px; margin-bottom:10px; animation: pulse 1s infinite; border: 2px solid #000;">🏃‍♂️ CUSTOMER ARRIVING! <br><button onclick="ackOnTheWay('${t.id}')" style="background:#000; color:#fff; padding:6px 12px; margin-top:8px; border-radius:6px; font-size:14px; border:none; cursor:pointer;">✅ Acknowledge & Prepare</button></div>` : '';
 
         let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0);
@@ -783,8 +832,9 @@
             badgeHtml = `<span style="background:#f8d7da; color:#721c24; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; border:1px solid #f5c6cb;">⏳ PAY LATER</span>`;
         }
 
+        // --- NEW: WHATSAPP BUTTON ---
         return `<div class="ticket" style="${cs}"><div><div style="display:flex; justify-content:space-between"><b style="color:#000;">${hasPhoto}${t.name} <span class="code-badge">#${t.tag}</span></b>${badgeHtml}</div><div class="timer-area" style="${tas}"><span style="color:#000;">${sd}</span><span class="time-val ${tc}">${td}</span></div>${cDisp}${unreadBadge}${onTheWayBadge}${bars}<small style="color:#000; font-size:13px; display:block; margin-top:5px;">${cS!==""?`<b style="color:#d32f2f;">Left: ${rS}</b> | <span style="color:#28a745;">✅ Col: ${cS}</span>`:`Items: ${oS}`}</small><small style="color:#666; font-size:11px; display:block; margin-top:2px;">Logged by: <b>${t.staff||'System'}</b> | Total: ₦${t.price}</small>
-        <button onclick="showTrackQR('${t.tag}')" style="background:#6f42c1; color:white; width:100%; border:none; padding:8px; margin-top:5px; border-radius:8px; font-weight:bold; cursor:pointer;">📱 Display Tracking QR</button>
+        <button onclick="sendWhatsApp('${t.id}')" style="background:#25D366; color:white; width:100%; border:none; padding:8px; margin-top:5px; border-radius:8px; font-weight:bold; cursor:pointer;">💬 Send WhatsApp Update</button>
         </div><div class="row" style="margin-top:10px;">${!t.shelved?`<button class="btn-shelf" onclick="openShelf('${t.id}')" style="flex:1;">📦 SHELF</button>`:''}<button class="btn-edit" onclick="startEdit('${t.id}')" style="flex:1;">✏️ EDIT</button><button style="background:var(--success); flex:1;" onclick="openCollect('${t.id}')">COLLECT</button></div></div>`;
     }
 
@@ -797,6 +847,7 @@
     window.startEdit = (id) => {
         const t=ticketsData.find(x=>x.id===id); editId=id; currentSockets=t.sockets||[]; document.getElementById('custName').value=t.name; document.getElementById('tokenNum').value=t.tag; document.getElementById('phCount').value=t.ph||0; document.getElementById('pbCount').value=t.pb||0; document.getElementById('chFullCount').value=t.chFull||0; document.getElementById('chUsbCount').value=t.chUsb||0; document.getElementById('chHeadCount').value=t.chHead||0; document.getElementById('otCount').value=t.ot||0; document.getElementById('otPrice').value=t.otPrice||0; 
         document.getElementById('amtPaidInput').value = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0);
+        document.getElementById('custPhone').value = t.phone || "";
         document.querySelectorAll('.cond-chk').forEach(c => c.checked = (t.cond||[]).includes(c.value));
         const d=document.getElementById('devicePhotoData'), p=document.getElementById('camPreview'); if(t.photo){ d.value=t.photo; p.src=t.photo; p.style.display='block'; document.getElementById('btnStartCam').innerText="Retake Photo"; document.getElementById('btnDelPhoto').style.display='block'; } else { d.value=''; p.style.display='none'; document.getElementById('btnStartCam').innerText="📷 Open Camera"; document.getElementById('btnDelPhoto').style.display='none'; }
         let cT=String(t.tag).replace(/^#+/,''); if(!isNaN(cT)&&cT!=="") cT=String(Number(cT)); const px=secureTagsData[cT]; document.getElementById('displayPin').innerText=px||"No PIN"; document.getElementById('displayPin').style.color='var(--success)';
@@ -817,37 +868,51 @@
     function resetForm(cT=false) { if(cT){ document.getElementById('tokenNum').value=""; document.getElementById('extendedForm').style.display='none'; document.getElementById('formAction').innerText="Enter Tag 🔵"; document.getElementById('saveBtn').style.display='none'; document.getElementById('cancelEditBtn').style.display="none"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; } currentSockets=[]; clearFormFieldsOnly(); autoCalc(); }
     window.closeModal = (id) => { document.getElementById(id).style.display='none'; if(id==='modalPrint') document.getElementById('receiptPreview').style.border="2px solid #333"; };
     
-    window.saveSettings = async () => { const np={ph:+document.getElementById('setPh').value, pb:+document.getElementById('setPb').value, chFull:+document.getElementById('setChFull').value, chUsb:+document.getElementById('setChUsb').value, chHead:+document.getElementById('setChHead').value, maxSockets:+document.getElementById('setMaxSockets').value, loyalty:document.getElementById('setLoyalty').value, closeTime:document.getElementById('setCloseTime').value, bankName:document.getElementById('setBankName').value, accName:document.getElementById('setAccName').value, accNumber:document.getElementById('setAccNumber').value}; await setDoc(doc(db,"config","prices"), np); priceConfig=np; alert("Updated!"); };
+    window.saveSettings = async () => { 
+        const np={
+            ph:+document.getElementById('setPh').value, pb:+document.getElementById('setPb').value, chFull:+document.getElementById('setChFull').value, chUsb:+document.getElementById('setChUsb').value, chHead:+document.getElementById('setChHead').value, maxSockets:+document.getElementById('setMaxSockets').value, loyalty:document.getElementById('setLoyalty').value, closeTime:document.getElementById('setCloseTime').value, bankName:document.getElementById('setBankName').value, accName:document.getElementById('setAccName').value, accNumber:document.getElementById('setAccNumber').value,
+            trackingUrl:document.getElementById('setTrackingUrl').value.trim()
+        }; 
+        await setDoc(doc(db,"config","prices"), np); 
+        priceConfig=np; 
+        alert("Settings Saved & Synced to QR Codes!"); 
+    };
     
     window.revertCollection = async (id) => { if(confirm("Re-activate?")) await updateDoc(doc(db,"tickets",id), {collected:false, collDate:null, shelved:false, shelfPh:false, shelfPb:false, shelfOt:false, rating:null, reviewText:null}); };
     const upSt=() => { const sb = document.getElementById('status'); if(navigator.onLine) { sb.className="status-bar on"; sb.innerText="🟢 CONNECTED & SYNCED"; } else { sb.className="status-bar off"; sb.innerText="📡 OFFLINE (Saving to Phone Memory...)"; } }; window.addEventListener('online', upSt); window.addEventListener('offline', upSt); upSt();
 
+    // --- RESTORED: PRINT TAGS NOW INCLUDES THE REAL QR CODE ---
     window.printSecureTags = async () => {
         const start = +document.getElementById('tagStart').value||1, count = +document.getElementById('tagCount').value||5, copies = +document.getElementById('tagCopies').value||25, btn = document.getElementById('genBtn');
         btn.innerText = "⏳ Saving..."; btn.disabled = true; let html = `<div id="captureArea" style="padding:20px; background:white; width:100%; min-width:1000px; max-width:1122px; margin:0 auto; box-sizing:border-box;">`;
-        const promises = [], genTags = [];
+        const promises = [];
+        
+        let base = priceConfig.trackingUrl || "https://trackingmydevice.netlify.app/";
+        if(!base.endsWith('/')) base += '/';
+
         try {
             for(let i=start; i<start+count; i++) {
                 const id=String(i); let pin = secureTagsData[id] || (String(i)+"-"+Math.random().toString(36).substring(2,6).toUpperCase()); if(!secureTagsData[id]) promises.push(setDoc(doc(db,"secure_tags",id), {pin}));
                 
-                const trackLink = "https://trackingmydevice.netlify.app/?track=" + id;
-                genTags.push({id:`qr-${id}`, s: trackLink});
+                const trackLink = base + "?track=" + id;
+                const qrImage = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(trackLink)}`;
                 
                 html+=`<div id="st-${i}" style="width:100%; padding:20px 0; background:#fff; margin-bottom:30px; border-bottom:2px dashed #999; text-align:center; page-break-inside:avoid;">
                     <div style="display:block; border:2px solid #000; padding:20px; border-radius:8px; width:280px; box-sizing:border-box; background:#fff; margin:0 auto 20px auto;">
                         <div style="margin:0 0 10px 0; font-size:22px; font-weight:900; font-family:Arial; color:#000; border-bottom:2px solid #ccc; padding-bottom:5px;">⚡ STARBITE</div>
-                        <div id="qr-${id}" style="text-align:center; margin:15px auto; display:flex; justify-content:center;"></div>
+                        <div style="text-align:center; margin:15px auto; display:flex; justify-content:center;">
+                            <img src="${qrImage}" style="width:180px; height:180px;">
+                        </div>
                         <div style="font-size:50px; font-weight:900; margin-top:5px; color:#000; font-family:Arial; line-height:1;">#${i}</div>
-                        <div style="margin-top:15px; padding-top:10px; border-top:2px dashed #999; font-size:12px; font-weight:bold; color:#000; line-height:1.4;">Click to view your phone's charging progress:<br><span style="color:var(--primary);">https://trackingmydevice.netlify.app/</span></div>
+                        <div style="margin-top:15px; padding-top:10px; border-top:2px dashed #999; font-size:12px; font-weight:bold; color:#000; line-height:1.4;">Click to view your phone's charging progress:<br><span style="color:var(--primary); font-size:10px; word-break: break-all;">${base}</span></div>
                     </div>`;
                 if(copies>0) { html+=`<div style="width:100%; text-align:center; font-size:0;">`; for(let c=0; c<copies; c++){ html+=`<div style="display:inline-block; width:18%; margin:0 1% 10px 1%; border:2px solid #000; padding:10px 2px; background:#fff; font-family:monospace; font-size:14px; font-weight:900; color:#000; box-sizing:border-box; vertical-align:top; text-align:center; white-space:nowrap; overflow:hidden;">📱 #${i} | ${pin}</div>`; } html+=`</div>`; }
                 html+=`<button id="bd-${i}" class="single-dl-btn" onclick="downloadSingleTag('st-${i}','${i}')" style="background:#28a745; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-size:16px; font-weight:bold; margin-top:20px;">📥 Save Layout</button></div>`;
             } html+=`</div>`; await Promise.all(promises); btn.innerText = "🖨️ Generate Tags"; btn.disabled = false;
             document.getElementById('receiptPreview').style.border = "none"; document.getElementById('receiptPreview').innerHTML = html;
-            genTags.forEach(o => { new QRCode(document.getElementById(o.id), {text:o.s, width:200, height:200, colorDark:"#000000", colorLight:"#ffffff", correctLevel:QRCode.CorrectLevel.H}); setTimeout(() => { const c=document.getElementById(o.id)?.querySelector('canvas'), img=document.getElementById(o.id)?.querySelector('img'); if(c&&img){ img.src=c.toDataURL(); img.style.display='block'; img.style.margin='0 auto'; c.style.display='none'; } }, 100); });
             closeModal('modalTagGen'); document.getElementById('modalPrint').style.display='flex';
         } catch(e) { alert("Error."); btn.innerText="🖨️ Generate Tags"; btn.disabled=false; }
     };
   </script>
 </body>
-</html>
+              </html>
