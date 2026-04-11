@@ -128,8 +128,8 @@
         <div style="margin-top:15px; padding-top:15px; border-top:1px dashed #ccc;">
             <label style="font-weight:bold; color:var(--dark); font-size:12px; display:block; margin-bottom:5px;">🏦 BANK ACCOUNT DETAILS</label>
             <div style="display:flex; flex-wrap:wrap; gap:5px;">
-                <input type="text" id="setBankName" placeholder="Bank Name (e.g. Opay, Moniepoint)" style="flex:1; min-width:120px;">
-                <input type="text" id="setAccName" placeholder="Account Name (e.g. Starbite Shop)" style="flex:2; min-width:150px;">
+                <input type="text" id="setBankName" placeholder="Bank Name (e.g. Opay)" style="flex:1; min-width:120px;">
+                <input type="text" id="setAccName" placeholder="Account Name" style="flex:2; min-width:150px;">
                 <input type="number" id="setAccNumber" placeholder="Account Number" style="flex:2; min-width:150px; font-weight:bold; color:var(--primary);">
             </div>
         </div>
@@ -137,7 +137,6 @@
         <div style="margin-top:15px; padding-top:15px; border-top:1px dashed #ccc;">
             <label style="font-weight:bold; color:var(--success); font-size:12px; display:block; margin-bottom:5px;">🌐 TRACKING WEBSITE URL (For WhatsApp Links & QR Codes)</label>
             <input type="url" id="setTrackingUrl" placeholder="e.g. https://yourname.github.io/track/" style="font-weight:bold; color:var(--success); width:100%; font-size: 14px;">
-            <small style="color:#666;">Paste your live GitHub or Netlify link here.</small>
         </div>
 
         <button onclick="saveSettings()" class="btn-edit" style="margin-top: 15px;">💾 SAVE ALL SETTINGS</button>
@@ -286,13 +285,13 @@
         </div>
       </div>
 
-      <div id="modalScanner" class="modal"><div class="modal-content" style="text-align: center; padding: 15px;"><h3 style="margin-top: 0; color: #000;">📷 Scan QR Tag</h3><p style="font-size: 12px; color: #666;">Point your phone camera at the customer's tag.</p><div id="reader"></div><button style="background: var(--danger); margin-top: 15px; width: 100%;" onclick="closeScanner()">Cancel</button></div></div>
+      <div id="modalScanner" class="modal"><div class="modal-content" style="text-align: center; padding: 15px;"><h3 style="margin-top: 0; color: #000;">📷 Scan Tag</h3><p style="font-size: 12px; color: #666;">Point your phone camera at the tag.</p><div id="reader"></div><button style="background: var(--danger); margin-top: 15px; width: 100%;" onclick="closeScanner()">Cancel</button></div></div>
       <div id="modalScanMatch" class="modal"><div class="modal-content" style="text-align: center;"><h3 style="margin-top: 0; color: var(--primary);">📱 Tag Found!</h3><div id="scanMatchDetails" style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left; color: #000;"></div><button id="btnScanCollect" style="background: var(--success); width: 100%; margin-bottom: 10px;">📦 Process Collection</button><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button id="btnScanEdit" style="background: var(--warning); width: 100%; color: #000;">✏️ Edit Ticket</button></div><button style="background: #666; width: 100%;" onclick="closeModal('modalScanMatch'); cancelEdit();">Close</button></div></div>
       <div id="modalPrint" class="modal"><div class="modal-content" id="printArea" style="max-width: 900px; width: 95%;"><div id="receiptPreview" style="background: #ffffff; padding: 15px;"></div><div id="printActions" style="display:flex; gap:10px; margin-top:10px; flex-wrap: wrap;"><button class="btn-print" style="flex:1; min-width: 100px;" onclick="window.print()">🖨️ PRINT ALL</button><button id="btnDownload" class="btn-download" style="flex:1; min-width: 100px;" onclick="downloadImage()">📥 SAVE ALL (GRID)</button></div><button style="background:#666; margin-top:10px; width: 100%;" onclick="closeModal('modalPrint')">Close</button></div></div>
 
       <div id="modalTagGen" class="modal">
         <div class="modal-content">
-          <h3 style="text-align: center; color: #000;">🖨️ Generate Web-Tracking Tags</h3>
+          <h3 style="text-align: center; color: #000;">🖨️ Generate Tags</h3>
           <div class="row" style="margin-top: 15px;"><div class="device-box"><label>Start Tag #</label><input type="number" id="tagStart" value="1" min="1" style="color: #000; background: #fff;"></div><div class="device-box"><label>How Many Tags?</label><input type="number" id="tagCount" value="5" min="1" style="color: #000; background: #fff;"></div></div>
           <div class="row" style="margin-top: 5px;"><div class="device-box" style="background: #e2e3e5;"><label style="color: #333;">Device PIN Stickers (per Tag)</label><input type="number" id="tagCopies" value="25" min="0" style="font-weight: bold; text-align: center; color: #000; background: #fff;"></div></div>
           <button id="genBtn" style="background:var(--dark); margin-top:15px;" onclick="printSecureTags()">🖨️ Generate Tags</button>
@@ -359,7 +358,6 @@
 
     const playBeep = () => { try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); osc.type='sine'; osc.frequency.setValueAtTime(800, ctx.currentTime); osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime+0.5); } catch(e){} };
     const playChaChing = () => { try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); osc.type='square'; osc.frequency.setValueAtTime(1200, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(2000, ctx.currentTime+0.1); osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime+0.2); } catch(e){} };
-    
     const playHonk = () => { 
         try { 
             const ctx = new (window.AudioContext || window.webkitAudioContext)(); 
@@ -406,8 +404,31 @@
         }
     }
 
+    // --- NEW: BULLETPROOF PHOTO SNAP CAMERA ENGINE ---
     let camStream=null;
-    window.startDeviceCam = async () => { const v = document.getElementById('camVideo'); document.getElementById('camPreview').style.display='none'; try { camStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}); v.srcObject=camStream; v.style.display='block'; document.getElementById('btnStartCam').style.display='none'; document.getElementById('btnSnapCam').style.display='block'; } catch(e) { alert("Camera access denied."); } };
+    window.startDeviceCam = async () => { 
+        const v = document.getElementById('camVideo'); 
+        document.getElementById('camPreview').style.display='none'; 
+        try { 
+            // Most robust constraint setup
+            const constraints = {
+                video: {
+                    facingMode: { ideal: "environment" },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            };
+            camStream = await navigator.mediaDevices.getUserMedia(constraints); 
+            v.srcObject=camStream; 
+            v.style.display='block'; 
+            document.getElementById('btnStartCam').style.display='none'; 
+            document.getElementById('btnSnapCam').style.display='block'; 
+        } catch(e) { 
+            alert("Camera Access Denied. Please check your browser settings and ensure you have given this website permission to use the camera."); 
+            console.error("Camera error:", e);
+        } 
+    };
+
     window.captureDeviceCam = () => { const v=document.getElementById('camVideo'), c=document.getElementById('camCanvas'), p=document.getElementById('camPreview'); const tW=300, tH=(v.videoHeight/v.videoWidth)*tW; c.width=tW; c.height=tH; c.getContext('2d').drawImage(v,0,0,tW,tH); const b64=c.toDataURL('image/jpeg',0.6); document.getElementById('devicePhotoData').value=b64; p.src=b64; p.style.display='block'; v.style.display='none'; if(camStream)camStream.getTracks().forEach(t=>t.stop()); const bS=document.getElementById('btnStartCam'); bS.style.display='block'; bS.innerText="Retake Photo"; document.getElementById('btnSnapCam').style.display='none'; document.getElementById('btnDelPhoto').style.display='block'; };
     window.stopCam = () => { if(camStream)camStream.getTracks().forEach(t=>t.stop()); document.getElementById('camVideo').style.display='none'; document.getElementById('btnStartCam').style.display='block'; document.getElementById('btnStartCam').innerText="📷 Open Camera"; document.getElementById('btnSnapCam').style.display='none'; document.getElementById('btnDelPhoto').style.display='none'; document.getElementById('camPreview').style.display='none'; document.getElementById('devicePhotoData').value=''; };
     window.removePhotoForm = () => { if(confirm("Remove image?")){ document.getElementById('devicePhotoData').value=''; document.getElementById('camPreview').style.display='none'; document.getElementById('btnStartCam').innerText='📷 Open Camera'; document.getElementById('btnDelPhoto').style.display='none'; } };
@@ -415,7 +436,6 @@
 
     window.exportCSV = () => { let csv = "Date,Customer Name,Tag Number,Phone,Items,Price,Amount Paid,Status,Logged By,Collected By,Rating,Review,Conditions\n"; ticketsData.forEach(t => { let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); csv += `"${t.jsDate?t.jsDate.toLocaleDateString():''}","${(t.name||"").replace(/"/g, '""')}","${t.tag}","${t.phone||''}","${t.ph||0}📱 ${t.pb||0}🔋",${t.price},${amtPaid},"${t.collected?'Collected':(t.shelved?'Shelved':'Active')}","${t.staff||''}","${t.collectedBy||''}","${t.rating||''}","${(t.reviewText||'').replace(/"/g, '""')}","${(t.cond||[]).join(', ')}"\n`; }); const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))); link.setAttribute("download", `Starbite_Report_${new Date().toISOString().split('T')[0]}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); };
 
-    // --- NEW: SEND WHATSAPP MESSAGE FUNCTION ---
     window.sendWhatsApp = (id) => {
         const t = ticketsData.find(x => x.id === id);
         if(!t || !t.phone || t.phone.length < 10) return alert("Please edit the ticket and add a valid phone number first!");
@@ -502,7 +522,41 @@
 
     window.killTag = async () => { const tagNum = document.getElementById('killTagNum').value.trim(); if(!tagNum) return alert("Enter a Tag number to kill."); if(!confirm(`Are you sure you want to KILL Tag #${tagNum}?\n\nThis will generate a brand new PIN. Anyone holding the old stolen tag will not be able to use it.`)) return; const newPin = String(tagNum) + "-" + Math.random().toString(36).substring(2, 6).toUpperCase(); try { await setDoc(doc(db, "secure_tags", String(tagNum)), { pin: newPin }); alert(`✅ Tag #${tagNum} reset!\nNew PIN: ${newPin}`); document.getElementById('killTagNum').value = ''; } catch(e) { alert("Error resetting tag: " + e.message); } };
 
-    window.openScanner = () => { document.getElementById('modalScanner').style.display = 'flex'; html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess).catch(e => { alert("Camera error."); closeScanner(); }); };
+    // --- NEW: BULLETPROOF QR SCANNER ENGINE ---
+    let html5QrCode = null;
+    window.openScanner = () => { 
+        document.getElementById('modalScanner').style.display = 'flex'; 
+        html5QrCode = new Html5Qrcode("reader"); 
+        
+        // Scan for all cameras first, find the back camera, connect directly to it
+        Html5Qrcode.getCameras().then(devices => {
+            if (devices && devices.length) {
+                let camId = devices[0].id; // default to first
+                // Look for back/environment camera
+                for (let i = 0; i < devices.length; i++) {
+                    if (devices[i].label.toLowerCase().includes("back") || devices[i].label.toLowerCase().includes("environment")) {
+                        camId = devices[i].id;
+                        break;
+                    }
+                }
+                html5QrCode.start(camId, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess)
+                .catch(err => {
+                    alert("Scanner failed to start. Please check camera permissions.");
+                    closeScanner();
+                });
+            } else {
+                alert("No cameras found on your device.");
+                closeScanner();
+            }
+        }).catch(err => {
+            // Absolute Fallback
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess)
+            .catch(e => {
+                alert("Scanner blocked! Please ALLOW camera permissions in your browser settings.");
+                closeScanner();
+            });
+        }); 
+    };
 
     function generateSmartStatusHTML(t) { let oStr="", rStr="", cStr=""; const bld = (l, tq, cq) => { let r=(tq||0)-(cq||0); if(tq>0) oStr+=`${tq}${l} `; if(cq>0) cStr+=`${cq}${l} `; if(r>0) rStr+=`${r}${l} `; }; bld('📱',t.ph,t.colPh); bld('🔋',t.pb,t.colPb); bld('🔌F',t.chFull,t.colChFull); bld('〰️U',t.chUsb,t.colChUsb); bld('🔌H',t.chHead,t.colChHead); bld('🔌L',t.ch,t.colCh); let html = `<p style="margin:0 0 5px 0; font-size:13px; color:#555;"><strong>Total Logged:</strong> ${oStr}</p>`; if(cStr!=="") html+=`<p style="margin:0 0 5px 0; font-size:13px; color:#28a745;"><strong>✅ Collected:</strong> ${cStr}</p>`; if(rStr!=="") html+=`<p style="margin:0 0 10px 0; font-size:15px; color:#000;"><strong>${t.shelved?'<span style="color:#28a745;">📦 ON SHELF (Ready)</span>':(t.shelfPh||t.shelfPb||t.shelfOt?'<span style="color:#ffc107;">⏳ PARTIALLY READY</span>':'<span style="color:#007bff;">⚡️ CHARGING</span>')}:</strong> <b>${rStr}</b></p>`; return html; }
 
@@ -817,10 +871,6 @@
         let oS="",rS="",cS=""; const bld=(l,tq,cq)=>{ let r=(tq||0)-(cq||0); if(tq>0)oS+=`${tq}${l} `; if(cq>0)cS+=`${cq}${l} `; if(r>0)rS+=`${r}${l} `; }; bld('📱',t.ph,t.colPh); bld('🔋',t.pb,t.colPb); bld('🔌F',t.chFull,t.colChFull); bld('〰️U',t.chUsb,t.colChUsb); bld('🔌H',t.chHead,t.colChHead); bld('🔌L',t.ch,t.colCh);
         let cDisp = (t.cond&&t.cond.length>0)?`<span style="color:#dc3545; font-size:11px; display:block; font-weight:bold; margin-bottom:5px;">⚠️ ${t.cond.join(', ')}</span>`:'';
         
-        let unreadBadge = t.hasUnread ? `<button onclick="startEdit('${t.id}')" style="background:var(--danger); color:white; width:100%; border:none; padding:10px; margin-bottom:10px; border-radius:8px; font-weight:bold; font-size:14px; cursor:pointer; animation: pulse 1.5s infinite; box-shadow: 0 4px 8px rgba(220,53,69,0.4);">💬 1 New Message! Click to Reply</button>` : '';
-
-        let onTheWayBadge = (t.onTheWay && !t.onTheWayAck) ? `<div style="background:var(--warning); color:#000; padding:8px; text-align:center; font-weight:bold; border-radius:6px; margin-bottom:10px; animation: pulse 1s infinite; border: 2px solid #000;">🏃‍♂️ CUSTOMER ARRIVING! <br><button onclick="ackOnTheWay('${t.id}')" style="background:#000; color:#fff; padding:6px 12px; margin-top:8px; border-radius:6px; font-size:14px; border:none; cursor:pointer;">✅ Acknowledge & Prepare</button></div>` : '';
-
         let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0);
         let bal = t.price - amtPaid;
         let badgeHtml = '';
@@ -832,8 +882,7 @@
             badgeHtml = `<span style="background:#f8d7da; color:#721c24; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; border:1px solid #f5c6cb;">⏳ PAY LATER</span>`;
         }
 
-        // --- NEW: WHATSAPP BUTTON ---
-        return `<div class="ticket" style="${cs}"><div><div style="display:flex; justify-content:space-between"><b style="color:#000;">${hasPhoto}${t.name} <span class="code-badge">#${t.tag}</span></b>${badgeHtml}</div><div class="timer-area" style="${tas}"><span style="color:#000;">${sd}</span><span class="time-val ${tc}">${td}</span></div>${cDisp}${unreadBadge}${onTheWayBadge}${bars}<small style="color:#000; font-size:13px; display:block; margin-top:5px;">${cS!==""?`<b style="color:#d32f2f;">Left: ${rS}</b> | <span style="color:#28a745;">✅ Col: ${cS}</span>`:`Items: ${oS}`}</small><small style="color:#666; font-size:11px; display:block; margin-top:2px;">Logged by: <b>${t.staff||'System'}</b> | Total: ₦${t.price}</small>
+        return `<div class="ticket" style="${cs}"><div><div style="display:flex; justify-content:space-between"><b style="color:#000;">${hasPhoto}${t.name} <span class="code-badge">#${t.tag}</span></b>${badgeHtml}</div><div class="timer-area" style="${tas}"><span style="color:#000;">${sd}</span><span class="time-val ${tc}">${td}</span></div>${cDisp}${bars}<small style="color:#000; font-size:13px; display:block; margin-top:5px;">${cS!==""?`<b style="color:#d32f2f;">Left: ${rS}</b> | <span style="color:#28a745;">✅ Col: ${cS}</span>`:`Items: ${oS}`}</small><small style="color:#666; font-size:11px; display:block; margin-top:2px;">Logged by: <b>${t.staff||'System'}</b> | Total: ₦${t.price}</small>
         <button onclick="sendWhatsApp('${t.id}')" style="background:#25D366; color:white; width:100%; border:none; padding:8px; margin-top:5px; border-radius:8px; font-weight:bold; cursor:pointer;">💬 Send WhatsApp Update</button>
         </div><div class="row" style="margin-top:10px;">${!t.shelved?`<button class="btn-shelf" onclick="openShelf('${t.id}')" style="flex:1;">📦 SHELF</button>`:''}<button class="btn-edit" onclick="startEdit('${t.id}')" style="flex:1;">✏️ EDIT</button><button style="background:var(--success); flex:1;" onclick="openCollect('${t.id}')">COLLECT</button></div></div>`;
     }
@@ -852,19 +901,14 @@
         const d=document.getElementById('devicePhotoData'), p=document.getElementById('camPreview'); if(t.photo){ d.value=t.photo; p.src=t.photo; p.style.display='block'; document.getElementById('btnStartCam').innerText="Retake Photo"; document.getElementById('btnDelPhoto').style.display='block'; } else { d.value=''; p.style.display='none'; document.getElementById('btnStartCam').innerText="📷 Open Camera"; document.getElementById('btnDelPhoto').style.display='none'; }
         let cT=String(t.tag).replace(/^#+/,''); if(!isNaN(cT)&&cT!=="") cT=String(Number(cT)); const px=secureTagsData[cT]; document.getElementById('displayPin').innerText=px||"No PIN"; document.getElementById('displayPin').style.color='var(--success)';
         
-        document.getElementById('staffChatArea').style.display = 'block';
-        renderStaffChat(t.chats || []);
-        if(t.hasUnread) updateDoc(doc(db, "tickets", id), { hasUnread: false });
-
         document.getElementById('extendedForm').style.display='block'; document.getElementById('formAction').innerHTML=`Edit #${t.tag} 🟢`; document.getElementById('saveBtn').style.display='block'; document.getElementById('saveBtn').innerText="💾 UPDATE"; document.getElementById('cancelEditBtn').style.display="block"; 
         
         window.scrollTo({top:0}); 
         autoCalc();
-        setTimeout(() => { const chatBox = document.getElementById('staffChatArea'); chatBox.scrollIntoView({ behavior: 'smooth', block: 'end' }); document.getElementById('staffChatInput').focus(); }, 300);
     };
 
     window.cancelEdit = () => { editId=null; currentSockets=[]; resetForm(true); };
-    function clearFormFieldsOnly() { stopCam(); ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput'].forEach(id => document.getElementById(id).value=id.includes('Count')||id.includes('Price')||id.includes('amt')?0:""); document.getElementById('payStatus').value="Later"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); document.getElementById('staffChatArea').style.display='none'; document.getElementById('staffChatHistory').innerHTML=''; document.getElementById('staffChatInput').value=''; }
+    function clearFormFieldsOnly() { stopCam(); ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput'].forEach(id => document.getElementById(id).value=id.includes('Count')||id.includes('Price')||id.includes('amt')?0:""); document.getElementById('payStatus').value="Later"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); }
     function resetForm(cT=false) { if(cT){ document.getElementById('tokenNum').value=""; document.getElementById('extendedForm').style.display='none'; document.getElementById('formAction').innerText="Enter Tag 🔵"; document.getElementById('saveBtn').style.display='none'; document.getElementById('cancelEditBtn').style.display="none"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; } currentSockets=[]; clearFormFieldsOnly(); autoCalc(); }
     window.closeModal = (id) => { document.getElementById(id).style.display='none'; if(id==='modalPrint') document.getElementById('receiptPreview').style.border="2px solid #333"; };
     
@@ -881,7 +925,7 @@
     window.revertCollection = async (id) => { if(confirm("Re-activate?")) await updateDoc(doc(db,"tickets",id), {collected:false, collDate:null, shelved:false, shelfPh:false, shelfPb:false, shelfOt:false, rating:null, reviewText:null}); };
     const upSt=() => { const sb = document.getElementById('status'); if(navigator.onLine) { sb.className="status-bar on"; sb.innerText="🟢 CONNECTED & SYNCED"; } else { sb.className="status-bar off"; sb.innerText="📡 OFFLINE (Saving to Phone Memory...)"; } }; window.addEventListener('online', upSt); window.addEventListener('offline', upSt); upSt();
 
-    // --- RESTORED: PRINT TAGS NOW INCLUDES THE REAL QR CODE ---
+    // --- QR CODE GENERATOR FOR TAGS ---
     window.printSecureTags = async () => {
         const start = +document.getElementById('tagStart').value||1, count = +document.getElementById('tagCount').value||5, copies = +document.getElementById('tagCopies').value||25, btn = document.getElementById('genBtn');
         btn.innerText = "⏳ Saving..."; btn.disabled = true; let html = `<div id="captureArea" style="padding:20px; background:white; width:100%; min-width:1000px; max-width:1122px; margin:0 auto; box-sizing:border-box;">`;
@@ -915,4 +959,4 @@
     };
   </script>
 </body>
-              </html>
+</html>
