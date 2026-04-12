@@ -126,7 +126,7 @@
         </div>
 
         <div style="margin-top:15px; padding-top:15px; border-top:1px dashed #ccc;">
-            <label style="font-weight:bold; color:var(--dark); font-size:12px; display:block; margin-bottom:5px;">🏦 BANK ACCOUNT DETAILS (For Customer Portal)</label>
+            <label style="font-weight:bold; color:var(--dark); font-size:12px; display:block; margin-bottom:5px;">🏦 BANK ACCOUNT DETAILS</label>
             <div style="display:flex; flex-wrap:wrap; gap:5px;">
                 <input type="text" id="setBankName" placeholder="Bank Name (e.g. Opay)" style="flex:1; min-width:120px;">
                 <input type="text" id="setAccName" placeholder="Account Name" style="flex:2; min-width:150px;">
@@ -208,6 +208,15 @@
             <div class="row" style="margin-top:10px;">
                 <div class="device-box" style="flex:1; border:2px solid var(--primary);"><label style="color:var(--primary);">TOTAL PRICE (₦)</label><input type="number" id="price" value="0" readonly style="font-weight:bold; color:var(--primary); font-size: 20px; text-align: center; background: #fff;"></div>
                 <div class="device-box" style="flex:1; background:#e3f2fd; border:2px solid var(--success);"><label style="color:var(--success);">AMOUNT PAID NOW (₦)</label><input type="number" id="amtPaidInput" value="0" min="0" style="font-weight:bold; color:var(--success); font-size: 20px; text-align: center; background: #fff;"></div>
+            </div>
+
+            <div style="background:#e3f2fd; padding:10px; border-radius:8px; margin-top:10px; border:2px dashed var(--primary);">
+                <label style="font-size:12px; font-weight:bold; color:var(--primary); display:block; margin-bottom:5px;">🔋 Manual Battery Sync (Enter exact % on device screen):</label>
+                <div class="row">
+                    <div class="device-box" style="background:transparent; border:none;"><label style="color:var(--dark);">PHONE %</label><input type="number" id="syncPh" min="0" max="100" placeholder="0" style="background:#fff; text-align:center; font-weight:bold;"></div>
+                    <div class="device-box" style="background:transparent; border:none;"><label style="color:var(--dark);">P-BANK %</label><input type="number" id="syncPb" min="0" max="100" placeholder="0" style="background:#fff; text-align:center; font-weight:bold;"></div>
+                    <div class="device-box" style="background:transparent; border:none;"><label style="color:var(--dark);">OTHER %</label><input type="number" id="syncOt" min="0" max="100" placeholder="0" style="background:#fff; text-align:center; font-weight:bold;"></div>
+                </div>
             </div>
 
             <div class="pin-display-box" id="pinBox">🏷️ System PIN for this Tag:<br><span class="pin-text" id="displayPin">...</span></div>
@@ -609,6 +618,16 @@
         allocateSockets(ph + pb + otCount); 
     }
 
+    // --- RE-BASED CALCULATION ENGINE ---
+    function getPct(t, type, nowMs) {
+        let baseTs = t.baseTs || t.jsDate.getTime();
+        let diff = Math.floor((nowMs - baseTs) / 60000);
+        if(type === 'ph') return Math.min(100, (t.phBasePct || 0) + Math.floor((diff / 150) * 100));
+        if(type === 'pb') return Math.min(100, (t.pbBasePct || 0) + Math.floor((diff / 600) * 100));
+        if(type === 'ot') return Math.min(100, (t.otBasePct || 0) + Math.floor((diff / 150) * 100));
+        return 0;
+    }
+
     onSnapshot(query(col, orderBy("ts", "desc")), (snap) => { 
         ticketsData = snap.docs.map(d => ({ ...d.data(), id: d.id, jsDate: d.data().ts ? d.data().ts.toDate() : new Date() })); 
         if(currentUserRole) { 
@@ -622,13 +641,19 @@
         let name = document.getElementById('custName').value.trim(), tag = document.getElementById('tokenNum').value.trim().replace(/^#+/, ''); if (!isNaN(tag) && tag !== "") tag = String(Number(tag));
         if(!name || !tag) return alert("Enter Name & Tag #");
         const cond = Array.from(document.querySelectorAll('.cond-chk:checked')).map(c=>c.value); const photoData = document.getElementById('devicePhotoData').value;
+        
+        const syncPh = parseInt(document.getElementById('syncPh').value) || 0;
+        const syncPb = parseInt(document.getElementById('syncPb').value) || 0;
+        const syncOt = parseInt(document.getElementById('syncOt').value) || 0;
+
         const data = { 
             name, tag, cond, photo: photoData, phone: document.getElementById('custPhone').value.trim(), 
             debtSettled: false, ph: +document.getElementById('phCount').value, pb: +document.getElementById('pbCount').value, 
             chFull: +document.getElementById('chFullCount').value, chUsb: +document.getElementById('chUsbCount').value, chHead: +document.getElementById('chHeadCount').value, 
             ot: +document.getElementById('otCount').value, otPrice: +document.getElementById('otPrice').value, price: +document.getElementById('price').value, 
             amountPaid: +document.getElementById('amtPaidInput').value,
-            sockets: JSON.parse(document.getElementById('assignedSockets').value || "[]"), staff: currentUserName 
+            sockets: JSON.parse(document.getElementById('assignedSockets').value || "[]"), staff: currentUserName,
+            phBasePct: syncPh, pbBasePct: syncPb, otBasePct: syncOt, baseTs: Date.now()
         };
         
         try { 
@@ -721,7 +746,7 @@
 
     window.calcColValue = () => {
         const ph = +(document.getElementById('in-col-ph')?.value || 0);
-        const pb = +(document.getElementById('pb')?.value || 0);
+        const pb = +(document.getElementById('in-col-pb')?.value || 0);
         const chFull = +(document.getElementById('in-col-chFull')?.value || 0);
         const chUsb = +(document.getElementById('in-col-chUsb')?.value || 0);
         const chHead = +(document.getElementById('in-col-chHead')?.value || 0);
@@ -844,19 +869,45 @@
     }
 
     function ticketTemplate(t) {
-        const nowMs = t.shelved && t.shelvedAt ? t.shelvedAt : (powerData.state === 'OFF' ? powerData.offAt : Date.now());
-        const diff = Math.floor((nowMs - t.jsDate.getTime()) / 60000); 
+        const nowMs = powerData.state === 'OFF' ? powerData.offAt : Date.now();
         
-        let tc='', sd=(t.sockets&&t.sockets.length>0)?`🔌 <b>${t.sockets.join(',')}</b>`:'🔌 <b>None</b>', td=`${Math.floor(diff/60)}h ${diff%60}m`, cs='', tas='';
-        if(t.shelved){ tc=''; sd=`📦 <b>Shelf</b>`; td=`✅ Rdy`; cs='border-left-color:#28a745;'; tas='background:#d4edda;'; } 
+        let tc='', sd=(t.sockets&&t.sockets.length>0)?`🔌 <b>${t.sockets.join(',')}</b>`:'🔌 <b>None</b>', cs='', tas='';
+        if(t.shelved){ tc=''; sd=`📦 <b>Shelf</b>`; cs='border-left-color:#28a745;'; tas='background:#d4edda;'; } 
         else if (t.shelfPh || t.shelfPb || t.shelfOt) { sd = `⏳ <b>Partial Shelf</b>`; tas='background:#fff3cd;'; }
         
         let actPh=(t.ph||0)-(t.colPh||0), actPb=(t.pb||0)-(t.colPb||0), actOt=(((t.chFull||0)-(t.colChFull||0))+((t.chUsb||0)-(t.colChUsb||0))+((t.chHead||0)-(t.colChHead||0))+((t.ch||0)-(t.colCh||0))+((t.ot||0)-(t.colOt||0)));
         let bars="", hasPhoto = t.photo ? '📸 ' : '';
 
-        if(actPh>0){ let p=Math.min(100,Math.floor((diff/150)*100)); let c='#dc3545'; let txt = `📱 Phones: ${p}%`; if(p>=30)c='#ffc107'; if(p>=80)c='#28a745'; if(diff>180&&!t.shelved&&!t.shelfPh)tc='danger'; if(t.shelved || t.shelfPh) { p=100; c='#28a745'; txt = `📱 Phones: ON SHELF ✅`; } bars+=`<div style="margin:5px 0; width:100%; background:#e0e0e0; border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:900; color:#333;">${txt}</div></div>`; }
-        if(actPb>0){ let p=Math.min(100,Math.floor((diff/600)*100)); let c='#dc3545'; let txt = `🔋 P-Bank: ${p}%`; if(p>=30)c='#ffc107'; if(p>=80)c='#28a745'; if(diff>630&&!t.shelved&&!t.shelfPb)tc='danger'; if(t.shelved || t.shelfPb) { p=100; c='#28a745'; txt = `🔋 P-Bank: ON SHELF ✅`; } bars+=`<div style="margin:5px 0; width:100%; background:#e0e0e0; border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:900; color:#333;">${txt}</div></div>`; }
-        if(actPh<=0 && actPb<=0 && actOt>0){ let p=Math.min(100,Math.floor((diff/150)*100)); let c='#dc3545'; let txt = `⚡ Device: ${p}%`; if(p>=30)c='#ffc107'; if(p>=80)c='#28a745'; if(diff>180&&!t.shelved&&!t.shelfOt)tc='danger'; if(t.shelved || t.shelfOt) { p=100; c='#28a745'; txt = `⚡ Device: ON SHELF ✅`; } bars+=`<div style="margin:5px 0; width:100%; background:#e0e0e0; border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:900; color:#333;">${txt}</div></div>`; }
+        // RE-BASED PROGRESS BARS
+        if(actPh>0){ 
+            let p = getPct(t, 'ph', nowMs);
+            let c='#dc3545'; let txt = `📱 Phones: ${p}%`; 
+            if(p>=30)c='#ffc107'; if(p>=80)c='#28a745'; 
+            if(p>=100&&!t.shelved&&!t.shelfPh)tc='danger'; 
+            if(t.shelved || t.shelfPh) { p=100; c='#28a745'; txt = `📱 Phones: ON SHELF ✅`; } 
+            bars+=`<div style="margin:5px 0; width:100%; background:#e0e0e0; border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:900; color:#333;">${txt}</div></div>`; 
+        }
+        if(actPb>0){ 
+            let p = getPct(t, 'pb', nowMs);
+            let c='#dc3545'; let txt = `🔋 P-Bank: ${p}%`; 
+            if(p>=30)c='#ffc107'; if(p>=80)c='#28a745'; 
+            if(p>=100&&!t.shelved&&!t.shelfPb)tc='danger'; 
+            if(t.shelved || t.shelfPb) { p=100; c='#28a745'; txt = `🔋 P-Bank: ON SHELF ✅`; } 
+            bars+=`<div style="margin:5px 0; width:100%; background:#e0e0e0; border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:900; color:#333;">${txt}</div></div>`; 
+        }
+        if(actPh<=0 && actPb<=0 && actOt>0){ 
+            let p = getPct(t, 'ot', nowMs);
+            let c='#dc3545'; let txt = `⚡ Device: ${p}%`; 
+            if(p>=30)c='#ffc107'; if(p>=80)c='#28a745'; 
+            if(p>=100&&!t.shelved&&!t.shelfOt)tc='danger'; 
+            if(t.shelved || t.shelfOt) { p=100; c='#28a745'; txt = `⚡ Device: ON SHELF ✅`; } 
+            bars+=`<div style="margin:5px 0; width:100%; background:#e0e0e0; border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:900; color:#333;">${txt}</div></div>`; 
+        }
+
+        // TIME DISPLAY
+        let baseTs = t.baseTs || t.jsDate.getTime();
+        let diffTime = Math.floor((nowMs - baseTs) / 60000);
+        let td = t.shelved ? `✅ Rdy` : `${Math.floor(diffTime/60)}h ${diffTime%60}m`;
 
         let oS="",rS="",cS=""; const bld=(l,tq,cq)=>{ let r=(tq||0)-(cq||0); if(tq>0)oS+=`${tq}${l} `; if(cq>0)cS+=`${cq}${l} `; if(r>0)rS+=`${r}${l} `; }; bld('📱',t.ph,t.colPh); bld('🔋',t.pb,t.colPb); bld('🔌F',t.chFull,t.colChFull); bld('〰️U',t.chUsb,t.colChUsb); bld('🔌H',t.chHead,t.colChHead); bld('🔌L',t.ch,t.colCh);
         let cDisp = (t.cond&&t.cond.length>0)?`<span style="color:#dc3545; font-size:11px; display:block; font-weight:bold; margin-bottom:5px;">⚠️ ${t.cond.join(', ')}</span>`:'';
@@ -895,6 +946,12 @@
         const d=document.getElementById('devicePhotoData'), p=document.getElementById('camPreview'); if(t.photo){ d.value=t.photo; p.src=t.photo; p.style.display='block'; document.getElementById('btnStartCam').innerText="Retake Photo"; document.getElementById('btnDelPhoto').style.display='block'; } else { d.value=''; p.style.display='none'; document.getElementById('btnStartCam').innerText="📷 Open Camera"; document.getElementById('btnDelPhoto').style.display='none'; }
         let cT=String(t.tag).replace(/^#+/,''); if(!isNaN(cT)&&cT!=="") cT=String(Number(cT)); const px=secureTagsData[cT]; document.getElementById('displayPin').innerText=px||"No PIN"; document.getElementById('displayPin').style.color='var(--success)';
         
+        // POPULATE SYNC FIELDS
+        const nowMs = powerData.state === 'OFF' ? powerData.offAt : Date.now();
+        document.getElementById('syncPh').value = getPct(t, 'ph', nowMs);
+        document.getElementById('syncPb').value = getPct(t, 'pb', nowMs);
+        document.getElementById('syncOt').value = getPct(t, 'ot', nowMs);
+
         document.getElementById('staffChatArea').style.display = 'block';
         renderStaffChat(t.chats || []);
         if(t.hasUnread) updateDoc(doc(db, "tickets", id), { hasUnread: false });
@@ -907,7 +964,7 @@
     };
 
     window.cancelEdit = () => { editId=null; currentSockets=[]; resetForm(true); };
-    function clearFormFieldsOnly() { stopCam(); ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput'].forEach(id => document.getElementById(id).value=id.includes('Count')||id.includes('Price')||id.includes('amt')?0:""); document.getElementById('payStatus').value="Later"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); document.getElementById('staffChatArea').style.display='none'; document.getElementById('staffChatHistory').innerHTML=''; document.getElementById('staffChatInput').value=''; }
+    function clearFormFieldsOnly() { stopCam(); ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput','syncPh','syncPb','syncOt'].forEach(id => { let el = document.getElementById(id); if(el) el.value=id.includes('Count')||id.includes('Price')||id.includes('amt')||id.includes('sync')?0:""; }); document.getElementById('payStatus').value="Later"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); document.getElementById('staffChatArea').style.display='none'; document.getElementById('staffChatHistory').innerHTML=''; document.getElementById('staffChatInput').value=''; }
     function resetForm(cT=false) { if(cT){ document.getElementById('tokenNum').value=""; document.getElementById('extendedForm').style.display='none'; document.getElementById('formAction').innerText="Enter Tag 🔵"; document.getElementById('saveBtn').style.display='none'; document.getElementById('cancelEditBtn').style.display="none"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; } currentSockets=[]; clearFormFieldsOnly(); autoCalc(); }
     window.closeModal = (id) => { document.getElementById(id).style.display='none'; if(id==='modalPrint') document.getElementById('receiptPreview').style.border="2px solid #333"; };
     
@@ -957,4 +1014,4 @@
     };
   </script>
 </body>
-                                                                </html>
+                  </html>
