@@ -126,7 +126,7 @@
         </div>
 
         <div style="margin-top:15px; padding-top:15px; border-top:1px dashed #ccc;">
-            <label style="font-weight:bold; color:var(--dark); font-size:12px; display:block; margin-bottom:5px;">🏦 BANK ACCOUNT DETAILS</label>
+            <label style="font-weight:bold; color:var(--dark); font-size:12px; display:block; margin-bottom:5px;">🏦 BANK ACCOUNT DETAILS (For Customer Portal)</label>
             <div style="display:flex; flex-wrap:wrap; gap:5px;">
                 <input type="text" id="setBankName" placeholder="Bank Name (e.g. Opay)" style="flex:1; min-width:120px;">
                 <input type="text" id="setAccName" placeholder="Account Name" style="flex:2; min-width:150px;">
@@ -213,11 +213,11 @@
             <div class="pin-display-box" id="pinBox">🏷️ System PIN for this Tag:<br><span class="pin-text" id="displayPin">...</span></div>
             
             <div id="staffChatArea" style="background:#f8f9fa; padding:15px; border-radius:8px; margin-top:15px; border:1px solid #ccc; display:none; text-align:left;">
-                <h4 style="margin:0 0 10px 0; color:var(--dark);">💬 Chat with Customer</h4>
+                <h4 style="margin:0 0 10px 0; color:var(--dark);">💬 Internal Chat with Customer</h4>
                 <div id="staffChatHistory" style="max-height:150px; overflow-y:auto; margin-bottom:10px; background:#fff; padding:10px; border-radius:8px; border:1px solid #eee;"></div>
                 <div style="display:flex; gap:5px;">
                     <input type="text" id="staffChatInput" placeholder="Reply to customer..." style="flex:1; margin:0; font-size:14px; padding:10px;">
-                    <button type="button" onclick="sendStaffChat()" style="width:auto; padding:10px 15px; margin:0;">Reply</button>
+                    <button type="button" onclick="sendStaffChat()" style="width:auto; padding:10px 15px; margin:0; background:var(--primary); color:white; border-radius:8px;">Reply</button>
                 </div>
             </div>
 
@@ -404,20 +404,12 @@
         }
     }
 
-    // --- NEW: BULLETPROOF PHOTO SNAP CAMERA ENGINE ---
     let camStream=null;
     window.startDeviceCam = async () => { 
         const v = document.getElementById('camVideo'); 
         document.getElementById('camPreview').style.display='none'; 
         try { 
-            // Most robust constraint setup
-            const constraints = {
-                video: {
-                    facingMode: { ideal: "environment" },
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                }
-            };
+            const constraints = { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } } };
             camStream = await navigator.mediaDevices.getUserMedia(constraints); 
             v.srcObject=camStream; 
             v.style.display='block'; 
@@ -457,7 +449,7 @@
         if(!base.endsWith('/')) base += '/';
         let link = base + "?track=" + t.tag;
 
-        let msg = `Hello ${t.name}! 👋\n\nThis is STARBITE Charging Shop.\nYour device (Tag #${t.tag}) is ${status}\n\n${finText}\n\nTrack your live charging progress here:\n${link}\n\nSee you soon!`;
+        let msg = `Hello ${t.name}! 👋\n\nThis is STARBITE Charging Shop.\nYour device (Tag #${t.tag}) is ${status}\n\n${finText}\n\nTrack your live charging progress or chat with us here:\n${link}\n\nSee you soon!`;
         
         let url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
         window.open(url, '_blank');
@@ -470,6 +462,7 @@
         inp.value = ''; await updateDoc(doc(db, "tickets", editId), { chats: newChats });
         setTimeout(() => { const box = document.getElementById('staffChatHistory'); box.scrollTop = box.scrollHeight; }, 50);
     };
+    
     window.renderStaffChat = (chats) => {
         let chatHtml = chats.map(c => `<div class="chat-bubble ${c.s==='s'?'chat-c':'chat-s'}">${c.msg}</div><div class="chat-clear"></div>`).join('');
         if(chats.length === 0) chatHtml = '<p style="color:#999; text-align:center; font-size:12px;">No messages yet.</p>';
@@ -522,17 +515,14 @@
 
     window.killTag = async () => { const tagNum = document.getElementById('killTagNum').value.trim(); if(!tagNum) return alert("Enter a Tag number to kill."); if(!confirm(`Are you sure you want to KILL Tag #${tagNum}?\n\nThis will generate a brand new PIN. Anyone holding the old stolen tag will not be able to use it.`)) return; const newPin = String(tagNum) + "-" + Math.random().toString(36).substring(2, 6).toUpperCase(); try { await setDoc(doc(db, "secure_tags", String(tagNum)), { pin: newPin }); alert(`✅ Tag #${tagNum} reset!\nNew PIN: ${newPin}`); document.getElementById('killTagNum').value = ''; } catch(e) { alert("Error resetting tag: " + e.message); } };
 
-    // --- NEW: BULLETPROOF QR SCANNER ENGINE ---
     let html5QrCode = null;
     window.openScanner = () => { 
         document.getElementById('modalScanner').style.display = 'flex'; 
         html5QrCode = new Html5Qrcode("reader"); 
         
-        // Scan for all cameras first, find the back camera, connect directly to it
         Html5Qrcode.getCameras().then(devices => {
             if (devices && devices.length) {
-                let camId = devices[0].id; // default to first
-                // Look for back/environment camera
+                let camId = devices[0].id; 
                 for (let i = 0; i < devices.length; i++) {
                     if (devices[i].label.toLowerCase().includes("back") || devices[i].label.toLowerCase().includes("environment")) {
                         camId = devices[i].id;
@@ -549,7 +539,6 @@
                 closeScanner();
             }
         }).catch(err => {
-            // Absolute Fallback
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess)
             .catch(e => {
                 alert("Scanner blocked! Please ALLOW camera permissions in your browser settings.");
@@ -625,6 +614,7 @@
         if(currentUserRole) { 
             render(); 
             if(document.getElementById('extendedForm').style.display === 'block') autoCalc(); 
+            if(editId) { const t = ticketsData.find(x=>x.id===editId); if(t) renderStaffChat(t.chats || []); }
         } 
     });
 
@@ -731,7 +721,7 @@
 
     window.calcColValue = () => {
         const ph = +(document.getElementById('in-col-ph')?.value || 0);
-        const pb = +(document.getElementById('in-col-pb')?.value || 0);
+        const pb = +(document.getElementById('pb')?.value || 0);
         const chFull = +(document.getElementById('in-col-chFull')?.value || 0);
         const chUsb = +(document.getElementById('in-col-chUsb')?.value || 0);
         const chHead = +(document.getElementById('in-col-chHead')?.value || 0);
@@ -871,6 +861,10 @@
         let oS="",rS="",cS=""; const bld=(l,tq,cq)=>{ let r=(tq||0)-(cq||0); if(tq>0)oS+=`${tq}${l} `; if(cq>0)cS+=`${cq}${l} `; if(r>0)rS+=`${r}${l} `; }; bld('📱',t.ph,t.colPh); bld('🔋',t.pb,t.colPb); bld('🔌F',t.chFull,t.colChFull); bld('〰️U',t.chUsb,t.colChUsb); bld('🔌H',t.chHead,t.colChHead); bld('🔌L',t.ch,t.colCh);
         let cDisp = (t.cond&&t.cond.length>0)?`<span style="color:#dc3545; font-size:11px; display:block; font-weight:bold; margin-bottom:5px;">⚠️ ${t.cond.join(', ')}</span>`:'';
         
+        let unreadBadge = t.hasUnread ? `<button onclick="startEdit('${t.id}')" style="background:var(--danger); color:white; width:100%; border:none; padding:10px; margin-bottom:10px; border-radius:8px; font-weight:bold; font-size:14px; cursor:pointer; animation: pulse 1.5s infinite; box-shadow: 0 4px 8px rgba(220,53,69,0.4);">💬 1 New Message! Click to Reply</button>` : '';
+
+        let onTheWayBadge = (t.onTheWay && !t.onTheWayAck) ? `<div style="background:var(--warning); color:#000; padding:8px; text-align:center; font-weight:bold; border-radius:6px; margin-bottom:10px; animation: pulse 1s infinite; border: 2px solid #000;">🏃‍♂️ CUSTOMER ARRIVING! <br><button onclick="ackOnTheWay('${t.id}')" style="background:#000; color:#fff; padding:6px 12px; margin-top:8px; border-radius:6px; font-size:14px; border:none; cursor:pointer;">✅ Acknowledge & Prepare</button></div>` : '';
+
         let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0);
         let bal = t.price - amtPaid;
         let badgeHtml = '';
@@ -882,7 +876,7 @@
             badgeHtml = `<span style="background:#f8d7da; color:#721c24; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; border:1px solid #f5c6cb;">⏳ PAY LATER</span>`;
         }
 
-        return `<div class="ticket" style="${cs}"><div><div style="display:flex; justify-content:space-between"><b style="color:#000;">${hasPhoto}${t.name} <span class="code-badge">#${t.tag}</span></b>${badgeHtml}</div><div class="timer-area" style="${tas}"><span style="color:#000;">${sd}</span><span class="time-val ${tc}">${td}</span></div>${cDisp}${bars}<small style="color:#000; font-size:13px; display:block; margin-top:5px;">${cS!==""?`<b style="color:#d32f2f;">Left: ${rS}</b> | <span style="color:#28a745;">✅ Col: ${cS}</span>`:`Items: ${oS}`}</small><small style="color:#666; font-size:11px; display:block; margin-top:2px;">Logged by: <b>${t.staff||'System'}</b> | Total: ₦${t.price}</small>
+        return `<div class="ticket" style="${cs}"><div><div style="display:flex; justify-content:space-between"><b style="color:#000;">${hasPhoto}${t.name} <span class="code-badge">#${t.tag}</span></b>${badgeHtml}</div><div class="timer-area" style="${tas}"><span style="color:#000;">${sd}</span><span class="time-val ${tc}">${td}</span></div>${cDisp}${unreadBadge}${onTheWayBadge}${bars}<small style="color:#000; font-size:13px; display:block; margin-top:5px;">${cS!==""?`<b style="color:#d32f2f;">Left: ${rS}</b> | <span style="color:#28a745;">✅ Col: ${cS}</span>`:`Items: ${oS}`}</small><small style="color:#666; font-size:11px; display:block; margin-top:2px;">Logged by: <b>${t.staff||'System'}</b> | Total: ₦${t.price}</small>
         <button onclick="sendWhatsApp('${t.id}')" style="background:#25D366; color:white; width:100%; border:none; padding:8px; margin-top:5px; border-radius:8px; font-weight:bold; cursor:pointer;">💬 Send WhatsApp Update</button>
         </div><div class="row" style="margin-top:10px;">${!t.shelved?`<button class="btn-shelf" onclick="openShelf('${t.id}')" style="flex:1;">📦 SHELF</button>`:''}<button class="btn-edit" onclick="startEdit('${t.id}')" style="flex:1;">✏️ EDIT</button><button style="background:var(--success); flex:1;" onclick="openCollect('${t.id}')">COLLECT</button></div></div>`;
     }
@@ -901,14 +895,19 @@
         const d=document.getElementById('devicePhotoData'), p=document.getElementById('camPreview'); if(t.photo){ d.value=t.photo; p.src=t.photo; p.style.display='block'; document.getElementById('btnStartCam').innerText="Retake Photo"; document.getElementById('btnDelPhoto').style.display='block'; } else { d.value=''; p.style.display='none'; document.getElementById('btnStartCam').innerText="📷 Open Camera"; document.getElementById('btnDelPhoto').style.display='none'; }
         let cT=String(t.tag).replace(/^#+/,''); if(!isNaN(cT)&&cT!=="") cT=String(Number(cT)); const px=secureTagsData[cT]; document.getElementById('displayPin').innerText=px||"No PIN"; document.getElementById('displayPin').style.color='var(--success)';
         
+        document.getElementById('staffChatArea').style.display = 'block';
+        renderStaffChat(t.chats || []);
+        if(t.hasUnread) updateDoc(doc(db, "tickets", id), { hasUnread: false });
+
         document.getElementById('extendedForm').style.display='block'; document.getElementById('formAction').innerHTML=`Edit #${t.tag} 🟢`; document.getElementById('saveBtn').style.display='block'; document.getElementById('saveBtn').innerText="💾 UPDATE"; document.getElementById('cancelEditBtn').style.display="block"; 
         
         window.scrollTo({top:0}); 
         autoCalc();
+        setTimeout(() => { const chatBox = document.getElementById('staffChatArea'); chatBox.scrollIntoView({ behavior: 'smooth', block: 'end' }); document.getElementById('staffChatInput').focus(); }, 300);
     };
 
     window.cancelEdit = () => { editId=null; currentSockets=[]; resetForm(true); };
-    function clearFormFieldsOnly() { stopCam(); ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput'].forEach(id => document.getElementById(id).value=id.includes('Count')||id.includes('Price')||id.includes('amt')?0:""); document.getElementById('payStatus').value="Later"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); }
+    function clearFormFieldsOnly() { stopCam(); ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput'].forEach(id => document.getElementById(id).value=id.includes('Count')||id.includes('Price')||id.includes('amt')?0:""); document.getElementById('payStatus').value="Later"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); document.getElementById('staffChatArea').style.display='none'; document.getElementById('staffChatHistory').innerHTML=''; document.getElementById('staffChatInput').value=''; }
     function resetForm(cT=false) { if(cT){ document.getElementById('tokenNum').value=""; document.getElementById('extendedForm').style.display='none'; document.getElementById('formAction').innerText="Enter Tag 🔵"; document.getElementById('saveBtn').style.display='none'; document.getElementById('cancelEditBtn').style.display="none"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; } currentSockets=[]; clearFormFieldsOnly(); autoCalc(); }
     window.closeModal = (id) => { document.getElementById(id).style.display='none'; if(id==='modalPrint') document.getElementById('receiptPreview').style.border="2px solid #333"; };
     
@@ -925,7 +924,6 @@
     window.revertCollection = async (id) => { if(confirm("Re-activate?")) await updateDoc(doc(db,"tickets",id), {collected:false, collDate:null, shelved:false, shelfPh:false, shelfPb:false, shelfOt:false, rating:null, reviewText:null}); };
     const upSt=() => { const sb = document.getElementById('status'); if(navigator.onLine) { sb.className="status-bar on"; sb.innerText="🟢 CONNECTED & SYNCED"; } else { sb.className="status-bar off"; sb.innerText="📡 OFFLINE (Saving to Phone Memory...)"; } }; window.addEventListener('online', upSt); window.addEventListener('offline', upSt); upSt();
 
-    // --- QR CODE GENERATOR FOR TAGS ---
     window.printSecureTags = async () => {
         const start = +document.getElementById('tagStart').value||1, count = +document.getElementById('tagCount').value||5, copies = +document.getElementById('tagCopies').value||25, btn = document.getElementById('genBtn');
         btn.innerText = "⏳ Saving..."; btn.disabled = true; let html = `<div id="captureArea" style="padding:20px; background:white; width:100%; min-width:1000px; max-width:1122px; margin:0 auto; box-sizing:border-box;">`;
@@ -959,4 +957,4 @@
     };
   </script>
 </body>
-</html>
+                                                                </html>
