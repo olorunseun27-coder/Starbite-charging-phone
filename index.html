@@ -177,11 +177,6 @@
             </div>
         </div>
 
-        <div id="featureTracking" style="margin-top:15px; padding-top:15px; border-top:1px dashed #ccc;">
-            <label style="font-weight:bold; color:var(--success); font-size:12px; display:block; margin-bottom:5px;">🌐 TRACKING WEBSITE URL (Premium Feature)</label>
-            <input type="url" id="setTrackingUrl" placeholder="e.g. https://yourname.github.io/track/" style="font-weight:bold; color:var(--success); width:100%; font-size: 14px;">
-        </div>
-
         <button onclick="saveSettings()" class="btn-edit" style="margin-top: 15px;">💾 SAVE ALL SETTINGS</button>
         
         <div style="margin-top:15px; padding-top:15px; border-top:2px dashed #d6a206;">
@@ -424,7 +419,6 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    // NEW: Added sendPasswordResetEmail to the import list below!
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     // ⚠️ PASTE YOUR ACTUAL FIREBASE CONFIG HERE ⚠️
@@ -441,24 +435,14 @@
     const db = getFirestore(app); 
     const auth = getAuth(app);
 
-    // ==========================================
-    // ⚙️ SAAS PLAN CONFIGURATION & PRICING
-    // ==========================================
-    const SAAS_PRICING = {
-        basic: 5000,
-        premium: 15000
-    };
+    const SAAS_PRICING = { basic: 5000, premium: 15000 };
+    const PLAN_LIMITS = { free: { sockets: 15, tags: 25 }, basic: { sockets: 30, tags: 50 }, premium: { sockets: 999999, tags: 999999 } };
 
-    const PLAN_LIMITS = {
-        free: { sockets: 15, tags: 25 },
-        basic: { sockets: 30, tags: 50 },
-        premium: { sockets: 999999, tags: 999999 } 
-    };
-
+    // 💡 NEW: Global Variables controlled by God Mode
     let superAdminPhone = "2348000000000"; 
-    // ==========================================
+    let globalTrackingUrl = "https://trackyourdevice.netlify.app/"; 
     
-    let ticketsData=[], secureTagsData={}, powerData={state:'ON', offAt:null}, editId=null, priceConfig={ph:200, pb:300, chFull:100, chUsb:50, chHead:50, maxSockets:50, loyalty:'ON', closeTime:'21:00', bankName:'', accName:'', accNumber:'', trackingUrl:''}, currentSockets=[], scannedPinMemory="";
+    let ticketsData=[], secureTagsData={}, powerData={state:'ON', offAt:null}, editId=null, priceConfig={ph:200, pb:300, chFull:100, chUsb:50, chHead:50, maxSockets:50, loyalty:'ON', closeTime:'21:00', bankName:'', accName:'', accNumber:''}, currentSockets=[], scannedPinMemory="";
     let currentShopId = null;
     let currentShopData = null;
 
@@ -468,9 +452,12 @@
     document.getElementById('priceBasicDisplay').innerText = `₦${SAAS_PRICING.basic.toLocaleString()}`;
     document.getElementById('pricePremiumDisplay').innerText = `₦${SAAS_PRICING.premium.toLocaleString()}`;
 
+    // 💡 NEW: Listen for Global Settings from God Mode
     onSnapshot(doc(db, "config", "admin"), (snap) => {
-        if(snap.exists() && snap.data().whatsappNumber) {
-            superAdminPhone = snap.data().whatsappNumber;
+        if(snap.exists()) {
+            const data = snap.data();
+            if(data.whatsappNumber) superAdminPhone = data.whatsappNumber;
+            if(data.trackingUrl) globalTrackingUrl = data.trackingUrl;
         }
     });
 
@@ -479,7 +466,6 @@
         document.getElementById('registerBox').style.display = type === 'register' ? 'block' : 'none';
     };
 
-    // --- NEW: PASSWORD RESET FEATURE ---
     window.resetPassword = async () => {
         const email = document.getElementById('loginEmail').value.trim();
         if(!email) return alert("Please enter your Shop Email in the box first, then click 'Forgot Password?'.");
@@ -572,10 +558,8 @@
 
         if (plan !== 'premium') {
             document.getElementById('featureCamera').style.display = 'none';
-            document.getElementById('featureTracking').style.display = 'none';
         } else {
             document.getElementById('featureCamera').style.display = 'block';
-            document.getElementById('featureTracking').style.display = 'block';
         }
     };
 
@@ -665,7 +649,7 @@
                 priceConfig = { 
                     ph: data.ph||200, pb: data.pb||300, chFull: data.chFull!==undefined?data.chFull:100, chUsb: data.chUsb!==undefined?data.chUsb:50, chHead: data.chHead!==undefined?data.chHead:50, 
                     maxSockets: data.maxSockets||50, loyalty: data.loyalty||'ON', closeTime: data.closeTime||'21:00', 
-                    bankName: data.bankName||'', accName: data.accName||'', accNumber: data.accNumber||'', trackingUrl: data.trackingUrl||'' 
+                    bankName: data.bankName||'', accName: data.accName||'', accNumber: data.accNumber||''
                 }; 
                 document.getElementById('setPh').value = priceConfig.ph;
                 document.getElementById('setPb').value = priceConfig.pb;
@@ -678,7 +662,6 @@
                 document.getElementById('setBankName').value = priceConfig.bankName;
                 document.getElementById('setAccName').value = priceConfig.accName;
                 document.getElementById('setAccNumber').value = priceConfig.accNumber;
-                if(document.getElementById('setTrackingUrl')) document.getElementById('setTrackingUrl').value = priceConfig.trackingUrl;
                 autoCalc(); 
             }
         });
@@ -778,7 +761,8 @@
         let bal = t.price - amtPaid;
         let finText = bal > 0 ? `Total Bill: ₦${t.price}\nAmount Due: ₦${bal}` : `Total Bill: ₦${t.price} (Paid in Full ✅)`;
 
-        let base = priceConfig.trackingUrl || "https://trackingmydevice.netlify.app/";
+        // 💡 NEW: Uses the global tracking URL!
+        let base = globalTrackingUrl;
         if(!base.endsWith('/')) base += '/';
         
         let link = base + "?shop=" + currentShopId + "&track=" + t.tag;
@@ -1251,8 +1235,7 @@
     
     window.saveSettings = async () => { 
         const np={
-            ph:+document.getElementById('setPh').value, pb:+document.getElementById('setPb').value, chFull:+document.getElementById('setChFull').value, chUsb:+document.getElementById('setChUsb').value, chHead:+document.getElementById('setChHead').value, maxSockets:+document.getElementById('setMaxSockets').value, loyalty:document.getElementById('setLoyalty').value, closeTime:document.getElementById('setCloseTime').value, bankName:document.getElementById('setBankName').value, accName:document.getElementById('setAccName').value, accNumber:document.getElementById('setAccNumber').value,
-            trackingUrl:document.getElementById('setTrackingUrl').value.trim()
+            ph:+document.getElementById('setPh').value, pb:+document.getElementById('setPb').value, chFull:+document.getElementById('setChFull').value, chUsb:+document.getElementById('setChUsb').value, chHead:+document.getElementById('setChHead').value, maxSockets:+document.getElementById('setMaxSockets').value, loyalty:document.getElementById('setLoyalty').value, closeTime:document.getElementById('setCloseTime').value, bankName:document.getElementById('setBankName').value, accName:document.getElementById('setAccName').value, accNumber:document.getElementById('setAccNumber').value
         }; 
         await setDoc(doc(db,`shops/${currentShopId}/config/prices`), np); 
         priceConfig=np; 
@@ -1279,7 +1262,8 @@
         btn.innerText = "⏳ Saving..."; btn.disabled = true; let html = `<div id="captureArea" style="padding:20px; background:white; width:100%; min-width:1000px; max-width:1122px; margin:0 auto; box-sizing:border-box;">`;
         const promises = [];
         
-        let base = priceConfig.trackingUrl || "https://trackingmydevice.netlify.app/";
+        // 💡 NEW: Pulls the global URL instantly
+        let base = globalTrackingUrl;
         if(!base.endsWith('/')) base += '/';
 
         try {
