@@ -2,19 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>STARBITE Pro: Charging Manager</title>
+  <title>STARBITE SaaS: Business Dashboard</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-    body.is-staff .admin-only { display: none !important; }
     :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --bg: #f4f7f6; --dark: #343a40; --gold: #ffd700; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; background-color: var(--bg); padding-bottom: 70px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 90vh; }
     
     .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; margin-top: 20px;}
-    .login-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
-    .login-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 350px; text-align: center; }
     
-    #mainApp { width: 100%; max-width: 900px; }
+    /* NEW AUTH SCREENS */
+    .auth-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
+    .auth-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 350px; text-align: center; }
+    .toggle-link { color: var(--primary); font-weight: bold; cursor: pointer; font-size: 14px; margin-top: 15px; display: inline-block; text-decoration: underline; }
+
+    #mainApp, #paywallScreen { width: 100%; max-width: 900px; }
     
     .dash-row { display: flex; gap: 10px; margin-bottom: 15px; }
     .dash-card { flex: 1; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; border-bottom: 3px solid transparent; }
@@ -25,7 +27,6 @@
     .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; transition: all 0.3s ease; }
     .settings-card { background: #fff3cd; border: 1px solid #ffeeba; }
     h2, h3 { color: var(--primary); margin: 0 0 10px 0; }
-    p.subtitle { color: #666; font-size: 14px; margin-top: -5px; margin-bottom: 20px; font-weight: bold; }
     
     input, button, select { padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 16px; transition: 0.2s; }
     button { cursor: pointer; background-color: var(--primary); color: white; border: none; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
@@ -33,7 +34,6 @@
     
     .btn-print { background-color: var(--dark); color: #fff; } .btn-download { background-color: #6f42c1; color: #fff; }
     .btn-edit { background-color: var(--warning); color: #000; } .btn-shelf { background-color: #6c757d; color: #fff; } 
-    .btn-wa { background-color: #25D366; color: white; font-weight: 900; }
     .row { display: flex; gap: 8px; align-items: center; margin-bottom: 5px; }
     .device-box { flex: 1; text-align: center; background: #f8f9fa; padding: 5px; border-radius: 8px; border: 1px solid #eee; }
     .device-box label { font-size: 10px; display: block; color: #666; font-weight: bold; white-space: nowrap;}
@@ -54,7 +54,6 @@
     .verify-box { margin: 15px 0; padding: 15px; background: #fff3cd; border: 2px solid #ffeeba; border-radius: 8px; text-align: center; }
     .socket-display { font-size: 18px; font-weight: 900; color: #6f42c1; padding: 10px; background: #e0d4f5; border-radius: 8px; margin-top: 10px; text-align: center; border: 2px solid #6f42c1; }
     #reader { width: 100%; border-radius: 8px; overflow: hidden; } #reader video { object-fit: cover; }
-    
     .chat-bubble { padding: 8px 12px; border-radius: 12px; margin-bottom: 5px; max-width: 85%; word-wrap: break-word; clear: both; font-size: 13px;}
     .chat-c { background: var(--primary); color: white; float: right; border-bottom-right-radius: 2px; }
     .chat-s { background: #e2e3e5; color: black; float: left; border-bottom-left-radius: 2px; }
@@ -73,33 +72,65 @@
 </head>
 <body>
 
-  <div id="loginScreen" class="login-container">
-      <div class="login-box">
-          <h2 style="margin-top: 0; font-size: 28px;">⚡️ STARBITE</h2>
-          <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Staff System Login</p>
-          <input type="text" id="loginEmail" placeholder="Staff Name (e.g. Mary)" style="color: #000; background: #fff; margin-bottom: 10px; font-weight:bold; text-transform:uppercase;">
-          <input type="password" id="loginPass" placeholder="4-Digit PIN" style="color: #000; background: #fff; margin-bottom: 15px;">
-          <button id="btnLogin" onclick="loginApp()" style="width: 100%; padding: 14px; font-size: 18px;">🔐 LOGIN</button>
+  <div id="authScreen" class="auth-container">
+      <div id="loginBox" class="auth-box">
+          <h2 style="margin-top: 0; font-size: 28px;">⚡️ STARBITE SaaS</h2>
+          <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Shop Owner Login</p>
+          <input type="email" id="loginEmail" placeholder="Shop Email" style="color: #000; background: #fff; margin-bottom: 10px; font-weight:bold;">
+          <input type="password" id="loginPass" placeholder="Password" style="color: #000; background: #fff; margin-bottom: 15px;">
+          <button id="btnLogin" onclick="loginShop()" style="width: 100%; padding: 14px; font-size: 18px;">🔐 LOGIN TO SHOP</button>
+          <span class="toggle-link" onclick="toggleAuth('register')">New Shop? Create an Account</span>
+      </div>
+
+      <div id="registerBox" class="auth-box" style="display:none;">
+          <h2 style="margin-top: 0; font-size: 28px;">⚡️ STARBITE SaaS</h2>
+          <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Register Your Charging Shop</p>
+          <input type="text" id="regShopName" placeholder="Business Name (e.g. Sam Chargers)" style="color: #000; background: #fff; margin-bottom: 10px; font-weight:bold;">
+          <input type="tel" id="regPhone" placeholder="Your Phone Number" style="color: #000; background: #fff; margin-bottom: 10px;">
+          <input type="email" id="regEmail" placeholder="Email Address" style="color: #000; background: #fff; margin-bottom: 10px;">
+          <input type="password" id="regPass" placeholder="Create Password (min 6 chars)" style="color: #000; background: #fff; margin-bottom: 15px;">
+          <button id="btnRegister" onclick="registerShop()" style="width: 100%; padding: 14px; font-size: 18px; background: var(--dark);">🚀 CREATE ACCOUNT</button>
+          <span class="toggle-link" onclick="toggleAuth('login')">Already registered? Log in</span>
+      </div>
+  </div>
+
+  <div id="paywallScreen" style="display: none; padding-top: 50px;">
+      <div class="card" style="max-width: 500px; margin: 0 auto; text-align: center; border: 4px solid var(--warning);">
+          <div style="font-size: 60px; margin-bottom: 10px;">🔒</div>
+          <h2 style="color: var(--dark); margin-bottom: 5px;">Account Pending Activation</h2>
+          <p style="color: #666; line-height: 1.5; margin-bottom: 20px;">Welcome to STARBITE Pro! Your shop apartment has been created, but it is currently locked.</p>
+          
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px;">
+              <h4 style="margin: 0 0 10px 0; color: var(--danger);">Subscription: ₦5,000 / Month</h4>
+              <p style="margin: 0; font-size: 14px;">Please transfer to:</p>
+              <p style="font-size: 18px; font-weight: bold; margin: 5px 0; color: var(--primary);">0123456789 - Bank Name</p>
+              <p style="margin: 0; font-size: 14px;">Name: Your Name Here</p>
+          </div>
+
+          <button onclick="sendReceipt()" style="background: #25D366; font-size: 18px; padding: 15px;"><span style="font-size:20px;">💬</span> I Have Paid (Send Receipt)</button>
+          
+          <div style="margin-top: 30px; border-top: 1px dashed #ccc; padding-top: 15px;">
+              <p style="font-size: 12px; color: #999;">Logged in as: <span id="paywallEmail"></span></p>
+              <button onclick="logoutShop()" style="background: var(--dark); padding: 8px; width: auto; font-size: 14px;">Log Out</button>
+          </div>
       </div>
   </div>
 
   <div id="mainApp" style="display: none;">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
-          <h2 style="margin: 0;">⚡️ STARBITE</h2>
+          <h2 style="margin: 0;">⚡️ STARBITE Pro</h2>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-              <span id="userBadge" style="font-weight: bold; font-size: 14px; padding: 5px 10px; background: #e3f2fd; color: var(--primary); border-radius: 6px;"></span>
+              <span id="shopBadge" style="font-weight: bold; font-size: 14px; padding: 5px 10px; background: #e3f2fd; color: var(--primary); border-radius: 6px;"></span>
               <button id="btnPower" style="width: auto; padding: 8px 12px; background: var(--success);" onclick="togglePower()">⚡ Power: ON</button>
-              <button style="width: auto; padding: 8px 12px; background: #17a2b8;" onclick="shiftReport()">💵 Shift Report</button>
-              <button class="admin-only" style="width: auto; padding: 8px 12px; background: #28a745;" onclick="exportCSV()">📊 CSV</button>
-              <button class="admin-only" style="width: auto; padding: 8px 12px; background: var(--gold); color: #000;" onclick="openReviews()">⭐ Reviews</button>
-              <button class="admin-only" style="width: auto; padding: 8px 12px; background: var(--primary);" onclick="openUsersModal()">👥 Staff</button>
-              <button class="admin-only" style="width: auto; padding: 8px 12px; background: var(--dark);" onclick="document.getElementById('modalTagGen').style.display='flex'">🖨️ Tags</button>
-              <button style="width: auto; padding: 8px 12px; background: var(--danger);" onclick="logoutApp()">🚪 Logout</button>
+              <button style="width: auto; padding: 8px 12px; background: #17a2b8;" onclick="exportCSV()">📊 CSV</button>
+              <button style="width: auto; padding: 8px 12px; background: var(--gold); color: #000;" onclick="openReviews()">⭐ Reviews</button>
+              <button style="width: auto; padding: 8px 12px; background: var(--dark);" onclick="document.getElementById('modalTagGen').style.display='flex'">🖨️ Tags</button>
+              <button style="width: auto; padding: 8px 12px; background: var(--danger);" onclick="logoutShop()">🚪 Logout</button>
           </div>
       </div>
 
-      <details class="card settings-card admin-only">
-        <summary style="font-weight:bold; cursor:pointer; color: #000;">⚙️ Admin Settings & Price List</summary>
+      <details class="card settings-card">
+        <summary style="font-weight:bold; cursor:pointer; color: #000;">⚙️ Shop Settings & Price List</summary>
         <div style="display:flex; flex-wrap: wrap; gap:5px; margin-top:10px;">
           <div class="device-box"><label>PHONE (₦)</label><input type="number" id="setPh" value="200"></div>
           <div class="device-box"><label>P-BANK (₦)</label><input type="number" id="setPb" value="300"></div>
@@ -147,7 +178,7 @@
         </div>
       </details>
 
-      <div class="dash-row admin-only">
+      <div class="dash-row">
         <div class="dash-card d-green"><h4>Cash Today</h4><div class="dash-val" id="valCash">₦0</div></div>
         <div class="dash-card d-blue"><h4>Pending</h4><div class="dash-val" id="valPending">₦0</div></div>
         <div class="dash-card d-purp"><h4>Active</h4><div class="dash-val" id="valCount">0</div></div>
@@ -236,7 +267,7 @@
       </div>
 
       <h3>Charging Now (<span id="countActive">0</span>)</h3>
-      <div id="listActive" class="ticket-grid">Connecting to database...</div>
+      <div id="listActive" class="ticket-grid">Loading shop database...</div>
 
       <details class="card" style="margin-bottom: 30px; margin-top: 15px;">
         <summary>📂 Search History</summary>
@@ -257,22 +288,6 @@
               <p style="color: #666; font-size: 13px;">Please start wrapping up and reminding customers.</p>
               <button style="background: var(--success); width: 100%; margin-top:15px;" onclick="closeModal('modalClosingAlert')">Acknowledge</button>
           </div>
-      </div>
-
-      <div id="modalUsers" class="modal">
-        <div class="modal-content" style="background: #2a2a2a; border: 1px solid #444;">
-          <h3 style="text-align: left; color: #fff; border-bottom: 1px solid #444; padding-bottom: 10px; margin-top:0;">👥 User Management</h3>
-          <div id="userList" style="margin-bottom: 20px; max-height: 250px; overflow-y: auto;"></div>
-          <h4 style="color: #ccc; margin-bottom: 10px;">➕ Add New Staff</h4>
-          <input type="text" id="newStaffName" placeholder="Staff Name" style="background:#fff; color:#000;">
-          <input type="number" id="newStaffPin" placeholder="4-Digit PIN" style="background:#fff; color:#000;">
-          <select id="newStaffRole" style="background:#fff; color:#000;">
-              <option value="staff">Staff (Charging Only)</option>
-              <option value="admin">Admin (All Access)</option>
-          </select>
-          <button onclick="addStaff()" style="background: var(--success); width: 100%; margin-top: 10px; padding:12px;">Add User</button>
-          <button style="background: #555; width: 100%; margin-top: 10px;" onclick="closeModal('modalUsers')">Close</button>
-        </div>
       </div>
 
       <div id="modalReviews" class="modal">
@@ -346,22 +361,176 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    
-    const firebaseConfig = { apiKey: "AIzaSyCqmaIDptWNk8v5E5Sz5XKKSAmk6FNX6Yo", authDomain: "credit-record-24f1e.firebaseapp.com", projectId: "credit-record-24f1e", storageBucket: "credit-record-24f1e.firebasestorage.app", messagingSenderId: "181078991416", appId: "1:181078991416:web:6e562cccc19767561b7ccd" };
-    const app = initializeApp(firebaseConfig); const db = getFirestore(app); 
-    const col = collection(db, "tickets"); const secureTagsCol = collection(db, "secure_tags"); const usersCol = collection(db, "users");
-    
-    enableIndexedDbPersistence(db).catch(e => console.log("Offline mode error", e));
+    import { getFirestore, collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    let ticketsData=[], secureTagsData={}, powerData={state:'ON', offAt:null}, editId=null, priceConfig={ph:200, pb:300, chFull:100, chUsb:50, chHead:50, maxSockets:50, loyalty:'ON', closeTime:'21:00', bankName:'', accName:'', accNumber:'', trackingUrl:''}, currentSockets=[], scannedPinMemory="", currentUserRole="staff", currentUserName="Staff";
+    const firebaseConfig = { apiKey: "AIzaSyCqmaIDptWNk8v5E5Sz5XKKSAmk6FNX6Yo", authDomain: "credit-record-24f1e.firebaseapp.com", projectId: "credit-record-24f1e", storageBucket: "credit-record-24f1e.firebasestorage.app", messagingSenderId: "181078991416", appId: "1:181078991416:web:6e562cccc19767561b7ccd" };
+    const app = initializeApp(firebaseConfig); 
+    const db = getFirestore(app); 
+    const auth = getAuth(app);
+    
+    let ticketsData=[], secureTagsData={}, powerData={state:'ON', offAt:null}, editId=null, priceConfig={ph:200, pb:300, chFull:100, chUsb:50, chHead:50, maxSockets:50, loyalty:'ON', closeTime:'21:00', bankName:'', accName:'', accNumber:'', trackingUrl:''}, currentSockets=[], scannedPinMemory="";
+    
+    // NEW: SAAS VARIABLES
+    let currentShopId = null;
+    let currentShopData = null;
+    const SUPER_ADMIN_WHATSAPP = "2348000000000"; // ⚠️ CHANGE THIS TO YOUR ACTUAL PHONE NUMBER!
+
     window.lastAlertMin = null;
     window.notifiedOnTheWay = new Set();
 
+    // --- SAAS AUTHENTICATION ENGINE ---
+    window.toggleAuth = (type) => {
+        document.getElementById('loginBox').style.display = type === 'login' ? 'block' : 'none';
+        document.getElementById('registerBox').style.display = type === 'register' ? 'block' : 'none';
+    };
+
+    window.registerShop = async () => {
+        const btn = document.getElementById('btnRegister');
+        const name = document.getElementById('regShopName').value.trim();
+        const phone = document.getElementById('regPhone').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const pass = document.getElementById('regPass').value.trim();
+
+        if(!name || !phone || !email || !pass) return alert("Please fill all fields.");
+        if(pass.length < 6) return alert("Password must be at least 6 characters.");
+
+        btn.innerText = "⏳ Creating Shop..."; btn.disabled = true;
+
+        try {
+            const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+            const uid = userCred.user.uid;
+            
+            // Create Shop Profile in Database (Status: Pending)
+            await setDoc(doc(db, "shops", uid), {
+                shopName: name, phone: phone, email: email, status: "pending", createdAt: serverTimestamp()
+            });
+
+            // Initialize default prices for this specific shop
+            await setDoc(doc(db, `shops/${uid}/config/prices`), {
+                ph:200, pb:300, chFull:100, chUsb:50, chHead:50, maxSockets:50, loyalty:'ON', closeTime:'21:00'
+            });
+
+            alert("Account created! Please follow the instructions to activate your shop.");
+        } catch(error) {
+            alert("Error: " + error.message);
+            btn.innerText = "🚀 CREATE ACCOUNT"; btn.disabled = false;
+        }
+    };
+
+    window.loginShop = async () => {
+        const btn = document.getElementById('btnLogin');
+        const email = document.getElementById('loginEmail').value.trim();
+        const pass = document.getElementById('loginPass').value.trim();
+
+        if(!email || !pass) return alert("Enter email and password.");
+        btn.innerText = "⏳ Authenticating..."; btn.disabled = true;
+
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch(error) {
+            alert("Login Failed: " + error.message);
+            btn.innerText = "🔐 LOGIN TO SHOP"; btn.disabled = false;
+        }
+    };
+
+    window.logoutShop = async () => {
+        if(confirm("Log out of your shop?")) {
+            await signOut(auth);
+            location.reload();
+        }
+    };
+
+    window.sendReceipt = () => {
+        const msg = `Hello! I just created a Starbite SaaS account for my shop and I am ready to pay my ₦5,000 subscription.\n\nMy Shop Email is: ${currentShopData.email}`;
+        window.open(`https://wa.me/${SUPER_ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
+    // --- AUTO-LOGIN & STATE MANAGEMENT ---
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentShopId = user.uid;
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('paywallEmail').innerText = user.email;
+
+            // Listen to this specific shop's status
+            onSnapshot(doc(db, "shops", currentShopId), (snap) => {
+                if(snap.exists()) {
+                    currentShopData = snap.data();
+                    if(currentShopData.status === 'active') {
+                        document.getElementById('paywallScreen').style.display = 'none';
+                        document.getElementById('mainApp').style.display = 'block';
+                        document.getElementById('shopBadge').innerText = "🏢 " + currentShopData.shopName;
+                        initShopData(); // Load their specific tickets
+                    } else {
+                        document.getElementById('mainApp').style.display = 'none';
+                        document.getElementById('paywallScreen').style.display = 'block';
+                    }
+                }
+            });
+        } else {
+            currentShopId = null;
+            currentShopData = null;
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('paywallScreen').style.display = 'none';
+            document.getElementById('btnLogin').innerText = "🔐 LOGIN TO SHOP";
+            document.getElementById('btnLogin').disabled = false;
+            document.getElementById('btnRegister').innerText = "🚀 CREATE ACCOUNT";
+            document.getElementById('btnRegister').disabled = false;
+        }
+    });
+
+    let ticketsUnsubscribe = null;
+    let pricesUnsubscribe = null;
+
+    function initShopData() {
+        if(ticketsUnsubscribe) ticketsUnsubscribe();
+        if(pricesUnsubscribe) pricesUnsubscribe();
+
+        // 1. Fetch settings for THIS shop
+        pricesUnsubscribe = onSnapshot(doc(db, `shops/${currentShopId}/config/prices`), (snap) => {
+            if (snap.exists()) { 
+                const data = snap.data(); 
+                priceConfig = { 
+                    ph: data.ph||200, pb: data.pb||300, chFull: data.chFull!==undefined?data.chFull:100, chUsb: data.chUsb!==undefined?data.chUsb:50, chHead: data.chHead!==undefined?data.chHead:50, 
+                    maxSockets: data.maxSockets||50, loyalty: data.loyalty||'ON', closeTime: data.closeTime||'21:00', 
+                    bankName: data.bankName||'', accName: data.accName||'', accNumber: data.accNumber||'', trackingUrl: data.trackingUrl||'' 
+                }; 
+                document.getElementById('setPh').value = priceConfig.ph;
+                document.getElementById('setPb').value = priceConfig.pb;
+                document.getElementById('setChFull').value = priceConfig.chFull;
+                document.getElementById('setChUsb').value = priceConfig.chUsb;
+                document.getElementById('setChHead').value = priceConfig.chHead;
+                document.getElementById('setMaxSockets').value = priceConfig.maxSockets;
+                document.getElementById('setLoyalty').value = priceConfig.loyalty;
+                document.getElementById('setCloseTime').value = priceConfig.closeTime;
+                document.getElementById('setBankName').value = priceConfig.bankName;
+                document.getElementById('setAccName').value = priceConfig.accName;
+                document.getElementById('setAccNumber').value = priceConfig.accNumber;
+                if(document.getElementById('setTrackingUrl')) document.getElementById('setTrackingUrl').value = priceConfig.trackingUrl;
+                autoCalc(); 
+            }
+        });
+
+        // 2. Fetch ONLY tickets that belong to THIS shop
+        const q = query(collection(db, "tickets"), where("shopId", "==", currentShopId));
+        ticketsUnsubscribe = onSnapshot(q, (snap) => { 
+            // Sort client-side to avoid forcing the user to create a Firebase Index
+            let rawTickets = snap.docs.map(d => ({ ...d.data(), id: d.id, jsDate: d.data().ts ? d.data().ts.toDate() : new Date() }));
+            ticketsData = rawTickets.sort((a,b) => b.jsDate - a.jsDate);
+            
+            render(); 
+            if(document.getElementById('extendedForm').style.display === 'block') autoCalc(); 
+            if(editId) { const t = ticketsData.find(x=>x.id===editId); if(t) renderStaffChat(t.chats || []); }
+        });
+    }
+
+    // --- REST OF CORE APP LOGIC ---
+
     setInterval(() => { 
         if (ticketsData.length > 0 && document.getElementById('mainApp').style.display !== 'none') {
-            render(); 
-            checkClosingTime();
+            render(); checkClosingTime();
         }
     }, 60000);
 
@@ -414,22 +583,7 @@
     }
 
     let camStream=null;
-    window.startDeviceCam = async () => { 
-        const v = document.getElementById('camVideo'); 
-        document.getElementById('camPreview').style.display='none'; 
-        try { 
-            const constraints = { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } } };
-            camStream = await navigator.mediaDevices.getUserMedia(constraints); 
-            v.srcObject=camStream; 
-            v.style.display='block'; 
-            document.getElementById('btnStartCam').style.display='none'; 
-            document.getElementById('btnSnapCam').style.display='block'; 
-        } catch(e) { 
-            alert("Camera Access Denied. Please check your browser settings and ensure you have given this website permission to use the camera."); 
-            console.error("Camera error:", e);
-        } 
-    };
-
+    window.startDeviceCam = async () => { const v = document.getElementById('camVideo'); document.getElementById('camPreview').style.display='none'; try { const constraints = { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } } }; camStream = await navigator.mediaDevices.getUserMedia(constraints); v.srcObject=camStream; v.style.display='block'; document.getElementById('btnStartCam').style.display='none'; document.getElementById('btnSnapCam').style.display='block'; } catch(e) { alert("Camera Access Denied. Please check your browser settings and ensure you have given this website permission to use the camera."); console.error("Camera error:", e); } };
     window.captureDeviceCam = () => { const v=document.getElementById('camVideo'), c=document.getElementById('camCanvas'), p=document.getElementById('camPreview'); const tW=300, tH=(v.videoHeight/v.videoWidth)*tW; c.width=tW; c.height=tH; c.getContext('2d').drawImage(v,0,0,tW,tH); const b64=c.toDataURL('image/jpeg',0.6); document.getElementById('devicePhotoData').value=b64; p.src=b64; p.style.display='block'; v.style.display='none'; if(camStream)camStream.getTracks().forEach(t=>t.stop()); const bS=document.getElementById('btnStartCam'); bS.style.display='block'; bS.innerText="Retake Photo"; document.getElementById('btnSnapCam').style.display='none'; document.getElementById('btnDelPhoto').style.display='block'; };
     window.stopCam = () => { if(camStream)camStream.getTracks().forEach(t=>t.stop()); document.getElementById('camVideo').style.display='none'; document.getElementById('btnStartCam').style.display='block'; document.getElementById('btnStartCam').innerText="📷 Open Camera"; document.getElementById('btnSnapCam').style.display='none'; document.getElementById('btnDelPhoto').style.display='none'; document.getElementById('camPreview').style.display='none'; document.getElementById('devicePhotoData').value=''; };
     window.removePhotoForm = () => { if(confirm("Remove image?")){ document.getElementById('devicePhotoData').value=''; document.getElementById('camPreview').style.display='none'; document.getElementById('btnStartCam').innerText='📷 Open Camera'; document.getElementById('btnDelPhoto').style.display='none'; } };
@@ -456,9 +610,11 @@
 
         let base = priceConfig.trackingUrl || "https://trackingmydevice.netlify.app/";
         if(!base.endsWith('/')) base += '/';
-        let link = base + "?track=" + t.tag;
+        
+        // ADD SHOP ID TO TRACKING LINK SO PORTAL KNOWS WHICH SHOP DB TO SEARCH
+        let link = base + "?shop=" + currentShopId + "&track=" + t.tag;
 
-        let msg = `Hello ${t.name}! 👋\n\nThis is STARBITE Charging Shop.\nYour device (Tag #${t.tag}) is ${status}\n\n${finText}\n\nTrack your live charging progress or chat with us here:\n${link}\n\nSee you soon!`;
+        let msg = `Hello ${t.name}! 👋\n\nThis is ${currentShopData.shopName}.\nYour device (Tag #${t.tag}) is ${status}\n\n${finText}\n\nTrack your live charging progress or chat with us here:\n${link}\n\nSee you soon!`;
         
         let url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
         window.open(url, '_blank');
@@ -480,44 +636,7 @@
 
     onSnapshot(doc(db,"config","power"), (snap) => { if(snap.exists()) powerData = snap.data(); const pb = document.getElementById('btnPower'); if(powerData.state === 'OFF') { pb.style.background = 'var(--danger)'; pb.innerText = '🛑 Paused (Grid Off)'; } else { pb.style.background = 'var(--success)'; pb.innerText = '⚡ Power: ON'; } if(ticketsData.length > 0) render(); });
     window.togglePower = async () => { if(powerData.state === 'ON') { if(confirm("Grid power off? This will PAUSE all charging timers.")) await setDoc(doc(db,"config","power"), {state:'OFF', offAt:Date.now()}); } else { if(confirm("Power restored? This will RESUME all timers and adjust for the time offline.")) { const offDuration = Date.now() - powerData.offAt; ticketsData.filter(t => !t.collected).forEach(t => { if(t.jsDate && !t.shelved) updateDoc(doc(db,"tickets",t.id), { ts: new Date(t.jsDate.getTime() + offDuration) }); }); await setDoc(doc(db,"config","power"), {state:'ON', offAt:null}); } } };
-    window.shiftReport = () => { const todayStr = new Date().toLocaleDateString(); const myT = ticketsData.filter(t => t.collected && t.collDate === todayStr && t.collectedBy === currentUserName); const myCash = myT.reduce((a,b) => a + (b.amountPaid !== undefined ? b.amountPaid : (b.payStatus === 'Now' ? b.price : 0)), 0); alert(`💵 SHIFT HANDOVER: ${currentUserName}\n\nDevices Handled: ${myT.length}\nCash Expected: ₦${myCash.toLocaleString()}\n\nPlease balance your drawer before logging out.`); };
-
-    window.loginApp = async () => { const btn = document.getElementById('btnLogin'), name = document.getElementById('loginEmail').value.trim(), pin = document.getElementById('loginPass').value.trim(); if(!name || !pin) return alert("Enter Staff Name and PIN."); btn.innerText = "⏳ Authenticating..."; btn.disabled = true; try { const snap = await getDocs(usersCol); let found = null; snap.forEach(d => { const u=d.data(); if(u.name.toLowerCase()===name.toLowerCase() && u.pin===pin) found={id:d.id, ...u}; }); if(found) { localStorage.setItem('sb_user', JSON.stringify(found)); applyAuth(found); } else if(snap.empty && name.toLowerCase()==='admin' && pin==='1234') { const nA = {name:'Admin', pin:'1234', role:'admin'}; await addDoc(usersCol, nA); localStorage.setItem('sb_user', JSON.stringify(nA)); applyAuth(nA); } else { alert("🛑 Login Error: Incorrect Name or PIN."); btn.innerText = "🔐 SECURE LOGIN"; btn.disabled = false; } } catch (e) { alert("Error: Check network connection."); btn.innerText = "🔐 SECURE LOGIN"; btn.disabled = false; } };
-    window.logoutApp = () => { if(confirm("Log out of STARBITE?")){ localStorage.removeItem('sb_user'); location.reload(); } };
     
-    function applyAuth(user) { document.getElementById('loginScreen').style.display='none'; document.getElementById('mainApp').style.display='block'; currentUserRole = user.role; currentUserName = user.name; if(user.role==='admin'){ document.body.classList.remove('is-staff'); document.getElementById('userBadge').innerText="👨‍💼 Admin: "+user.name; } else { document.body.classList.add('is-staff'); document.getElementById('userBadge').innerText="💁 Staff: "+user.name; } init(); }
-    const savedUser = localStorage.getItem('sb_user'); if(savedUser) applyAuth(JSON.parse(savedUser));
-
-    window.openUsersModal = () => { document.getElementById('modalUsers').style.display = 'flex'; };
-    onSnapshot(usersCol, (snap) => { let html = ''; snap.forEach(d => { const u = d.data(); const rc = u.role === 'admin' ? '#007bff' : '#17a2b8'; const rl = u.role === 'admin' ? 'Admin (All)' : 'Charging Only'; html += `<div style="background: #3a3a3a; padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid ${rc};"><div><b style="font-size: 18px; color: #fff;">${u.name}</b> <span style="color: ${rc}; font-size: 13px; margin-left:5px;">${rl}</span><br><span style="color: #aaa; font-family: monospace; font-size: 13px;">PIN: ${u.pin}</span></div><div><button onclick="deleteStaff('${d.id}', '${u.name}')" style="background: var(--danger); padding: 6px 12px; font-size: 13px; width: auto;">Del</button></div></div>`; }); document.getElementById('userList').innerHTML = html || '<p style="color:#aaa;">No staff found.</p>'; });
-    window.addStaff = async () => { const name = document.getElementById('newStaffName').value.trim(), pin = document.getElementById('newStaffPin').value.trim(), role = document.getElementById('newStaffRole').value; if(!name || !pin) return alert("Enter name and PIN"); if(pin.length < 4) return alert("PIN should be at least 4 digits"); try { await addDoc(usersCol, { name, pin, role }); document.getElementById('newStaffName').value = ''; document.getElementById('newStaffPin').value = ''; } catch(e) { alert(e.message); } };
-    window.deleteStaff = async (id, name) => { if(confirm(`Delete staff member: ${name}?`)) { try { await deleteDoc(doc(db, "users", id)); } catch(e) { alert(e.message); } } };
-
-    async function init() { 
-        const snap = await getDoc(doc(db, "config", "prices")); 
-        if (snap.exists()) { 
-            const data = snap.data(); 
-            priceConfig = { 
-                ph: data.ph||200, pb: data.pb||300, chFull: data.chFull!==undefined?data.chFull:100, chUsb: data.chUsb!==undefined?data.chUsb:50, chHead: data.chHead!==undefined?data.chHead:50, 
-                maxSockets: data.maxSockets||50, loyalty: data.loyalty||'ON', closeTime: data.closeTime||'21:00', 
-                bankName: data.bankName||'', accName: data.accName||'', accNumber: data.accNumber||'', trackingUrl: data.trackingUrl||'' 
-            }; 
-        } 
-        
-        document.getElementById('setPh').value = priceConfig.ph;
-        document.getElementById('setPb').value = priceConfig.pb;
-        document.getElementById('setChFull').value = priceConfig.chFull;
-        document.getElementById('setChUsb').value = priceConfig.chUsb;
-        document.getElementById('setChHead').value = priceConfig.chHead;
-        document.getElementById('setMaxSockets').value = priceConfig.maxSockets;
-        document.getElementById('setLoyalty').value = priceConfig.loyalty;
-        document.getElementById('setCloseTime').value = priceConfig.closeTime;
-        document.getElementById('setBankName').value = priceConfig.bankName;
-        document.getElementById('setAccName').value = priceConfig.accName;
-        document.getElementById('setAccNumber').value = priceConfig.accNumber;
-        if(document.getElementById('setTrackingUrl')) document.getElementById('setTrackingUrl').value = priceConfig.trackingUrl;
-        autoCalc(); 
-    }
     ['phCount', 'pbCount', 'chFullCount', 'chUsbCount', 'chHeadCount', 'otCount', 'otPrice'].forEach(id => { document.getElementById(id).addEventListener('input', autoCalc); });
 
     onSnapshot(secureTagsCol, (snap) => { secureTagsData = {}; snap.docs.forEach(d => { secureTagsData[d.id] = d.data().pin; }); });
@@ -528,31 +647,18 @@
     window.openScanner = () => { 
         document.getElementById('modalScanner').style.display = 'flex'; 
         html5QrCode = new Html5Qrcode("reader"); 
-        
         Html5Qrcode.getCameras().then(devices => {
             if (devices && devices.length) {
                 let camId = devices[0].id; 
                 for (let i = 0; i < devices.length; i++) {
                     if (devices[i].label.toLowerCase().includes("back") || devices[i].label.toLowerCase().includes("environment")) {
-                        camId = devices[i].id;
-                        break;
+                        camId = devices[i].id; break;
                     }
                 }
-                html5QrCode.start(camId, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess)
-                .catch(err => {
-                    alert("Scanner failed to start. Please check camera permissions.");
-                    closeScanner();
-                });
-            } else {
-                alert("No cameras found on your device.");
-                closeScanner();
-            }
+                html5QrCode.start(camId, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess).catch(err => { alert("Scanner failed to start."); closeScanner(); });
+            } else { alert("No cameras found."); closeScanner(); }
         }).catch(err => {
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess)
-            .catch(e => {
-                alert("Scanner blocked! Please ALLOW camera permissions in your browser settings.");
-                closeScanner();
-            });
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess).catch(e => { alert("Scanner blocked."); closeScanner(); });
         }); 
     };
 
@@ -618,7 +724,6 @@
         allocateSockets(ph + pb + otCount); 
     }
 
-    // --- RE-BASED CALCULATION ENGINE ---
     function getPct(t, type, nowMs) {
         let baseTs = t.baseTs || t.jsDate.getTime();
         let diff = Math.floor((nowMs - baseTs) / 60000);
@@ -627,15 +732,6 @@
         if(type === 'ot') return Math.min(100, (t.otBasePct || 0) + Math.floor((diff / 150) * 100));
         return 0;
     }
-
-    onSnapshot(query(col, orderBy("ts", "desc")), (snap) => { 
-        ticketsData = snap.docs.map(d => ({ ...d.data(), id: d.id, jsDate: d.data().ts ? d.data().ts.toDate() : new Date() })); 
-        if(currentUserRole) { 
-            render(); 
-            if(document.getElementById('extendedForm').style.display === 'block') autoCalc(); 
-            if(editId) { const t = ticketsData.find(x=>x.id===editId); if(t) renderStaffChat(t.chats || []); }
-        } 
-    });
 
     window.saveTicket = async () => {
         let name = document.getElementById('custName').value.trim(), tag = document.getElementById('tokenNum').value.trim().replace(/^#+/, ''); if (!isNaN(tag) && tag !== "") tag = String(Number(tag));
@@ -646,14 +742,16 @@
         const syncPb = parseInt(document.getElementById('syncPb').value) || 0;
         const syncOt = parseInt(document.getElementById('syncOt').value) || 0;
 
+        // ADD SHOP ID TO TICKET
         const data = { 
             name, tag, cond, photo: photoData, phone: document.getElementById('custPhone').value.trim(), 
             debtSettled: false, ph: +document.getElementById('phCount').value, pb: +document.getElementById('pbCount').value, 
             chFull: +document.getElementById('chFullCount').value, chUsb: +document.getElementById('chUsbCount').value, chHead: +document.getElementById('chHeadCount').value, 
             ot: +document.getElementById('otCount').value, otPrice: +document.getElementById('otPrice').value, price: +document.getElementById('price').value, 
             amountPaid: +document.getElementById('amtPaidInput').value,
-            sockets: JSON.parse(document.getElementById('assignedSockets').value || "[]"), staff: currentUserName,
-            phBasePct: syncPh, pbBasePct: syncPb, otBasePct: syncOt, baseTs: Date.now()
+            sockets: JSON.parse(document.getElementById('assignedSockets').value || "[]"), staff: currentShopData.shopName, // Use shop name as staff for now
+            phBasePct: syncPh, pbBasePct: syncPb, otBasePct: syncOt, baseTs: Date.now(),
+            shopId: currentShopId 
         };
         
         try { 
@@ -662,15 +760,13 @@
                 cancelEdit(); 
             } else { 
                 data.ts = serverTimestamp(); data.colPh = 0; data.colPb = 0; data.colChFull = 0; data.colChUsb = 0; data.colChHead = 0; data.colOt = 0; data.collected = false; data.shelved = false; data.chats = []; data.hasUnread = false; data.onTheWay = false; data.onTheWayAck = false;
-                await addDoc(col, data); 
+                await addDoc(collection(db, "tickets"), data); 
                 resetForm(true); 
             } 
         } catch(e) { alert("Error: " + e.message); }
     };
     
-    window.ackOnTheWay = async (id) => {
-        try { await updateDoc(doc(db, "tickets", id), { onTheWayAck: true }); } catch(e) { alert(e.message); }
-    };
+    window.ackOnTheWay = async (id) => { try { await updateDoc(doc(db, "tickets", id), { onTheWayAck: true }); } catch(e) { alert(e.message); } };
 
     window.openShelf = (id) => {
         const t = ticketsData.find(x => x.id === id);
@@ -723,9 +819,7 @@
             h+=renderColRow('Full Chrg',t.chFull,t.colChFull,'in-col-chFull'); 
             h+=renderColRow('USB',t.chUsb,t.colChUsb,'in-col-chUsb'); 
             h+=renderColRow('Head',t.chHead,t.colChHead,'in-col-chHead'); 
-        } else if(t.ch>0) {
-            h+=renderColRow('Leg Chrg',t.ch,t.colCh,'in-col-ch'); 
-        }
+        } else if(t.ch>0) { h+=renderColRow('Leg Chrg',t.ch,t.colCh,'in-col-ch'); }
         h+=renderColRow('Others',t.ot,t.colOt,'in-col-ot');
         document.getElementById('collect-items-list').innerHTML = h; 
         
@@ -821,7 +915,7 @@
         
         await updateDoc(doc(db,"tickets",id), {
             colPh:t.ph||0, colPb:t.pb||0, colChFull:t.chFull||0, colChUsb:t.chUsb||0, colChHead:t.chHead||0, colCh:t.ch||0, colOt:t.ot||0, 
-            sockets:[], collected:true, collDate:new Date().toLocaleDateString(), collectedBy:currentUserName,
+            sockets:[], collected:true, collDate:new Date().toLocaleDateString(), collectedBy:currentShopData.shopName,
             amountPaid: amtPaid + payNow
         }); 
         playChaChing(); closeModal('mod-collect'); document.getElementById('tokenNum').value=""; document.getElementById('formAction').innerText="Enter Tag to Start 🔵"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML='';
@@ -835,7 +929,7 @@
             rated.forEach(t => {
                 let stars = '⭐'.repeat(t.rating);
                 html += `<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:10px; border-left:4px solid var(--gold);">
-                    <b>${stars}</b><br><small style="color:#666;">Staff: <b>${t.collectedBy || t.staff}</b> | Customer: ${t.name}</small><br>
+                    <b>${stars}</b><br><small style="color:#666;">Customer: ${t.name}</small><br>
                     <p style="margin:5px 0; font-size:14px; font-style:italic;">"${t.reviewText || 'No comment provided.'}"</p>
                 </div>`;
             });
@@ -878,7 +972,6 @@
         let actPh=(t.ph||0)-(t.colPh||0), actPb=(t.pb||0)-(t.colPb||0), actOt=(((t.chFull||0)-(t.colChFull||0))+((t.chUsb||0)-(t.colChUsb||0))+((t.chHead||0)-(t.colChHead||0))+((t.ch||0)-(t.colCh||0))+((t.ot||0)-(t.colOt||0)));
         let bars="", hasPhoto = t.photo ? '📸 ' : '';
 
-        // RE-BASED PROGRESS BARS
         if(actPh>0){ 
             let p = getPct(t, 'ph', nowMs);
             let c='#dc3545'; let txt = `📱 Phones: ${p}%`; 
@@ -904,7 +997,6 @@
             bars+=`<div style="margin:5px 0; width:100%; background:#e0e0e0; border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:900; color:#333;">${txt}</div></div>`; 
         }
 
-        // TIME DISPLAY
         let baseTs = t.baseTs || t.jsDate.getTime();
         let diffTime = Math.floor((nowMs - baseTs) / 60000);
         let td = t.shelved ? `✅ Rdy` : `${Math.floor(diffTime/60)}h ${diffTime%60}m`;
@@ -927,7 +1019,7 @@
             badgeHtml = `<span style="background:#f8d7da; color:#721c24; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; border:1px solid #f5c6cb;">⏳ PAY LATER</span>`;
         }
 
-        return `<div class="ticket" style="${cs}"><div><div style="display:flex; justify-content:space-between"><b style="color:#000;">${hasPhoto}${t.name} <span class="code-badge">#${t.tag}</span></b>${badgeHtml}</div><div class="timer-area" style="${tas}"><span style="color:#000;">${sd}</span><span class="time-val ${tc}">${td}</span></div>${cDisp}${unreadBadge}${onTheWayBadge}${bars}<small style="color:#000; font-size:13px; display:block; margin-top:5px;">${cS!==""?`<b style="color:#d32f2f;">Left: ${rS}</b> | <span style="color:#28a745;">✅ Col: ${cS}</span>`:`Items: ${oS}`}</small><small style="color:#666; font-size:11px; display:block; margin-top:2px;">Logged by: <b>${t.staff||'System'}</b> | Total: ₦${t.price}</small>
+        return `<div class="ticket" style="${cs}"><div><div style="display:flex; justify-content:space-between"><b style="color:#000;">${hasPhoto}${t.name} <span class="code-badge">#${t.tag}</span></b>${badgeHtml}</div><div class="timer-area" style="${tas}"><span style="color:#000;">${sd}</span><span class="time-val ${tc}">${td}</span></div>${cDisp}${unreadBadge}${onTheWayBadge}${bars}<small style="color:#000; font-size:13px; display:block; margin-top:5px;">${cS!==""?`<b style="color:#d32f2f;">Left: ${rS}</b> | <span style="color:#28a745;">✅ Col: ${cS}</span>`:`Items: ${oS}`}</small><small style="color:#666; font-size:11px; display:block; margin-top:2px;">Logged by: <b>System</b> | Total: ₦${t.price}</small>
         <button onclick="sendWhatsApp('${t.id}')" style="background:#25D366; color:white; width:100%; border:none; padding:8px; margin-top:5px; border-radius:8px; font-weight:bold; cursor:pointer;">💬 Send WhatsApp Update</button>
         </div><div class="row" style="margin-top:10px;">${!t.shelved?`<button class="btn-shelf" onclick="openShelf('${t.id}')" style="flex:1;">📦 SHELF</button>`:''}<button class="btn-edit" onclick="startEdit('${t.id}')" style="flex:1;">✏️ EDIT</button><button style="background:var(--success); flex:1;" onclick="openCollect('${t.id}')">COLLECT</button></div></div>`;
     }
@@ -935,7 +1027,7 @@
     function historyTemplate(t) {
         let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0);
         let debtBtn = (amtPaid < t.price && !t.debtSettled) ? `<button onclick="settleDebt('${t.id}')" style="background:var(--warning); color:#000; padding:4px 8px; margin-top:5px; width:100%; border-radius:4px; font-size:12px; font-weight:bold;">💸 Pay Remaining ₦${t.price - amtPaid}</button>` : '';
-        return `<div class="ticket" style="border-left-color:#ccc; opacity:0.8;"><b style="color:#000;">${t.photo?'📸 ':''}${t.name} (#${t.tag})</b> - <span style="color:#000;">Total: ₦${t.price}</span><br><small style="color:#000;">In: ${t.staff||'Sys'} | Out: ${t.collDate} (${t.collectedBy||'Sys'})</small>${debtBtn}<button onclick="revertCollection('${t.id}')" style="width:100%; padding:4px 8px; margin-top:5px; background:#666; border-radius:4px; color:white; border:none;">Re-activate</button></div>`; 
+        return `<div class="ticket" style="border-left-color:#ccc; opacity:0.8;"><b style="color:#000;">${t.photo?'📸 ':''}${t.name} (#${t.tag})</b> - <span style="color:#000;">Total: ₦${t.price}</span><br><small style="color:#000;">Out: ${t.collDate}</small>${debtBtn}<button onclick="revertCollection('${t.id}')" style="width:100%; padding:4px 8px; margin-top:5px; background:#666; border-radius:4px; color:white; border:none;">Re-activate</button></div>`; 
     }
 
     window.startEdit = (id) => {
@@ -946,7 +1038,6 @@
         const d=document.getElementById('devicePhotoData'), p=document.getElementById('camPreview'); if(t.photo){ d.value=t.photo; p.src=t.photo; p.style.display='block'; document.getElementById('btnStartCam').innerText="Retake Photo"; document.getElementById('btnDelPhoto').style.display='block'; } else { d.value=''; p.style.display='none'; document.getElementById('btnStartCam').innerText="📷 Open Camera"; document.getElementById('btnDelPhoto').style.display='none'; }
         let cT=String(t.tag).replace(/^#+/,''); if(!isNaN(cT)&&cT!=="") cT=String(Number(cT)); const px=secureTagsData[cT]; document.getElementById('displayPin').innerText=px||"No PIN"; document.getElementById('displayPin').style.color='var(--success)';
         
-        // POPULATE SYNC FIELDS
         const nowMs = powerData.state === 'OFF' ? powerData.offAt : Date.now();
         document.getElementById('syncPh').value = getPct(t, 'ph', nowMs);
         document.getElementById('syncPb').value = getPct(t, 'pb', nowMs);
@@ -973,9 +1064,9 @@
             ph:+document.getElementById('setPh').value, pb:+document.getElementById('setPb').value, chFull:+document.getElementById('setChFull').value, chUsb:+document.getElementById('setChUsb').value, chHead:+document.getElementById('setChHead').value, maxSockets:+document.getElementById('setMaxSockets').value, loyalty:document.getElementById('setLoyalty').value, closeTime:document.getElementById('setCloseTime').value, bankName:document.getElementById('setBankName').value, accName:document.getElementById('setAccName').value, accNumber:document.getElementById('setAccNumber').value,
             trackingUrl:document.getElementById('setTrackingUrl').value.trim()
         }; 
-        await setDoc(doc(db,"config","prices"), np); 
+        await setDoc(doc(db,`shops/${currentShopId}/config/prices`), np); 
         priceConfig=np; 
-        alert("Settings Saved & Synced to QR Codes!"); 
+        alert("Shop Settings Saved!"); 
     };
     
     window.revertCollection = async (id) => { if(confirm("Re-activate?")) await updateDoc(doc(db,"tickets",id), {collected:false, collDate:null, shelved:false, shelfPh:false, shelfPb:false, shelfOt:false, rating:null, reviewText:null}); };
@@ -993,7 +1084,7 @@
             for(let i=start; i<start+count; i++) {
                 const id=String(i); let pin = secureTagsData[id] || (String(i)+"-"+Math.random().toString(36).substring(2,6).toUpperCase()); if(!secureTagsData[id]) promises.push(setDoc(doc(db,"secure_tags",id), {pin}));
                 
-                const trackLink = base + "?track=" + id;
+                const trackLink = base + "?shop=" + currentShopId + "&track=" + id;
                 const qrImage = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(trackLink)}`;
                 
                 html+=`<div id="st-${i}" style="width:100%; padding:20px 0; background:#fff; margin-bottom:30px; border-bottom:2px dashed #999; text-align:center; page-break-inside:avoid;">
@@ -1014,4 +1105,4 @@
     };
   </script>
 </body>
-                  </html>
+            </html>
