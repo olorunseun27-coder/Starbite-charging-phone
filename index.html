@@ -130,6 +130,9 @@
               <button id="btnStaffManage" style="width: auto; padding: 8px 12px; background: var(--primary);" onclick="document.getElementById('modalUsers').style.display='flex'">👥 Staff</button>
               <button style="width: auto; padding: 8px 12px; background: var(--dark);" onclick="document.getElementById('modalTagGen').style.display='flex'">🖨️ Tags</button>
               <button style="width: auto; padding: 8px 12px; background: var(--success); font-weight:900; border: 2px solid #fff; box-shadow: 0 0 8px rgba(40,167,69,0.6);" onclick="document.getElementById('modalUpgrade').style.display='flex'">🚀 UPGRADE</button>
+              
+              <button style="width: auto; padding: 8px 12px; background: #6f42c1; color: white;" onclick="rescueOldData()">🚑 Rescue Old Data</button>
+              
               <button style="width: auto; padding: 8px 12px; background: var(--danger);" onclick="logoutShop()">🚪 Logout</button>
           </div>
       </div>
@@ -419,7 +422,16 @@
     import { getFirestore, collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    const firebaseConfig = { apiKey: "AIzaSyCqmaIDptWNk8v5E5Sz5XKKSAmk6FNX6Yo", authDomain: "credit-record-24f1e.firebaseapp.com", projectId: "credit-record-24f1e", storageBucket: "credit-record-24f1e.firebasestorage.app", messagingSenderId: "181078991416", appId: "1:181078991416:web:6e562cccc19767561b7ccd" };
+    // ⚠️ PASTE YOUR ACTUAL FIREBASE CONFIG HERE ⚠️
+    const firebaseConfig = { 
+        apiKey: "AIzaSyCqmaIDptWNk8v5E5Sz5XKKSAmk6FNX6Yo", 
+        authDomain: "credit-record-24f1e.firebaseapp.com", 
+        projectId: "credit-record-24f1e", 
+        storageBucket: "credit-record-24f1e.firebasestorage.app", 
+        messagingSenderId: "181078991416", 
+        appId: "1:181078991416:web:6e562cccc19767561b7ccd" 
+    };
+    
     const app = initializeApp(firebaseConfig); 
     const db = getFirestore(app); 
     const auth = getAuth(app);
@@ -438,7 +450,6 @@
         premium: { sockets: 999999, tags: 999999 } 
     };
 
-    // 💡 NEW: Admin Phone is now dynamic!
     let superAdminPhone = "2348000000000"; 
     // ==========================================
     
@@ -452,7 +463,6 @@
     document.getElementById('priceBasicDisplay').innerText = `₦${SAAS_PRICING.basic.toLocaleString()}`;
     document.getElementById('pricePremiumDisplay').innerText = `₦${SAAS_PRICING.premium.toLocaleString()}`;
 
-    // 💡 NEW: Listen for the Admin Phone Number from the God Mode Dashboard
     onSnapshot(doc(db, "config", "admin"), (snap) => {
         if(snap.exists() && snap.data().whatsappNumber) {
             superAdminPhone = snap.data().whatsappNumber;
@@ -548,6 +558,39 @@
         } else {
             document.getElementById('featureCamera').style.display = 'block';
             document.getElementById('featureTracking').style.display = 'block';
+        }
+    };
+
+    // --- 🚑 ONE-TIME DATA RESCUE SCRIPT ---
+    window.rescueOldData = async () => {
+        if(confirm("Ready to rescue your old tags and move them to this new account?")) {
+            try {
+                let tagsCount = 0;
+                let ticketsCount = 0;
+
+                // 1. Rescue all old global tags
+                const oldTags = await getDocs(collection(db, "secure_tags"));
+                const tagPromises = oldTags.docs.map(d => {
+                    tagsCount++;
+                    return setDoc(doc(db, `shops/${currentShopId}/secure_tags`, d.id), d.data());
+                });
+                await Promise.all(tagPromises);
+
+                // 2. Rescue all old global tickets
+                const oldTickets = await getDocs(collection(db, "tickets"));
+                const ticketPromises = oldTickets.docs.map(d => {
+                    if(!d.data().shopId) { 
+                        ticketsCount++;
+                        return updateDoc(doc(db, "tickets", d.id), { shopId: currentShopId });
+                    }
+                });
+                await Promise.all(ticketPromises);
+
+                alert(`✅ Success! Rescued ${tagsCount} Tags and ${ticketsCount} Tickets into your new Shop Apartment. Refreshing now...`);
+                location.reload();
+            } catch(e) {
+                alert("Error rescuing data: " + e.message);
+            }
         }
     };
 
@@ -1242,7 +1285,7 @@
                 
                 let infoText = plan === 'premium' ? `Click to view your phone's charging progress:<br><span style="color:var(--primary); font-size:10px; word-break: break-all;">${base}</span>` : `Keep this tag safe to claim your device.`;
 
-                html+=`<div id="st-${i}" style="width:100%; padding:20px 0; background:#fff; margin-bottom:30px; border-bottom:2px dashed #999; text-align:center; page-break-inside:avoid;">
+                html+=`<div id="st-${i}" stylewidth:100%; padding:20px 0; background:#fff; margin-bottom:30px; border-bottom:2px dashed #999; text-align:center; page-break-inside:avoid;">
                     <div style="display:block; border:2px solid #000; padding:20px; border-radius:8px; width:280px; box-sizing:border-box; background:#fff; margin:0 auto 20px auto;">
                         <div style="margin:0 0 10px 0; font-size:22px; font-weight:900; font-family:Arial; color:#000; border-bottom:2px solid #ccc; padding-bottom:5px;">⚡ STARBITE</div>
                         ${qrImageHtml}
@@ -1278,4 +1321,4 @@
     };
   </script>
 </body>
-  </html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  </html>
