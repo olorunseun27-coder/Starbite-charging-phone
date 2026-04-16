@@ -83,7 +83,11 @@
           <input type="email" id="loginEmail" placeholder="Shop Email" style="color: #000; background: #fff; margin-bottom: 10px; font-weight:bold;">
           <input type="password" id="loginPass" placeholder="Password" style="color: #000; background: #fff; margin-bottom: 15px;">
           <button id="btnLogin" onclick="loginShop()" style="width: 100%; padding: 14px; font-size: 18px;">🔐 LOGIN TO SHOP</button>
-          <span class="toggle-link" onclick="toggleAuth('register')">New Shop? Create an Account</span>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+              <span class="toggle-link" style="margin-top: 0;" onclick="toggleAuth('register')">New Shop? Register</span>
+              <span class="toggle-link" style="margin-top: 0; color: #dc3545; text-decoration: none;" onclick="resetPassword()">Forgot Password?</span>
+          </div>
       </div>
 
       <div id="registerBox" class="auth-box" style="display:none;">
@@ -420,7 +424,8 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    // NEW: Added sendPasswordResetEmail to the import list below!
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     // ⚠️ PASTE YOUR ACTUAL FIREBASE CONFIG HERE ⚠️
     const firebaseConfig = { 
@@ -472,6 +477,19 @@
     window.toggleAuth = (type) => {
         document.getElementById('loginBox').style.display = type === 'login' ? 'block' : 'none';
         document.getElementById('registerBox').style.display = type === 'register' ? 'block' : 'none';
+    };
+
+    // --- NEW: PASSWORD RESET FEATURE ---
+    window.resetPassword = async () => {
+        const email = document.getElementById('loginEmail').value.trim();
+        if(!email) return alert("Please enter your Shop Email in the box first, then click 'Forgot Password?'.");
+        
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert(`Password reset link sent to: ${email}\n\nPlease check your inbox and spam folder.`);
+        } catch(error) {
+            alert("Error sending reset email: " + error.message);
+        }
     };
 
     window.registerShop = async () => {
@@ -561,14 +579,12 @@
         }
     };
 
-    // --- 🚑 ONE-TIME DATA RESCUE SCRIPT ---
     window.rescueOldData = async () => {
         if(confirm("Ready to rescue your old tags and move them to this new account?")) {
             try {
                 let tagsCount = 0;
                 let ticketsCount = 0;
 
-                // 1. Rescue all old global tags
                 const oldTags = await getDocs(collection(db, "secure_tags"));
                 const tagPromises = oldTags.docs.map(d => {
                     tagsCount++;
@@ -576,7 +592,6 @@
                 });
                 await Promise.all(tagPromises);
 
-                // 2. Rescue all old global tickets
                 const oldTickets = await getDocs(collection(db, "tickets"));
                 const ticketPromises = oldTickets.docs.map(d => {
                     if(!d.data().shopId) { 
@@ -1285,7 +1300,7 @@
                 
                 let infoText = plan === 'premium' ? `Click to view your phone's charging progress:<br><span style="color:var(--primary); font-size:10px; word-break: break-all;">${base}</span>` : `Keep this tag safe to claim your device.`;
 
-                html+=`<div id="st-${i}" stylewidth:100%; padding:20px 0; background:#fff; margin-bottom:30px; border-bottom:2px dashed #999; text-align:center; page-break-inside:avoid;">
+                html+=`<div id="st-${i}" style="width:100%; padding:20px 0; background:#fff; margin-bottom:30px; border-bottom:2px dashed #999; text-align:center; page-break-inside:avoid;">
                     <div style="display:block; border:2px solid #000; padding:20px; border-radius:8px; width:280px; box-sizing:border-box; background:#fff; margin:0 auto 20px auto;">
                         <div style="margin:0 0 10px 0; font-size:22px; font-weight:900; font-family:Arial; color:#000; border-bottom:2px solid #ccc; padding-bottom:5px;">⚡ STARBITE</div>
                         ${qrImageHtml}
@@ -1321,4 +1336,4 @@
     };
   </script>
 </body>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  </html>
+  </html>
