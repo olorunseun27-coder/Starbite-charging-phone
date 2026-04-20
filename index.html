@@ -465,8 +465,8 @@
     import { getFirestore, collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    // ⚠️ PASTE YOUR ACTUAL FIREBASE CONFIG HERE ⚠️
-const firebaseConfig = { 
+    // ⚠️ REAL FIREBASE CONFIG APPLIED HERE ⚠️
+    const firebaseConfig = { 
         apiKey: "AIzaSyCqmaIDptWNk8v5E5Sz5XKKSAmk6FNX6Yo", 
         authDomain: "credit-record-24f1e.firebaseapp.com", 
         projectId: "credit-record-24f1e", 
@@ -702,11 +702,14 @@ const firebaseConfig = {
             if(editId) { const t = ticketsData.find(x=>x.id===editId); if(t) renderStaffChat(t.chats || []); }
         });
 
-        // 🔔 NEW: PENDING DROP-OFFS CATCHER
+        // 🔔 PENDING DROP-OFFS CATCHER (With Memory Array)
+        window.pendingQueue = [];
         onSnapshot(query(collection(db, "pending_dropoffs"), where("shopId", "==", currentShopId)), (snap) => {
             let html = '';
+            window.pendingQueue = [];
             snap.forEach(d => {
                 const data = d.data();
+                window.pendingQueue.push({ docId: d.id, ...data });
                 html += `
                 <div style="background:var(--warning); color:#000; padding:15px; border-radius:8px; margin-bottom:15px; border:2px dashed #000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; animation: pulse 2s infinite;">
                     <div style="text-align: left;">
@@ -720,27 +723,18 @@ const firebaseConfig = {
         });
     }
 
-    // Function to auto-fill the form when accepting a pending dropoff
-    // Function to accept the form and push data to the main inputs
-        window.acceptDropoff = async (docId, tag, name, phone) => {
-            // 1. Enter the Tag Number first
-            document.getElementById('tokenNum').value = tag;
-            
-            // 2. Trigger the system to open the form (This runs the safety clear-out script!)
-            document.getElementById('tokenNum').dispatchEvent(new Event('input'));
-            
-            // 3. WAIT a tiny fraction of a second, THEN fill in the details so they don't get erased!
-            setTimeout(() => {
-                document.getElementById('custName').value = name;
-                document.getElementById('custPhone').value = phone;
-            }, 50);
-            
-            // 4. Delete the temporary pending request from the database
+    // 🔧 FIX: Accept Drop-off with Timeout to prevent clearing data
+    window.acceptDropoff = async (docId, tag, name, phone) => {
+        document.getElementById('tokenNum').value = tag;
+        document.getElementById('tokenNum').dispatchEvent(new Event('input'));
+        
+        setTimeout(async () => {
+            document.getElementById('custName').value = name;
+            document.getElementById('custPhone').value = phone;
             try { await deleteDoc(doc(db, "pending_dropoffs", docId)); } catch(e){}
-            
-            // 5. Scroll to the top so you can see the form
             window.scrollTo({top:0, behavior: 'smooth'});
-        };
+        }, 100);
+    };
 
     setInterval(() => { if (ticketsData.length > 0 && document.getElementById('mainApp').style.display !== 'none') { render(); checkClosingTime(); } }, 60000);
 
@@ -860,17 +854,39 @@ const firebaseConfig = {
 
     function generateSmartStatusHTML(t) { let oStr="", rStr="", cStr=""; const bld = (l, tq, cq) => { let r=(tq||0)-(cq||0); if(tq>0) oStr+=`${tq}${l} `; if(cq>0) cStr+=`${cq}${l} `; if(r>0) rStr+=`${r}${l} `; }; bld('📱',t.ph,t.colPh); bld('🔋',t.pb,t.colPb); bld('🔌F',t.chFull,t.colChFull); bld('〰️U',t.chUsb,t.colChUsb); bld('🔌H',t.chHead,t.colChHead); bld('🔌L',t.ch,t.colCh); let html = `<p style="margin:0 0 5px 0; font-size:13px; color:#555;"><strong>Total Logged:</strong> ${oStr}</p>`; if(cStr!=="") html+=`<p style="margin:0 0 5px 0; font-size:13px; color:#28a745;"><strong>✅ Collected:</strong> ${cStr}</p>`; if(rStr!=="") html+=`<p style="margin:0 0 10px 0; font-size:15px; color:#000;"><strong>${t.shelved?'<span style="color:#28a745;">📦 ON SHELF (Ready)</span>':(t.shelfPh||t.shelfPb||t.shelfOt?'<span style="color:#ffc107;">⏳ PARTIALLY READY</span>':'<span style="color:#007bff;">⚡️ CHARGING</span>')}:</strong> <b>${rStr}</b></p>`; return html; }
 
+    // 🔧 FIX: Smarter Scanner Logic
     function onScanSuccess(text) { 
         playBeep(); closeScanner(); let tag = text; scannedPinMemory = ""; 
         if(text.includes('?track=')) { tag = text.split('?track=')[1]; } else if(text.includes(':')) { let p = text.split(':'); tag = p[0]; scannedPinMemory = p[1]; } 
         tag = tag.replace(/^#+/, ''); if (!isNaN(tag) && tag !== "") tag = String(Number(tag)); 
+        
+        // 1. Check if the tag is currently ACTIVE (Customer picking up)
         const t = ticketsData.find(x => String(x.tag).replace(/^#+/, '') === tag && !x.collected); 
         if (t) { 
             let photoArray = t.photos || (t.photo ? [t.photo] : []); let imgHTML = '';
             if(photoArray.length > 0) { imgHTML = '<div style="display:flex; gap:5px; overflow-x:auto; margin-bottom:10px; padding-bottom:5px;">'; photoArray.forEach(img => { imgHTML += `<img src="${img}" style="width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #ccc; flex-shrink:0;">`; }); imgHTML += '</div>'; }
-            document.getElementById('scanMatchDetails').innerHTML = `${imgHTML}<p style="margin:0 0 5px 0;"><strong>Customer:</strong> ${t.name}</p><p style="margin:0 0 5px 0;"><strong>Tag:</strong> #${t.tag}</p>${generateSmartStatusHTML(t)}<p style="margin:0 0 5px 0; font-size:13px; color:#555;"><strong>Amount:</strong> ₦${t.price}</p>`; document.getElementById('btnScanCollect').onclick = () => { closeModal('modalScanMatch'); openCollect(t.id); }; document.getElementById('btnScanEdit').onclick = () => { closeModal('modalScanMatch'); startEdit(t.id); }; document.getElementById('modalScanMatch').style.display = 'flex'; 
-        } const inp = document.getElementById('tokenNum'); inp.value = tag; inp.dispatchEvent(new Event('input')); 
+            document.getElementById('scanMatchDetails').innerHTML = `${imgHTML}<p style="margin:0 0 5px 0;"><strong>Customer:</strong> ${t.name}</p><p style="margin:0 0 5px 0;"><strong>Tag:</strong> #${t.tag}</p>${generateSmartStatusHTML(t)}<p style="margin:0 0 5px 0; font-size:13px; color:#555;"><strong>Amount:</strong> ₦${t.price}</p>`; 
+            document.getElementById('btnScanCollect').onclick = () => { closeModal('modalScanMatch'); openCollect(t.id); }; 
+            document.getElementById('btnScanEdit').onclick = () => { closeModal('modalScanMatch'); startEdit(t.id); }; 
+            document.getElementById('modalScanMatch').style.display = 'flex'; 
+            return; // 🛑 Prevents opening the blank form
+        } 
+
+        // 2. Check if the tag is in the PENDING QUEUE (Customer just filled the form)
+        if (window.pendingQueue) {
+            const pending = window.pendingQueue.find(x => String(x.tag) === tag);
+            if (pending) {
+                window.acceptDropoff(pending.docId, pending.tag, pending.name, pending.phone);
+                return; // 🛑 Prevents opening the blank form
+            }
+        }
+
+        // 3. NORMAL TAG BEHAVIOR (Blank tag, open the new ticket form)
+        const inp = document.getElementById('tokenNum'); 
+        inp.value = tag; 
+        inp.dispatchEvent(new Event('input')); 
     }
+    
     window.closeScanner = () => { if (html5QrCode) html5QrCode.stop().then(() => html5QrCode.clear()).catch(e=>{}); document.getElementById('modalScanner').style.display = 'none'; };
 
     document.getElementById('custPhone').addEventListener('input', (e) => { 
@@ -1153,4 +1169,4 @@ const firebaseConfig = {
     window.downloadSingleTag = (elementId, tagNum) => { const el = document.getElementById(elementId); html2canvas(el, { scale: 3 }).then(canvas => { const link = document.createElement('a'); link.download = `Starbite-Tag-${tagNum}.png`; link.href = canvas.toDataURL('image/png'); link.click(); }); };
   </script>
 </body>
-  </html>
+        </html>
