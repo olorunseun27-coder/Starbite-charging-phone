@@ -836,7 +836,33 @@
     onSnapshot(doc(db,"config","power"), (snap) => { if(snap.exists()) powerData = snap.data(); const pb = document.getElementById('btnPower'); if(powerData.state === 'OFF') { pb.style.background = 'var(--danger)'; pb.innerText = '🛑 Paused (Grid Off)'; } else { pb.style.background = 'var(--success)'; pb.innerText = '⚡ Power: ON'; } if(ticketsData.length > 0) render(); });
     window.togglePower = async () => { if(powerData.state === 'ON') { if(confirm("Grid power off? This will PAUSE all charging timers.")) await setDoc(doc(db,"config","power"), {state:'OFF', offAt:Date.now()}); } else { if(confirm("Power restored? This will RESUME all timers and adjust for the time offline.")) { const offDuration = Date.now() - powerData.offAt; ticketsData.filter(t => !t.collected).forEach(t => { if(t.jsDate && !t.shelved) updateDoc(doc(db,"tickets",t.id), { ts: new Date(t.jsDate.getTime() + offDuration) }); }); await setDoc(doc(db,"config","power"), {state:'ON', offAt:null}); } } };
     
-    ['phCount', 'pbCount', 'chFullCount', 'chUsbCount', 'chHeadCount', 'otCount', 'otPrice'].forEach(id => { document.getElementById(id).addEventListener('input', autoCalc); });
+    // 💡 UPGRADED INPUT BOX LOGIC
+    document.getElementById('tokenNum').addEventListener('input', (e) => {
+        let rawText = e.target.value;
+        let tagVal = rawText;
+
+        // If you accidentally paste a full link, extract the number!
+        if(rawText.includes('track=')) {
+            tagVal = rawText.split('track=')[1].split('&')[0];
+        }
+        
+        // Force the box to ONLY keep numbers (Removes "https" etc.)
+        tagVal = tagVal.replace(/\D/g, ''); 
+        e.target.value = tagVal; 
+
+        if (!tagVal) return cancelEdit(); 
+        editId = null; currentSockets = []; 
+
+        const t = ticketsData.find(x => String(x.tag) === tagVal && !x.collected); 
+        const f = document.getElementById('extendedForm'), act = document.getElementById('formAction'), btn = document.getElementById('saveBtn');
+        if (t) {
+            f.style.display = 'none'; act.style.display = 'block'; btn.style.display = 'none'; document.getElementById('securityCheckAlert').innerHTML = ''; document.getElementById('vipAlert').innerHTML = ''; act.innerHTML = `<div style="background:#e3f2fd; padding:15px; border-radius:8px; border:2px solid var(--primary); text-align:left;"><h4 style="margin:0 0 10px 0; color:var(--primary); text-align:center;">📱 Tag #${tagVal} is Active</h4><p style="margin:0 0 5px 0; color:#000;"><strong>Customer:</strong> ${t.name}</p>${generateSmartStatusHTML(t)}<div style="display:flex; gap:10px;"><button onclick="startEdit('${t.id}')" style="flex:1; background:var(--warning); color:#000; padding:10px;">✏️ Edit</button><button onclick="openCollect('${t.id}')" style="flex:2; background:var(--success); padding:10px;">📦 Process Collection</button></div></div>`;
+        } else {
+            f.style.display = 'block'; const p = secureTagsData[tagVal]; document.getElementById('displayPin').innerText = p || "UNREGISTERED TAG"; document.getElementById('displayPin').style.color = p ? 'var(--success)' : 'var(--danger)';
+            const pastUses = ticketsData.filter(x => String(x.tag) === tagVal && x.collected).sort((a,b) => b.jsDate - a.jsDate); let histHTML = ''; if(pastUses.length > 0) { const lu = pastUses[0]; histHTML = `<div style="background:#fff3cd; color:#856404; padding:10px; border-left:4px solid #ffeeba; margin-bottom:15px; border-radius:4px; font-size:13px;"><b>🕵️ Anti-Fraud Memory:</b><br>This tag was last used by <b>${lu.name}</b>.<br>Collected on: ${lu.collDate}.</div>`; } document.getElementById('securityCheckAlert').innerHTML = histHTML;
+            act.innerHTML = p ? `New Entry for #${tagVal} 🔵` : `<span style="color:var(--danger);">❌ Print/Generate this tag first!</span>`; btn.style.display = p ? 'block' : 'none'; btn.innerText = "🚀 CREATE TICKET"; document.getElementById('cancelEditBtn').style.display = "none"; clearFormFieldsOnly(); autoCalc();
+        }
+    });
 
     window.killTag = async () => { const tagNum = document.getElementById('killTagNum').value.trim(); if(!tagNum) return alert("Enter a Tag number to kill."); if(!confirm(`Are you sure you want to KILL Tag #${tagNum}?\n\nThis will generate a brand new PIN. Anyone holding the old stolen tag will not be able to use it.`)) return; const newPin = String(tagNum) + "-" + Math.random().toString(36).substring(2, 6).toUpperCase(); try { await setDoc(doc(db, `shops/${currentShopId}/secure_tags`, String(tagNum)), { pin: newPin }); alert(`✅ Tag #${tagNum} reset!\nNew PIN: ${newPin}`); document.getElementById('killTagNum').value = ''; } catch(e) { alert("Error resetting tag: " + e.message); } };
 
@@ -854,14 +880,32 @@
 
     function generateSmartStatusHTML(t) { let oStr="", rStr="", cStr=""; const bld = (l, tq, cq) => { let r=(tq||0)-(cq||0); if(tq>0) oStr+=`${tq}${l} `; if(cq>0) cStr+=`${cq}${l} `; if(r>0) rStr+=`${r}${l} `; }; bld('📱',t.ph,t.colPh); bld('🔋',t.pb,t.colPb); bld('🔌F',t.chFull,t.colChFull); bld('〰️U',t.chUsb,t.colChUsb); bld('🔌H',t.chHead,t.colChHead); bld('🔌L',t.ch,t.colCh); let html = `<p style="margin:0 0 5px 0; font-size:13px; color:#555;"><strong>Total Logged:</strong> ${oStr}</p>`; if(cStr!=="") html+=`<p style="margin:0 0 5px 0; font-size:13px; color:#28a745;"><strong>✅ Collected:</strong> ${cStr}</p>`; if(rStr!=="") html+=`<p style="margin:0 0 10px 0; font-size:15px; color:#000;"><strong>${t.shelved?'<span style="color:#28a745;">📦 ON SHELF (Ready)</span>':(t.shelfPh||t.shelfPb||t.shelfOt?'<span style="color:#ffc107;">⏳ PARTIALLY READY</span>':'<span style="color:#007bff;">⚡️ CHARGING</span>')}:</strong> <b>${rStr}</b></p>`; return html; }
 
-    // 🔧 FIX: Smarter Scanner Logic
+    // 💡 UPGRADED SCANNER LOGIC
     function onScanSuccess(text) { 
-        playBeep(); closeScanner(); let tag = text; scannedPinMemory = ""; 
-        if(text.includes('?track=')) { tag = text.split('?track=')[1]; } else if(text.includes(':')) { let p = text.split(':'); tag = p[0]; scannedPinMemory = p[1]; } 
-        tag = tag.replace(/^#+/, ''); if (!isNaN(tag) && tag !== "") tag = String(Number(tag)); 
+        playBeep(); closeScanner(); 
+        let tag = text; 
+        scannedPinMemory = ""; 
         
-        // 1. Check if the tag is currently ACTIVE (Customer picking up)
-        const t = ticketsData.find(x => String(x.tag).replace(/^#+/, '') === tag && !x.collected); 
+        // 1. Smart URL Parsing (If you scan a link, extract ONLY the tag number)
+        if(text.includes('track=')) { 
+            tag = text.split('track=')[1].split('&')[0]; 
+        } else if(text.startsWith('http')) {
+            alert("⚠️ Invalid Tag Scanned!\nThis QR code is a generic website link, it does not have a Tag Number attached to it.");
+            return;
+        } else if(text.includes(':')) { 
+            let p = text.split(':'); tag = p[0]; scannedPinMemory = p[1]; 
+        } 
+        
+        // 2. Clean it to ensure it's strictly a number
+        tag = tag.replace(/\D/g, ''); 
+        
+        if (tag === "") {
+            alert("⚠️ Could not read a valid Tag Number from this QR code.");
+            return;
+        }
+        
+        // 3. Check if the tag is currently ACTIVE (Customer picking up)
+        const t = ticketsData.find(x => String(x.tag) === tag && !x.collected); 
         if (t) { 
             let photoArray = t.photos || (t.photo ? [t.photo] : []); let imgHTML = '';
             if(photoArray.length > 0) { imgHTML = '<div style="display:flex; gap:5px; overflow-x:auto; margin-bottom:10px; padding-bottom:5px;">'; photoArray.forEach(img => { imgHTML += `<img src="${img}" style="width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #ccc; flex-shrink:0;">`; }); imgHTML += '</div>'; }
@@ -872,7 +916,7 @@
             return; // 🛑 Prevents opening the blank form
         } 
 
-        // 2. Check if the tag is in the PENDING QUEUE (Customer just filled the form)
+        // 4. Check if the tag is in the PENDING QUEUE (Customer just filled the form)
         if (window.pendingQueue) {
             const pending = window.pendingQueue.find(x => String(x.tag) === tag);
             if (pending) {
@@ -881,34 +925,13 @@
             }
         }
 
-        // 3. NORMAL TAG BEHAVIOR (Blank tag, open the new ticket form)
+        // 5. NORMAL TAG BEHAVIOR (Blank tag, open the new ticket form)
         const inp = document.getElementById('tokenNum'); 
         inp.value = tag; 
         inp.dispatchEvent(new Event('input')); 
     }
     
     window.closeScanner = () => { if (html5QrCode) html5QrCode.stop().then(() => html5QrCode.clear()).catch(e=>{}); document.getElementById('modalScanner').style.display = 'none'; };
-
-    document.getElementById('custPhone').addEventListener('input', (e) => { 
-        const p = e.target.value.trim(); const dAlert = document.getElementById('debtAlert'); dAlert.innerHTML = ''; const vAlert = document.getElementById('vipAlert'); vAlert.innerHTML = '';
-        if(p.length > 7) { 
-            const debts = ticketsData.filter(t => t.phone === p && t.amountPaid < t.price && !t.debtSettled); 
-            if(debts.length > 0) { const owed = debts.reduce((s, t) => s + (t.price - (t.amountPaid || 0)), 0); dAlert.innerHTML = `<div style="background:#f8d7da; color:#721c24; padding:10px; border-left:4px solid #f5c6cb; margin-bottom:10px; border-radius:4px; font-size:13px;"><b>🚨 UNPAID DEBT:</b><br>This number owes <b>₦${owed}</b> from past visits!</div>`; } 
-            if(priceConfig.loyalty === 'ON') { const pastCollected = ticketsData.filter(t => t.phone === p && t.collected).length; if(pastCollected > 0 && pastCollected % 5 === 4) { vAlert.innerHTML = `<div style="background:var(--gold); color:#000; padding:15px; margin-bottom:15px; border-radius:8px; text-align:center; font-weight:bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); animation: pulse 2s infinite;">🏆 VIP CUSTOMER! This is their 5th Charge! Offer a FREE service!</div>`; } }
-        } 
-    });
-
-    document.getElementById('tokenNum').addEventListener('input', (e) => {
-        let tagVal = e.target.value.trim().replace(/^#+/, ''); if (!isNaN(tagVal) && tagVal !== "") tagVal = String(Number(tagVal));
-        if (!tagVal) return cancelEdit(); editId = null; currentSockets = []; const t = ticketsData.find(x => String(x.tag).replace(/^#+/, '') === tagVal && !x.collected); const f = document.getElementById('extendedForm'), act = document.getElementById('formAction'), btn = document.getElementById('saveBtn');
-        if (t) {
-            f.style.display = 'none'; act.style.display = 'block'; btn.style.display = 'none'; document.getElementById('securityCheckAlert').innerHTML = ''; document.getElementById('vipAlert').innerHTML = ''; act.innerHTML = `<div style="background:#e3f2fd; padding:15px; border-radius:8px; border:2px solid var(--primary); text-align:left;"><h4 style="margin:0 0 10px 0; color:var(--primary); text-align:center;">📱 Tag #${tagVal} is Active</h4><p style="margin:0 0 5px 0; color:#000;"><strong>Customer:</strong> ${t.name}</p>${generateSmartStatusHTML(t)}<div style="display:flex; gap:10px;"><button onclick="startEdit('${t.id}')" style="flex:1; background:var(--warning); color:#000; padding:10px;">✏️ Edit</button><button onclick="openCollect('${t.id}')" style="flex:2; background:var(--success); padding:10px;">📦 Process Collection</button></div></div>`;
-        } else {
-            f.style.display = 'block'; const p = secureTagsData[tagVal]; document.getElementById('displayPin').innerText = p || "UNREGISTERED TAG"; document.getElementById('displayPin').style.color = p ? 'var(--success)' : 'var(--danger)';
-            const pastUses = ticketsData.filter(x => String(x.tag).replace(/^#+/, '') === tagVal && x.collected).sort((a,b) => b.jsDate - a.jsDate); let histHTML = ''; if(pastUses.length > 0) { const lu = pastUses[0]; histHTML = `<div style="background:#fff3cd; color:#856404; padding:10px; border-left:4px solid #ffeeba; margin-bottom:15px; border-radius:4px; font-size:13px;"><b>🕵️ Anti-Fraud Memory:</b><br>This tag was last used by <b>${lu.name}</b>.<br>Collected on: ${lu.collDate}.</div>`; } document.getElementById('securityCheckAlert').innerHTML = histHTML;
-            act.innerHTML = p ? `New Entry for #${tagVal} 🔵` : `<span style="color:var(--danger);">❌ Print/Generate this tag first!</span>`; btn.style.display = p ? 'block' : 'none'; btn.innerText = "🚀 CREATE TICKET"; document.getElementById('cancelEditBtn').style.display = "none"; clearFormFieldsOnly(); autoCalc();
-        }
-    });
 
     function allocateSockets(req) { let u = new Set(); ticketsData.filter(t => !t.collected && t.id !== editId).forEach(t => { if (t.sockets) t.sockets.forEach(s => u.add(s)); }); let a = [...currentSockets]; if (a.length > req) a = a.slice(0, req); let n = 1; while (a.length < req) { if (!u.has(n) && !a.includes(n)) a.push(n); n++; } currentSockets = a.sort((x,y) => x-y); document.getElementById('socketUI').innerHTML = a.length===0 ? "🔌 No Devices" : `🔌 Assigned Sockets: <b>${a.join(', ')}</b>`; document.getElementById('assignedSockets').value = JSON.stringify(a); }
     
@@ -1169,4 +1192,4 @@
     window.downloadSingleTag = (elementId, tagNum) => { const el = document.getElementById(elementId); html2canvas(el, { scale: 3 }).then(canvas => { const link = document.createElement('a'); link.download = `Starbite-Tag-${tagNum}.png`; link.href = canvas.toDataURL('image/png'); link.click(); }); };
   </script>
 </body>
-        </html>
+                </html>
