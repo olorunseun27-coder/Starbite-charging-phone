@@ -203,16 +203,18 @@
             <div id="vipAlert"></div>
             
             <div id="featureCamera" style="background:#e2e3e5; padding:10px; border-radius:8px; margin-bottom:10px; border: 2px dashed #999;">
-                <label style="font-size:12px; font-weight:bold; color:#333; display:block; margin-bottom:5px;">📸 Snap Device (Premium Feature)</label>
+                <label style="font-size:12px; font-weight:bold; color:#333; display:block; margin-bottom:5px;">📸 Snap Devices (Take Multiple Photos)</label>
                 <video id="camVideo" autoplay playsinline style="display:none; width:100%; max-height:250px; border-radius:8px; object-fit:cover; margin-bottom:5px;"></video>
                 <canvas id="camCanvas" style="display:none;"></canvas>
-                <img id="camPreview" style="display:none; width:100%; max-height:250px; border-radius:8px; object-fit:cover; margin-bottom:5px; border:2px solid #fff;">
+                
+                <div id="photoGallery" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px; margin-bottom:10px;">
+                    </div>
+                
                 <div style="display:flex; gap:5px;">
                     <button type="button" id="btnStartCam" onclick="startDeviceCam()" style="background:#17a2b8; flex:1; padding:8px;">📷 Open Camera</button>
                     <button type="button" id="btnSnapCam" onclick="captureDeviceCam()" style="background:var(--success); flex:1; padding:8px; display:none;">📸 Snap Photo</button>
-                    <button type="button" id="btnDelPhoto" onclick="removePhotoForm()" style="background:var(--danger); flex:1; padding:8px; display:none;">🗑️ Delete</button>
+                    <button type="button" id="btnStopCam" onclick="stopCam()" style="background:var(--dark); flex:1; padding:8px; display:none;">✅ Done</button>
                 </div>
-                <input type="hidden" id="devicePhotoData">
             </div>
 
             <input type="text" id="custName" placeholder="Customer Name" style="color: #000; background: #fff;">
@@ -294,6 +296,17 @@
               <p style="color: #333; font-size: 15px; font-weight:bold;">Shop closes in exactly <span id="closeMinsLeft" style="font-size:20px; color:var(--danger);"></span> minutes.</p>
               <p style="color: #666; font-size: 13px;">Please start wrapping up and reminding customers.</p>
               <button style="background: var(--success); width: 100%; margin-top:15px;" onclick="closeModal('modalClosingAlert')">Acknowledge</button>
+          </div>
+      </div>
+
+      <div id="modalExpiryWarning" class="modal">
+          <div class="modal-content" style="text-align: center; border: 4px solid var(--warning);">
+              <h1 style="font-size:50px; margin:0;">⚠️</h1>
+              <h3 style="color: #856404; margin-top:10px;">Subscription Expiring Soon!</h3>
+              <p style="color: #333; font-size: 15px; font-weight:bold;">Your <span id="expiryPlanName"></span> plan expires in exactly <span id="expiryDaysLeft" style="font-size:20px; color:var(--danger);"></span> days.</p>
+              <p style="color: #666; font-size: 13px;">Please renew now to avoid losing access to your premium features and unlimited sockets.</p>
+              <button style="background: var(--success); width: 100%; margin-top:15px; font-size: 16px;" onclick="document.getElementById('modalUpgrade').style.display='flex'; closeModal('modalExpiryWarning');">🚀 Renew Now</button>
+              <button style="background: #666; width: 100%; margin-top:10px;" onclick="closeModal('modalExpiryWarning')">Remind Me Later</button>
           </div>
       </div>
 
@@ -438,21 +451,23 @@
     const SAAS_PRICING = { basic: 5000, premium: 15000 };
     const PLAN_LIMITS = { free: { sockets: 15, tags: 25 }, basic: { sockets: 30, tags: 50 }, premium: { sockets: 999999, tags: 999999 } };
 
-    // 💡 NEW: Global Variables controlled by God Mode
     let superAdminPhone = "2348000000000"; 
     let globalTrackingUrl = "https://trackyourdevice.netlify.app/"; 
     
+    // 📸 NEW: Array to hold multiple photos
+    let currentPhotos = [];
+
     let ticketsData=[], secureTagsData={}, powerData={state:'ON', offAt:null}, editId=null, priceConfig={ph:200, pb:300, chFull:100, chUsb:50, chHead:50, maxSockets:50, loyalty:'ON', closeTime:'21:00', bankName:'', accName:'', accNumber:''}, currentSockets=[], scannedPinMemory="";
     let currentShopId = null;
     let currentShopData = null;
 
     window.lastAlertMin = null;
     window.notifiedOnTheWay = new Set();
+    window.hasShownExpiryWarning = false;
 
     document.getElementById('priceBasicDisplay').innerText = `₦${SAAS_PRICING.basic.toLocaleString()}`;
     document.getElementById('pricePremiumDisplay').innerText = `₦${SAAS_PRICING.premium.toLocaleString()}`;
 
-    // 💡 NEW: Listen for Global Settings from God Mode
     onSnapshot(doc(db, "config", "admin"), (snap) => {
         if(snap.exists()) {
             const data = snap.data();
@@ -545,9 +560,15 @@
 
     window.applyPlanRestrictions = () => {
         const plan = currentShopData.plan || 'free';
+        let planText = `${plan} Plan`;
+        
+        if (plan !== 'free' && currentShopData.planExpiry) {
+            const daysLeft = Math.ceil((currentShopData.planExpiry - Date.now()) / (1000 * 60 * 60 * 24));
+            planText = `${plan} (${daysLeft} Days Left)`;
+        }
         
         const badge = document.getElementById('planIndicator');
-        badge.innerText = `${plan} Plan`;
+        badge.innerText = planText;
         badge.className = `plan-badge plan-${plan}`;
 
         if (plan === 'free') {
@@ -601,6 +622,24 @@
             onSnapshot(doc(db, "shops", currentShopId), async (snap) => {
                 if(snap.exists()) {
                     currentShopData = snap.data();
+                    
+                    if (currentShopData.plan !== 'free' && currentShopData.planExpiry) {
+                        const daysLeft = Math.ceil((currentShopData.planExpiry - Date.now()) / (1000 * 60 * 60 * 24));
+
+                        if (daysLeft <= 0) {
+                            alert("⏳ SUBSCRIPTION EXPIRED!\nYour billing cycle has ended. You have been downgraded to the Free Plan. Please upgrade to restore your premium features.");
+                            await updateDoc(doc(db, "shops", currentShopId), { plan: "free", planExpiry: null });
+                            currentShopData.plan = "free";
+                            currentShopData.planExpiry = null;
+                        } 
+                        else if (daysLeft <= 3 && !window.hasShownExpiryWarning) {
+                            window.hasShownExpiryWarning = true; 
+                            document.getElementById('expiryPlanName').innerText = currentShopData.plan.toUpperCase();
+                            document.getElementById('expiryDaysLeft').innerText = daysLeft;
+                            document.getElementById('modalExpiryWarning').style.display = 'flex';
+                        }
+                    }
+
                     if(currentShopData.status === 'active') {
                         document.getElementById('paywallScreen').style.display = 'none';
                         document.getElementById('mainApp').style.display = 'block';
@@ -736,11 +775,67 @@
     }
 
     let camStream=null;
-    window.startDeviceCam = async () => { const v = document.getElementById('camVideo'); document.getElementById('camPreview').style.display='none'; try { const constraints = { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } } }; camStream = await navigator.mediaDevices.getUserMedia(constraints); v.srcObject=camStream; v.style.display='block'; document.getElementById('btnStartCam').style.display='none'; document.getElementById('btnSnapCam').style.display='block'; } catch(e) { alert("Camera Access Denied. Please check your browser settings and ensure you have given this website permission to use the camera."); console.error("Camera error:", e); } };
-    window.captureDeviceCam = () => { const v=document.getElementById('camVideo'), c=document.getElementById('camCanvas'), p=document.getElementById('camPreview'); const tW=300, tH=(v.videoHeight/v.videoWidth)*tW; c.width=tW; c.height=tH; c.getContext('2d').drawImage(v,0,0,tW,tH); const b64=c.toDataURL('image/jpeg',0.6); document.getElementById('devicePhotoData').value=b64; p.src=b64; p.style.display='block'; v.style.display='none'; if(camStream)camStream.getTracks().forEach(t=>t.stop()); const bS=document.getElementById('btnStartCam'); bS.style.display='block'; bS.innerText="Retake Photo"; document.getElementById('btnSnapCam').style.display='none'; document.getElementById('btnDelPhoto').style.display='block'; };
-    window.stopCam = () => { if(camStream)camStream.getTracks().forEach(t=>t.stop()); document.getElementById('camVideo').style.display='none'; document.getElementById('btnStartCam').style.display='block'; document.getElementById('btnStartCam').innerText="📷 Open Camera"; document.getElementById('btnSnapCam').style.display='none'; document.getElementById('btnDelPhoto').style.display='none'; document.getElementById('camPreview').style.display='none'; document.getElementById('devicePhotoData').value=''; };
-    window.removePhotoForm = () => { if(confirm("Remove image?")){ document.getElementById('devicePhotoData').value=''; document.getElementById('camPreview').style.display='none'; document.getElementById('btnStartCam').innerText='📷 Open Camera'; document.getElementById('btnDelPhoto').style.display='none'; } };
-    window.deletePhoto = async (id) => { if(confirm("Permanently delete this photo?")) { try { await updateDoc(doc(db, "tickets", id), { photo: "" }); closeModal('modalScanMatch'); } catch(e) { alert(e.message); } } };
+
+    // 📸 NEW: Multi-Camera Functions
+    window.startDeviceCam = async () => { 
+        const v = document.getElementById('camVideo'); 
+        try { 
+            const constraints = { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } } }; 
+            camStream = await navigator.mediaDevices.getUserMedia(constraints); 
+            v.srcObject=camStream; 
+            v.style.display='block'; 
+            document.getElementById('btnStartCam').style.display='none'; 
+            document.getElementById('btnSnapCam').style.display='block'; 
+            document.getElementById('btnStopCam').style.display='block'; 
+        } catch(e) { 
+            alert("Camera Access Denied."); 
+        } 
+    };
+
+    window.captureDeviceCam = () => { 
+        const v=document.getElementById('camVideo'), c=document.getElementById('camCanvas'); 
+        const tW=300, tH=(v.videoHeight/v.videoWidth)*tW; 
+        c.width=tW; c.height=tH; 
+        c.getContext('2d').drawImage(v,0,0,tW,tH); 
+        const b64=c.toDataURL('image/jpeg',0.6); 
+        
+        currentPhotos.push(b64);
+        renderPhotoGallery();
+    };
+
+    window.renderPhotoGallery = () => {
+        const gal = document.getElementById('photoGallery');
+        if (currentPhotos.length === 0) {
+            gal.innerHTML = '';
+            return;
+        }
+        gal.innerHTML = currentPhotos.map((photo, index) => `
+            <div style="position:relative; flex-shrink:0; margin-top:10px;">
+                <img src="${photo}" style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:2px solid #fff; box-shadow:0 2px 4px rgba(0,0,0,0.2);">
+                <button type="button" onclick="removePhoto(${index})" style="position:absolute; top:-5px; right:-5px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; font-weight:bold; cursor:pointer; padding:0; line-height:1; box-shadow:0 2px 4px rgba(0,0,0,0.5);">×</button>
+            </div>
+        `).join('');
+    };
+
+    window.removePhoto = (index) => {
+        currentPhotos.splice(index, 1);
+        renderPhotoGallery();
+    };
+
+    window.stopCam = () => { 
+        if(camStream)camStream.getTracks().forEach(t=>t.stop()); 
+        document.getElementById('camVideo').style.display='none'; 
+        
+        const startBtn = document.getElementById('btnStartCam');
+        startBtn.style.display='block'; 
+        startBtn.innerText = currentPhotos.length > 0 ? "📷 Take More Photos" : "📷 Open Camera";
+        
+        document.getElementById('btnSnapCam').style.display='none'; 
+        document.getElementById('btnStopCam').style.display='none'; 
+    };
+
+    // Removed the old single photo delete function as the array system handles it now
+    window.removePhotoForm = () => { /* Deprecated */ };
 
     window.exportCSV = () => { let csv = "Date,Customer Name,Tag Number,Phone,Items,Price,Amount Paid,Status,Logged By,Collected By,Rating,Review,Conditions\n"; ticketsData.forEach(t => { let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); csv += `"${t.jsDate?t.jsDate.toLocaleDateString():''}","${(t.name||"").replace(/"/g, '""')}","${t.tag}","${t.phone||''}","${t.ph||0}📱 ${t.pb||0}🔋",${t.price},${amtPaid},"${t.collected?'Collected':(t.shelved?'Shelved':'Active')}","${t.staff||''}","${t.collectedBy||''}","${t.rating||''}","${(t.reviewText||'').replace(/"/g, '""')}","${(t.cond||[]).join(', ')}"\n`; }); const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))); link.setAttribute("download", `Starbite_Report_${new Date().toISOString().split('T')[0]}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); };
 
@@ -761,7 +856,6 @@
         let bal = t.price - amtPaid;
         let finText = bal > 0 ? `Total Bill: ₦${t.price}\nAmount Due: ₦${bal}` : `Total Bill: ₦${t.price} (Paid in Full ✅)`;
 
-        // 💡 NEW: Uses the global tracking URL!
         let base = globalTrackingUrl;
         if(!base.endsWith('/')) base += '/';
         
@@ -821,7 +915,19 @@
         else if(text.includes(':')) { let p = text.split(':'); tag = p[0]; scannedPinMemory = p[1]; } 
         tag = tag.replace(/^#+/, ''); if (!isNaN(tag) && tag !== "") tag = String(Number(tag)); 
         const t = ticketsData.find(x => String(x.tag).replace(/^#+/, '') === tag && !x.collected); 
-        if (t) { let imgHTML = t.photo ? `<div style="position:relative;"><img src="${t.photo}" style="width:100%; max-height:200px; object-fit:cover; border-radius:8px; margin-bottom:10px; border:2px solid #ccc;"><button onclick="deletePhoto('${t.id}')" style="position:absolute; top:8px; right:8px; background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.5);">🗑️ Delete</button></div>` : ''; document.getElementById('scanMatchDetails').innerHTML = `${imgHTML}<p style="margin:0 0 5px 0;"><strong>Customer:</strong> ${t.name}</p><p style="margin:0 0 5px 0;"><strong>Tag:</strong> #${t.tag}</p>${generateSmartStatusHTML(t)}<p style="margin:0 0 5px 0; font-size:13px; color:#555;"><strong>Amount:</strong> ₦${t.price}</p>`; document.getElementById('btnScanCollect').onclick = () => { closeModal('modalScanMatch'); openCollect(t.id); }; document.getElementById('btnScanEdit').onclick = () => { closeModal('modalScanMatch'); startEdit(t.id); }; document.getElementById('modalScanMatch').style.display = 'flex'; } const inp = document.getElementById('tokenNum'); inp.value = tag; inp.dispatchEvent(new Event('input')); 
+        if (t) { 
+            // 📸 Handle Multiple Photos for Scan Match Details
+            let photoArray = t.photos || (t.photo ? [t.photo] : []);
+            let imgHTML = '';
+            if(photoArray.length > 0) {
+                imgHTML = '<div style="display:flex; gap:5px; overflow-x:auto; margin-bottom:10px; padding-bottom:5px;">';
+                photoArray.forEach(img => {
+                    imgHTML += `<img src="${img}" style="width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #ccc; flex-shrink:0;">`;
+                });
+                imgHTML += '</div>';
+            }
+            
+            document.getElementById('scanMatchDetails').innerHTML = `${imgHTML}<p style="margin:0 0 5px 0;"><strong>Customer:</strong> ${t.name}</p><p style="margin:0 0 5px 0;"><strong>Tag:</strong> #${t.tag}</p>${generateSmartStatusHTML(t)}<p style="margin:0 0 5px 0; font-size:13px; color:#555;"><strong>Amount:</strong> ₦${t.price}</p>`; document.getElementById('btnScanCollect').onclick = () => { closeModal('modalScanMatch'); openCollect(t.id); }; document.getElementById('btnScanEdit').onclick = () => { closeModal('modalScanMatch'); startEdit(t.id); }; document.getElementById('modalScanMatch').style.display = 'flex'; } const inp = document.getElementById('tokenNum'); inp.value = tag; inp.dispatchEvent(new Event('input')); 
     }
     window.closeScanner = () => { if (html5QrCode) html5QrCode.stop().then(() => html5QrCode.clear()).catch(e=>{}); document.getElementById('modalScanner').style.display = 'none'; };
 
@@ -896,14 +1002,16 @@
 
         let name = document.getElementById('custName').value.trim(), tag = document.getElementById('tokenNum').value.trim().replace(/^#+/, ''); if (!isNaN(tag) && tag !== "") tag = String(Number(tag));
         if(!name || !tag) return alert("Enter Name & Tag #");
-        const cond = Array.from(document.querySelectorAll('.cond-chk:checked')).map(c=>c.value); const photoData = document.getElementById('devicePhotoData').value;
+        const cond = Array.from(document.querySelectorAll('.cond-chk:checked')).map(c=>c.value); 
         
         const syncPh = parseInt(document.getElementById('syncPh').value) || 0;
         const syncPb = parseInt(document.getElementById('syncPb').value) || 0;
         const syncOt = parseInt(document.getElementById('syncOt').value) || 0;
 
         const data = { 
-            name, tag, cond, photo: photoData, phone: document.getElementById('custPhone').value.trim(), 
+            name, tag, cond, 
+            photos: currentPhotos, // 📸 NEW: Saves the entire array of photos
+            phone: document.getElementById('custPhone').value.trim(), 
             debtSettled: false, ph: +document.getElementById('phCount').value, pb: +document.getElementById('pbCount').value, 
             chFull: +document.getElementById('chFullCount').value, chUsb: +document.getElementById('chUsbCount').value, chHead: +document.getElementById('chHeadCount').value, 
             ot: +document.getElementById('otCount').value, otPrice: +document.getElementById('otPrice').value, price: +document.getElementById('price').value, 
@@ -1130,7 +1238,20 @@
         else if (t.shelfPh || t.shelfPb || t.shelfOt) { sd = `⏳ <b>Partial Shelf</b>`; tas='background:#fff3cd;'; }
         
         let actPh=(t.ph||0)-(t.colPh||0), actPb=(t.pb||0)-(t.colPb||0), actOt=(((t.chFull||0)-(t.colChFull||0))+((t.chUsb||0)-(t.colChUsb||0))+((t.chHead||0)-(t.colChHead||0))+((t.ch||0)-(t.colCh||0))+((t.ot||0)-(t.colOt||0)));
-        let bars="", hasPhoto = t.photo ? '📸 ' : '';
+        
+        // 📸 NEW: Display multiple photos in the ticket
+        let photoArray = t.photos || (t.photo ? [t.photo] : []);
+        let hasPhoto = photoArray.length > 0 ? '📸 ' : '';
+        let photoHtml = '';
+        if(photoArray.length > 0) {
+            photoHtml = '<div style="display:flex; gap:10px; overflow-x:auto; margin-bottom:15px; padding-bottom:5px;">';
+            photoArray.forEach(img => {
+                photoHtml += `<img src="${img}" class="device-photo" style="width:120px; height:120px; object-fit:cover; border-radius:8px; border:2px solid #eee; flex-shrink:0; box-shadow:0 2px 4px rgba(0,0,0,0.1);">`;
+            });
+            photoHtml += '</div>';
+        }
+
+        let bars="";
 
         if(actPh>0){ 
             let p = getPct(t, 'ph', nowMs);
@@ -1186,7 +1307,7 @@
             whatsappBtnHtml = `<button onclick="document.getElementById('modalUpgrade').style.display='flex'" style="background:#ccc; color:#666; width:100%; border:none; padding:8px; margin-top:5px; border-radius:8px; font-weight:bold; cursor:pointer;">🔒 Upgrade to send WhatsApp updates</button>`;
         }
 
-        return `<div class="ticket" style="${cs}"><div><div style="display:flex; justify-content:space-between"><b style="color:#000;">${hasPhoto}${t.name} <span class="code-badge">#${t.tag}</span></b>${badgeHtml}</div><div class="timer-area" style="${tas}"><span style="color:#000;">${sd}</span><span class="time-val ${tc}">${td}</span></div>${cDisp}${unreadBadge}${onTheWayBadge}${bars}<small style="color:#000; font-size:13px; display:block; margin-top:5px;">${cS!==""?`<b style="color:#d32f2f;">Left: ${rS}</b> | <span style="color:#28a745;">✅ Col: ${cS}</span>`:`Items: ${oS}`}</small><small style="color:#666; font-size:11px; display:block; margin-top:2px;">Total: ₦${t.price}</small>
+        return `<div class="ticket" style="${cs}"><div><div style="display:flex; justify-content:space-between"><b style="color:#000;">${hasPhoto}${t.name} <span class="code-badge">#${t.tag}</span></b>${badgeHtml}</div><div class="timer-area" style="${tas}"><span style="color:#000;">${sd}</span><span class="time-val ${tc}">${td}</span></div>${cDisp}${unreadBadge}${onTheWayBadge}${photoHtml}${bars}<small style="color:#000; font-size:13px; display:block; margin-top:5px;">${cS!==""?`<b style="color:#d32f2f;">Left: ${rS}</b> | <span style="color:#28a745;">✅ Col: ${cS}</span>`:`Items: ${oS}`}</small><small style="color:#666; font-size:11px; display:block; margin-top:2px;">Total: ₦${t.price}</small>
         ${whatsappBtnHtml}
         </div><div class="row" style="margin-top:10px;">${!t.shelved?`<button class="btn-shelf" onclick="openShelf('${t.id}')" style="flex:1;">📦 SHELF</button>`:''}<button class="btn-edit" onclick="startEdit('${t.id}')" style="flex:1;">✏️ EDIT</button><button style="background:var(--success); flex:1;" onclick="openCollect('${t.id}')">COLLECT</button></div></div>`;
     }
@@ -1194,7 +1315,8 @@
     function historyTemplate(t) {
         let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0);
         let debtBtn = (amtPaid < t.price && !t.debtSettled) ? `<button onclick="settleDebt('${t.id}')" style="background:var(--warning); color:#000; padding:4px 8px; margin-top:5px; width:100%; border-radius:4px; font-size:12px; font-weight:bold;">💸 Pay Remaining ₦${t.price - amtPaid}</button>` : '';
-        return `<div class="ticket" style="border-left-color:#ccc; opacity:0.8;"><b style="color:#000;">${t.photo?'📸 ':''}${t.name} (#${t.tag})</b> - <span style="color:#000;">Total: ₦${t.price}</span><br><small style="color:#000;">Out: ${t.collDate}</small>${debtBtn}<button onclick="revertCollection('${t.id}')" style="width:100%; padding:4px 8px; margin-top:5px; background:#666; border-radius:4px; color:white; border:none;">Re-activate</button></div>`; 
+        let hasPhoto = (t.photos && t.photos.length > 0) || t.photo ? '📸 ' : '';
+        return `<div class="ticket" style="border-left-color:#ccc; opacity:0.8;"><b style="color:#000;">${hasPhoto}${t.name} (#${t.tag})</b> - <span style="color:#000;">Total: ₦${t.price}</span><br><small style="color:#000;">Out: ${t.collDate}</small>${debtBtn}<button onclick="revertCollection('${t.id}')" style="width:100%; padding:4px 8px; margin-top:5px; background:#666; border-radius:4px; color:white; border:none;">Re-activate</button></div>`; 
     }
 
     window.startEdit = (id) => {
@@ -1202,7 +1324,16 @@
         document.getElementById('amtPaidInput').value = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0);
         document.getElementById('custPhone').value = t.phone || "";
         document.querySelectorAll('.cond-chk').forEach(c => c.checked = (t.cond||[]).includes(c.value));
-        const d=document.getElementById('devicePhotoData'), p=document.getElementById('camPreview'); if(t.photo){ d.value=t.photo; p.src=t.photo; p.style.display='block'; document.getElementById('btnStartCam').innerText="Retake Photo"; document.getElementById('btnDelPhoto').style.display='block'; } else { d.value=''; p.style.display='none'; document.getElementById('btnStartCam').innerText="📷 Open Camera"; document.getElementById('btnDelPhoto').style.display='none'; }
+        
+        // 📸 NEW: Load existing photos into the gallery
+        currentPhotos = t.photos || (t.photo ? [t.photo] : []);
+        renderPhotoGallery();
+        if(currentPhotos.length > 0) {
+            document.getElementById('btnStartCam').innerText = "📷 Take More Photos";
+        } else {
+            document.getElementById('btnStartCam').innerText = "📷 Open Camera";
+        }
+
         let cT=String(t.tag).replace(/^#+/,''); if(!isNaN(cT)&&cT!=="") cT=String(Number(cT)); const px=secureTagsData[cT]; document.getElementById('displayPin').innerText=px||"No PIN"; document.getElementById('displayPin').style.color='var(--success)';
         
         const nowMs = powerData.state === 'OFF' ? powerData.offAt : Date.now();
@@ -1229,7 +1360,20 @@
     };
 
     window.cancelEdit = () => { editId=null; currentSockets=[]; resetForm(true); };
-    function clearFormFieldsOnly() { stopCam(); ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput','syncPh','syncPb','syncOt'].forEach(id => { let el = document.getElementById(id); if(el) el.value=id.includes('Count')||id.includes('Price')||id.includes('amt')||id.includes('sync')?0:""; }); document.getElementById('payStatus').value="Later"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); document.getElementById('staffChatArea').style.display='none'; document.getElementById('staffChatHistory').innerHTML=''; document.getElementById('staffChatInput').value=''; }
+    function clearFormFieldsOnly() { 
+        stopCam(); 
+        currentPhotos = []; // Clear photo array
+        renderPhotoGallery(); // Clear UI gallery
+        ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput','syncPh','syncPb','syncOt'].forEach(id => { let el = document.getElementById(id); if(el) el.value=id.includes('Count')||id.includes('Price')||id.includes('amt')||id.includes('sync')?0:""; }); 
+        document.getElementById('payStatus').value="Later"; 
+        document.getElementById('securityCheckAlert').innerHTML=''; 
+        document.getElementById('debtAlert').innerHTML=''; 
+        document.getElementById('vipAlert').innerHTML=''; 
+        document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); 
+        document.getElementById('staffChatArea').style.display='none'; 
+        document.getElementById('staffChatHistory').innerHTML=''; 
+        document.getElementById('staffChatInput').value=''; 
+    }
     function resetForm(cT=false) { if(cT){ document.getElementById('tokenNum').value=""; document.getElementById('extendedForm').style.display='none'; document.getElementById('formAction').innerText="Enter Tag 🔵"; document.getElementById('saveBtn').style.display='none'; document.getElementById('cancelEditBtn').style.display="none"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; } currentSockets=[]; clearFormFieldsOnly(); autoCalc(); }
     window.closeModal = (id) => { document.getElementById(id).style.display='none'; if(id==='modalPrint') document.getElementById('receiptPreview').style.border="2px solid #333"; };
     
@@ -1262,7 +1406,6 @@
         btn.innerText = "⏳ Saving..."; btn.disabled = true; let html = `<div id="captureArea" style="padding:20px; background:white; width:100%; min-width:1000px; max-width:1122px; margin:0 auto; box-sizing:border-box;">`;
         const promises = [];
         
-        // 💡 NEW: Pulls the global URL instantly
         let base = globalTrackingUrl;
         if(!base.endsWith('/')) base += '/';
 
@@ -1320,4 +1463,4 @@
     };
   </script>
 </body>
-  </html>
+                </html>
