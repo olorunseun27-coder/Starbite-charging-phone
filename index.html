@@ -465,14 +465,14 @@
     import { getFirestore, collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    // ⚠️ REAL FIREBASE CONFIG APPLIED HERE ⚠️
+    // ⚠️ REAL FIREBASE CONFIG HERE ⚠️
     const firebaseConfig = { 
-        apiKey: "AIzaSyCqmaIDptWNk8v5E5Sz5XKKSAmk6FNX6Yo", 
-        authDomain: "credit-record-24f1e.firebaseapp.com", 
-        projectId: "credit-record-24f1e", 
-        storageBucket: "credit-record-24f1e.firebasestorage.app", 
-        messagingSenderId: "181078991416", 
-        appId: "1:181078991416:web:6e562cccc19767561b7ccd" 
+        apiKey: "", 
+        authDomain: "", 
+        projectId: "", 
+        storageBucket: "", 
+        messagingSenderId: "", 
+        appId: "" 
     };
     
     const app = initializeApp(firebaseConfig); 
@@ -702,36 +702,63 @@
             if(editId) { const t = ticketsData.find(x=>x.id===editId); if(t) renderStaffChat(t.chats || []); }
         });
 
-        // 🔔 PENDING DROP-OFFS CATCHER (With Memory Array)
+        // 🔔 UPGRADED PENDING DROP-OFFS CATCHER (With Spam Filter & Device Types)
         window.pendingQueue = [];
         onSnapshot(query(collection(db, "pending_dropoffs"), where("shopId", "==", currentShopId)), (snap) => {
             let html = '';
             window.pendingQueue = [];
-            snap.forEach(d => {
-                const data = d.data();
-                window.pendingQueue.push({ docId: d.id, ...data });
+            let seenTags = new Set(); // Prevent duplicate tag renders
+            
+            // Sort by Time (Newest first)
+            let docs = [];
+            snap.forEach(d => docs.push({ docId: d.id, ...d.data() }));
+            docs.sort((a, b) => b.ts - a.ts);
+
+            docs.forEach(data => {
+                if(seenTags.has(data.tag)) return; // Only process one request per tag!
+                seenTags.add(data.tag);
+                
+                window.pendingQueue.push(data);
+                
+                let devStr = "";
+                if(data.ph > 0) devStr += `${data.ph}📱 `;
+                if(data.pb > 0) devStr += `${data.pb}🔋`;
+
                 html += `
                 <div style="background:var(--warning); color:#000; padding:15px; border-radius:8px; margin-bottom:15px; border:2px dashed #000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; animation: pulse 2s infinite;">
                     <div style="text-align: left;">
                         <b style="font-size: 16px;">🔔 New Drop-off: ${data.name}</b><br>
-                        <span style="font-size: 14px; font-weight: bold; color: var(--danger);">Tag #${data.tag}</span> | ${data.phone}
+                        <span style="font-size: 14px; font-weight: bold; color: var(--danger);">Tag #${data.tag}</span> | ${data.phone}<br>
+                        <span style="font-size: 13px; color: #333; font-weight:bold;">Devices: ${devStr || 'None'}</span>
                     </div>
-                    <button onclick="acceptDropoff('${d.id}', '${data.tag}', '${data.name}', '${data.phone}')" style="background:var(--success); padding:10px 15px; width:auto; margin:0; font-size: 16px;">Accept Form</button>
+                    <button onclick="acceptDropoff('${data.docId}', '${data.tag}', '${data.name}', '${data.phone}', ${data.ph || 0}, ${data.pb || 0})" style="background:var(--success); padding:10px 15px; width:auto; margin:0; font-size: 16px;">Accept Form</button>
                 </div>`;
             });
             document.getElementById('pendingDropoffsArea').innerHTML = html;
         });
     }
 
-    // 🔧 FIX: Accept Drop-off with Timeout to prevent clearing data
-    window.acceptDropoff = async (docId, tag, name, phone) => {
+    // 🔧 UPGRADED: Accept Drop-off with Instant Calculation
+    window.acceptDropoff = async (docId, tag, name, phone, ph, pb) => {
         document.getElementById('tokenNum').value = tag;
         document.getElementById('tokenNum').dispatchEvent(new Event('input'));
         
         setTimeout(async () => {
             document.getElementById('custName').value = name;
             document.getElementById('custPhone').value = phone;
-            try { await deleteDoc(doc(db, "pending_dropoffs", docId)); } catch(e){}
+            document.getElementById('phCount').value = ph || 0;
+            document.getElementById('pbCount').value = pb || 0;
+            
+            // 🔥 CRITICAL: Force calculation so Sockets and Prices update instantly!
+            autoCalc();
+
+            try { 
+                // Delete ALL pending spam requests for this specific tag
+                const q = query(collection(db, "pending_dropoffs"), where("shopId", "==", currentShopId), where("tag", "==", tag));
+                const snap = await getDocs(q);
+                snap.forEach(d => deleteDoc(doc(db, "pending_dropoffs", d.id)));
+            } catch(e){}
+            
             window.scrollTo({top:0, behavior: 'smooth'});
         }, 100);
     };
@@ -836,17 +863,14 @@
     onSnapshot(doc(db,"config","power"), (snap) => { if(snap.exists()) powerData = snap.data(); const pb = document.getElementById('btnPower'); if(powerData.state === 'OFF') { pb.style.background = 'var(--danger)'; pb.innerText = '🛑 Paused (Grid Off)'; } else { pb.style.background = 'var(--success)'; pb.innerText = '⚡ Power: ON'; } if(ticketsData.length > 0) render(); });
     window.togglePower = async () => { if(powerData.state === 'ON') { if(confirm("Grid power off? This will PAUSE all charging timers.")) await setDoc(doc(db,"config","power"), {state:'OFF', offAt:Date.now()}); } else { if(confirm("Power restored? This will RESUME all timers and adjust for the time offline.")) { const offDuration = Date.now() - powerData.offAt; ticketsData.filter(t => !t.collected).forEach(t => { if(t.jsDate && !t.shelved) updateDoc(doc(db,"tickets",t.id), { ts: new Date(t.jsDate.getTime() + offDuration) }); }); await setDoc(doc(db,"config","power"), {state:'ON', offAt:null}); } } };
     
-    // 💡 UPGRADED INPUT BOX LOGIC
     document.getElementById('tokenNum').addEventListener('input', (e) => {
         let rawText = e.target.value;
         let tagVal = rawText;
 
-        // If you accidentally paste a full link, extract the number!
         if(rawText.includes('track=')) {
             tagVal = rawText.split('track=')[1].split('&')[0];
         }
         
-        // Force the box to ONLY keep numbers (Removes "https" etc.)
         tagVal = tagVal.replace(/\D/g, ''); 
         e.target.value = tagVal; 
 
@@ -880,13 +904,11 @@
 
     function generateSmartStatusHTML(t) { let oStr="", rStr="", cStr=""; const bld = (l, tq, cq) => { let r=(tq||0)-(cq||0); if(tq>0) oStr+=`${tq}${l} `; if(cq>0) cStr+=`${cq}${l} `; if(r>0) rStr+=`${r}${l} `; }; bld('📱',t.ph,t.colPh); bld('🔋',t.pb,t.colPb); bld('🔌F',t.chFull,t.colChFull); bld('〰️U',t.chUsb,t.colChUsb); bld('🔌H',t.chHead,t.colChHead); bld('🔌L',t.ch,t.colCh); let html = `<p style="margin:0 0 5px 0; font-size:13px; color:#555;"><strong>Total Logged:</strong> ${oStr}</p>`; if(cStr!=="") html+=`<p style="margin:0 0 5px 0; font-size:13px; color:#28a745;"><strong>✅ Collected:</strong> ${cStr}</p>`; if(rStr!=="") html+=`<p style="margin:0 0 10px 0; font-size:15px; color:#000;"><strong>${t.shelved?'<span style="color:#28a745;">📦 ON SHELF (Ready)</span>':(t.shelfPh||t.shelfPb||t.shelfOt?'<span style="color:#ffc107;">⏳ PARTIALLY READY</span>':'<span style="color:#007bff;">⚡️ CHARGING</span>')}:</strong> <b>${rStr}</b></p>`; return html; }
 
-    // 💡 UPGRADED SCANNER LOGIC
     function onScanSuccess(text) { 
         playBeep(); closeScanner(); 
         let tag = text; 
         scannedPinMemory = ""; 
         
-        // 1. Smart URL Parsing (If you scan a link, extract ONLY the tag number)
         if(text.includes('track=')) { 
             tag = text.split('track=')[1].split('&')[0]; 
         } else if(text.startsWith('http')) {
@@ -896,15 +918,9 @@
             let p = text.split(':'); tag = p[0]; scannedPinMemory = p[1]; 
         } 
         
-        // 2. Clean it to ensure it's strictly a number
         tag = tag.replace(/\D/g, ''); 
+        if (tag === "") { alert("⚠️ Could not read a valid Tag Number from this QR code."); return; }
         
-        if (tag === "") {
-            alert("⚠️ Could not read a valid Tag Number from this QR code.");
-            return;
-        }
-        
-        // 3. Check if the tag is currently ACTIVE (Customer picking up)
         const t = ticketsData.find(x => String(x.tag) === tag && !x.collected); 
         if (t) { 
             let photoArray = t.photos || (t.photo ? [t.photo] : []); let imgHTML = '';
@@ -913,19 +929,17 @@
             document.getElementById('btnScanCollect').onclick = () => { closeModal('modalScanMatch'); openCollect(t.id); }; 
             document.getElementById('btnScanEdit').onclick = () => { closeModal('modalScanMatch'); startEdit(t.id); }; 
             document.getElementById('modalScanMatch').style.display = 'flex'; 
-            return; // 🛑 Prevents opening the blank form
+            return; 
         } 
 
-        // 4. Check if the tag is in the PENDING QUEUE (Customer just filled the form)
         if (window.pendingQueue) {
             const pending = window.pendingQueue.find(x => String(x.tag) === tag);
             if (pending) {
-                window.acceptDropoff(pending.docId, pending.tag, pending.name, pending.phone);
-                return; // 🛑 Prevents opening the blank form
+                window.acceptDropoff(pending.docId, pending.tag, pending.name, pending.phone, pending.ph, pending.pb);
+                return;
             }
         }
 
-        // 5. NORMAL TAG BEHAVIOR (Blank tag, open the new ticket form)
         const inp = document.getElementById('tokenNum'); 
         inp.value = tag; 
         inp.dispatchEvent(new Event('input')); 
