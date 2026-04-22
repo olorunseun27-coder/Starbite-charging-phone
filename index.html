@@ -483,7 +483,7 @@
     const PLAN_LIMITS = { free: { sockets: 15, tags: 25 }, basic: { sockets: 30, tags: 50 }, premium: { sockets: 999999, tags: 999999 } };
 
     let superAdminPhone = "2348000000000"; 
-    let globalTrackingUrl = "trackyourdevice.netlify.app"; 
+    let globalTrackingUrl = "https://trackyourdevice.netlify.app/"; 
     let currentPhotos = [];
     
     let deviceChartInstance = null;
@@ -1206,4 +1206,4 @@
     window.downloadSingleTag = (elementId, tagNum) => { const el = document.getElementById(elementId); html2canvas(el, { scale: 3 }).then(canvas => { const link = document.createElement('a'); link.download = `Starbite-Tag-${tagNum}.png`; link.href = canvas.toDataURL('image/png'); link.click(); }); };
   </script>
 </body>
-                                                                                                                                                     </html>
+                             </html>
