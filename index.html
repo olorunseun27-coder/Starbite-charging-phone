@@ -496,7 +496,7 @@
     window.lastAlertMin = null;
     window.notifiedOnTheWay = new Set();
     window.hasShownExpiryWarning = false;
-    window.pendingClaim = null; // 🌟 NEW: Memorizes the customer's requested devices
+    window.pendingClaim = null; 
 
     document.getElementById('priceBasicDisplay').innerText = `₦${SAAS_PRICING.basic.toLocaleString()}`;
     document.getElementById('pricePremiumDisplay').innerText = `₦${SAAS_PRICING.premium.toLocaleString()}`;
@@ -669,7 +669,6 @@
     let pricesUnsubscribe = null;
     let tagsUnsubscribe = null;
 
-    // 🚨 REJECT FUNCTION (Deletes & Warns them on WhatsApp)
     window.rejectDropoff = async (docId, phone) => {
         if(!confirm("Are you sure you want to REJECT this customer's drop-off request?")) return;
         try {
@@ -755,13 +754,13 @@
         });
     }
 
+    // 🌟 FIX: Placed pendingClaim inside setTimeout!
     window.acceptDropoff = async (docId, tag, name, phone, ph, pb) => {
-        window.pendingClaim = { ph: ph || 0, pb: pb || 0 }; // 🌟 Memorize their request
-
         document.getElementById('tokenNum').value = tag;
         document.getElementById('tokenNum').dispatchEvent(new Event('input'));
         
         setTimeout(async () => {
+            window.pendingClaim = { ph: ph || 0, pb: pb || 0 }; // Memorize AFTER clear!
             document.getElementById('custName').value = name;
             document.getElementById('custPhone').value = phone;
             document.getElementById('phCount').value = ph || 0;
@@ -973,7 +972,6 @@
 
     function getPct(t, type, nowMs) { let baseTs = t.baseTs || t.jsDate.getTime(); let diff = Math.floor((nowMs - baseTs) / 60000); if(type === 'ph') return Math.min(100, (t.phBasePct || 0) + Math.floor((diff / 150) * 100)); if(type === 'pb') return Math.min(100, (t.pbBasePct || 0) + Math.floor((diff / 600) * 100)); if(type === 'ot') return Math.min(100, (t.otBasePct || 0) + Math.floor((diff / 150) * 100)); return 0; }
 
-    // 🌟 UPGRADED TICKET SAVING (Checks for lowered amounts and sends warning)
     window.saveTicket = async () => {
         const plan = currentShopData.plan || 'free'; const limit = PLAN_LIMITS[plan].sockets; const activeCount = ticketsData.filter(t => !t.collected && t.id !== editId).length;
         if (activeCount >= limit) { alert(`🔒 UPGRADE REQUIRED!\nYour ${plan.toUpperCase()} plan allows a maximum of ${limit} active devices.\nPlease upgrade to add more.`); return; }
@@ -990,11 +988,10 @@
         let hasMismatch = false;
         let mismatchMsg = null;
         
-        // 🔎 Mismatch Detection Engine
         if(window.pendingClaim && !editId) {
             if(phActual !== claimedPh || pbActual !== claimedPb) {
                 if(!confirm(`⚠️ ADJUSTMENT DETECTED!\n\nCustomer claimed: ${claimedPh}📱, ${claimedPb}🔋\nYou entered: ${phActual}📱, ${pbActual}🔋\n\nClicking OK will securely save the actual items you received and politely notify the customer.`)) {
-                    return; // Stop the save process if you hit cancel!
+                    return; 
                 }
                 
                 hasMismatch = true;
@@ -1006,7 +1003,7 @@
         
         const data = { 
             name, tag, cond, photos: currentPhotos, phone: phoneNum, debtSettled: false, ph: phActual, pb: pbActual, chFull: +document.getElementById('chFullCount').value, chUsb: +document.getElementById('chUsbCount').value, chHead: +document.getElementById('chHeadCount').value, ot: +document.getElementById('otCount').value, otPrice: +document.getElementById('otPrice').value, price: +document.getElementById('price').value, amountPaid: +document.getElementById('amtPaidInput').value, sockets: JSON.parse(document.getElementById('assignedSockets').value || "[]"), phBasePct: syncPh, pbBasePct: syncPb, otBasePct: syncOt, baseTs: Date.now(), shopId: currentShopId,
-            claimedPh: claimedPh, claimedPb: claimedPb, hasMismatch: hasMismatch // 🚨 Saved so the customer app can see it!
+            claimedPh: claimedPh, claimedPb: claimedPb, hasMismatch: hasMismatch
         };
         
         try { 
@@ -1018,7 +1015,6 @@
                 await addDoc(collection(db, "tickets"), data); 
                 resetForm(true); 
                 
-                // 📱 Fire the WhatsApp message if a mismatch happened!
                 if(mismatchMsg && phoneNum.length >= 10) {
                     let cleanPhone = phoneNum.replace(/\D/g, ''); 
                     if(cleanPhone.startsWith('0')) cleanPhone = '234' + cleanPhone.substring(1); 
