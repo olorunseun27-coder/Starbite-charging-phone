@@ -465,7 +465,7 @@
     import { getFirestore, collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-      // ⚠️ REAL FIREBASE CONFIG HERE ⚠️
+    // ⚠️ REAL FIREBASE CONFIG HERE ⚠️
     const firebaseConfig = { 
         apiKey: "AIzaSyCqmaIDptWNk8v5E5Sz5XKKSAmk6FNX6Yo", 
         authDomain: "credit-record-24f1e.firebaseapp.com", 
@@ -746,8 +746,8 @@
                         <span style="font-size: 13px; color: #333; font-weight:bold;">Devices: ${devStr || 'None'}</span>
                     </div>
                     <div style="display:flex; gap:5px;">
-                        <button onclick="acceptDropoff('${data.docId}', '${data.tag}', '${data.name}', '${data.phone}', ${data.ph || 0}, ${data.pb || 0})" style="background:var(--success); padding:10px; width:100%; margin:0; font-size: 14px;">✅ Accept</button>
-                        <button onclick="rejectDropoff('${data.docId}', '${data.phone}')" style="background:var(--danger); padding:10px; width:100%; margin:0; font-size: 14px;">❌ Reject</button>
+                        <button onclick="acceptDropoff('${data.docId}', '${data.tag}', '${data.name}', '${data.phone}', ${data.ph || 0}, ${data.pb || 0})" style="background:var(--success); padding:10px; width:100%; margin:0; font-size: 14px;">✅ Accept / Correct</button>
+                        <button onclick="rejectDropoff('${data.docId}', '${data.phone}')" style="background:var(--danger); padding:10px; width:100%; margin:0; font-size: 14px;">❌ Delete Request</button>
                     </div>
                 </div>`;
             });
@@ -985,26 +985,28 @@
         const phActual = +document.getElementById('phCount').value;
         const pbActual = +document.getElementById('pbCount').value;
         
+        let claimedPh = window.pendingClaim ? window.pendingClaim.ph : phActual;
+        let claimedPb = window.pendingClaim ? window.pendingClaim.pb : pbActual;
+        let hasMismatch = false;
         let mismatchMsg = null;
         
         // 🔎 Mismatch Detection Engine
         if(window.pendingClaim && !editId) {
-            let claimedPh = window.pendingClaim.ph;
-            let claimedPb = window.pendingClaim.pb;
-            
-            if(phActual < claimedPh || pbActual < claimedPb) {
-                if(!confirm(`⚠️ ITEM MISMATCH DETECTED!\n\nCustomer claimed: ${claimedPh} Phones, ${claimedPb} P-Banks.\nYou entered: ${phActual} Phones, ${pbActual} P-Banks.\n\nClicking OK will save the ticket and open WhatsApp to notify them of the correction.`)) {
+            if(phActual !== claimedPh || pbActual !== claimedPb) {
+                if(!confirm(`⚠️ ADJUSTMENT DETECTED!\n\nCustomer claimed: ${claimedPh}📱, ${claimedPb}🔋\nYou entered: ${phActual}📱, ${pbActual}🔋\n\nClicking OK will securely save the actual items you received and politely notify the customer.`)) {
                     return; // Stop the save process if you hit cancel!
                 }
                 
-                mismatchMsg = `Hello ${name}! 👋\n\nYour drop-off for Tag #${tag} has been processed, but we had to make a correction.\n\nYou claimed: ${claimedPh}📱 & ${claimedPb}🔋\nWe received: ${phActual}📱 & ${pbActual}🔋\n\nYour ticket has been updated to reflect exactly what was physically handed to us. If this is a mistake, please speak to the counter immediately!`;
+                hasMismatch = true;
+                mismatchMsg = `Hello ${name}! 👋\n\nThank you for dropping off your device (Tag #${tag}).\n\nJust a quick polite notice: Your app registration stated ${claimedPh}📱 and ${claimedPb}🔋, but we received ${phActual}📱 and ${pbActual}🔋 at the counter.\n\nWe have securely logged the items we received and started charging them! ⚡ If this is a mistake, please chat with us via your tracking link.`;
             }
         }
 
         const syncPh = parseInt(document.getElementById('syncPh').value) || 0; const syncPb = parseInt(document.getElementById('syncPb').value) || 0; const syncOt = parseInt(document.getElementById('syncOt').value) || 0;
         
         const data = { 
-            name, tag, cond, photos: currentPhotos, phone: phoneNum, debtSettled: false, ph: phActual, pb: pbActual, chFull: +document.getElementById('chFullCount').value, chUsb: +document.getElementById('chUsbCount').value, chHead: +document.getElementById('chHeadCount').value, ot: +document.getElementById('otCount').value, otPrice: +document.getElementById('otPrice').value, price: +document.getElementById('price').value, amountPaid: +document.getElementById('amtPaidInput').value, sockets: JSON.parse(document.getElementById('assignedSockets').value || "[]"), phBasePct: syncPh, pbBasePct: syncPb, otBasePct: syncOt, baseTs: Date.now(), shopId: currentShopId 
+            name, tag, cond, photos: currentPhotos, phone: phoneNum, debtSettled: false, ph: phActual, pb: pbActual, chFull: +document.getElementById('chFullCount').value, chUsb: +document.getElementById('chUsbCount').value, chHead: +document.getElementById('chHeadCount').value, ot: +document.getElementById('otCount').value, otPrice: +document.getElementById('otPrice').value, price: +document.getElementById('price').value, amountPaid: +document.getElementById('amtPaidInput').value, sockets: JSON.parse(document.getElementById('assignedSockets').value || "[]"), phBasePct: syncPh, pbBasePct: syncPb, otBasePct: syncOt, baseTs: Date.now(), shopId: currentShopId,
+            claimedPh: claimedPh, claimedPb: claimedPb, hasMismatch: hasMismatch // 🚨 Saved so the customer app can see it!
         };
         
         try { 
