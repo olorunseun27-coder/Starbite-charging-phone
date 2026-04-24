@@ -248,8 +248,17 @@
                 </div>
             </div>
 
-            <input type="text" id="custName" placeholder="Customer Name" style="color: #000; background: #fff;">
-            <div class="row"><input type="tel" id="custPhone" placeholder="Phone Number (Important for WhatsApp)" style="flex:2; color: #000; background: #fff;"><select id="payStatus" style="flex:1; color: #000; background: #fff;"><option value="Later">Pay Later ⏳</option><option value="Now">Paid Now 💰</option></select></div>
+            <datalist id="pastNames"></datalist>
+            <datalist id="pastPhones"></datalist>
+            
+            <input type="text" id="custName" placeholder="Customer Name" list="pastNames" style="color: #000; background: #fff; transition: 0.3s;">
+            <div class="row">
+                <input type="tel" id="custPhone" placeholder="Phone Number (Important for WhatsApp)" list="pastPhones" style="flex:2; color: #000; background: #fff; transition: 0.3s;">
+                <select id="payStatus" style="flex:1; color: #000; background: #fff;">
+                    <option value="Later">Pay Later ⏳</option>
+                    <option value="Now">Paid Now 💰</option>
+                </select>
+            </div>
             
             <div style="background:#f8d7da; padding:10px; border-radius:8px; margin-top:5px; margin-bottom:5px;">
                 <label style="font-size:12px; font-weight:bold; color:#721c24;">⚠️ Liability Check (Device Condition):</label>
@@ -465,7 +474,7 @@
     import { getFirestore, collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, setDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    // ⚠️ REAL FIREBASE CONFIG HERE ⚠️
+    // ⚠️ PASTE YOUR REAL FIREBASE KEYS HERE ⚠️
     const firebaseConfig = { 
         apiKey: "", 
         authDomain: "", 
@@ -617,7 +626,6 @@
         }
     };
 
-    // 🌟 NEW: STAFF MANAGEMENT FUNCTIONS
     window.addStaff = async () => {
         const name = document.getElementById('newStaffName').value.trim();
         const pin = document.getElementById('newStaffPin').value.trim();
@@ -708,7 +716,6 @@
         if(pricesUnsubscribe) pricesUnsubscribe();
         if(tagsUnsubscribe) tagsUnsubscribe();
 
-        // 🌟 LOAD STAFF MEMBERS LIVE
         onSnapshot(collection(db, `shops/${currentShopId}/staff`), (snap) => {
             let h = '';
             snap.forEach(d => {
@@ -748,6 +755,20 @@
             render(); 
             if(document.getElementById('extendedForm').style.display === 'block') autoCalc(); 
             if(editId) { const t = ticketsData.find(x=>x.id===editId); if(t) renderStaffChat(t.chats || []); }
+            
+            // 🧠 CRM LOGIC: Build the Dropdown Memories from past tickets
+            let nameOpts = new Set(); let phoneOpts = new Set();
+            ticketsData.forEach(t => { if(t.name) nameOpts.add(t.name); if(t.phone && t.phone.length > 7) phoneOpts.add(t.phone); });
+            
+            let dlNames = document.getElementById('pastNames'); 
+            if(dlNames) dlNames.innerHTML = [...nameOpts].map(n => `<option value="${n}">`).join('');
+            
+            let dlPhones = document.getElementById('pastPhones'); 
+            if(dlPhones) dlPhones.innerHTML = [...phoneOpts].map(p => {
+                let match = ticketsData.find(t => t.phone === p);
+                let label = match ? `${p} (${match.name})` : p;
+                return `<option value="${p}">${label}</option>`;
+            }).join('');
         });
 
         window.pendingQueue = [];
@@ -786,6 +807,43 @@
             document.getElementById('pendingDropoffsArea').innerHTML = html;
         });
     }
+
+    // 🌟 CRM LOGIC: Auto-Fill Phone when Name is typed
+    document.getElementById('custName').addEventListener('input', (e) => {
+        const n = e.target.value.trim().toLowerCase();
+        if(n.length > 2) {
+            const pInput = document.getElementById('custPhone');
+            if(!pInput.value) {
+                const match = ticketsData.find(t => t.name && t.name.toLowerCase() === n && t.phone);
+                if(match) { 
+                    pInput.value = match.phone; 
+                    pInput.style.border = '2px solid var(--success)'; 
+                    setTimeout(()=>pInput.style.border='1px solid #ccc', 2000);
+                    pInput.dispatchEvent(new Event('input')); // This wakes up the debt/VIP checker!
+                }
+            }
+        }
+    });
+
+    // 🌟 CRM LOGIC: Auto-Fill Name and Check Debts when Phone is typed
+    document.getElementById('custPhone').addEventListener('input', (e) => { 
+        const p = e.target.value.trim(); const dAlert = document.getElementById('debtAlert'); dAlert.innerHTML = ''; const vAlert = document.getElementById('vipAlert'); vAlert.innerHTML = '';
+        if(p.length > 7) { 
+            const nInput = document.getElementById('custName');
+            if(!nInput.value) {
+                const match = ticketsData.find(t => t.phone === p && t.name);
+                if(match) { 
+                    nInput.value = match.name; 
+                    nInput.style.border = '2px solid var(--success)'; 
+                    setTimeout(()=>nInput.style.border='1px solid #ccc', 2000);
+                }
+            }
+
+            const debts = ticketsData.filter(t => t.phone === p && t.amountPaid < t.price && !t.debtSettled); 
+            if(debts.length > 0) { const owed = debts.reduce((s, t) => s + (t.price - (t.amountPaid || 0)), 0); dAlert.innerHTML = `<div style="background:#f8d7da; color:#721c24; padding:10px; border-left:4px solid #f5c6cb; margin-bottom:10px; border-radius:4px; font-size:13px;"><b>🚨 UNPAID DEBT:</b><br>This number owes <b>₦${owed}</b> from past visits!</div>`; } 
+            if(priceConfig.loyalty === 'ON') { const pastCollected = ticketsData.filter(t => t.phone === p && t.collected).length; if(pastCollected > 0 && pastCollected % 5 === 4) { vAlert.innerHTML = `<div style="background:var(--gold); color:#000; padding:15px; margin-bottom:15px; border-radius:8px; text-align:center; font-weight:bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); animation: pulse 2s infinite;">🏆 VIP CUSTOMER! This is their 5th Charge! Offer a FREE service!</div>`; } }
+        } 
+    });
 
     window.acceptDropoff = async (docId, tag, name, phone, ph, pb) => {
         document.getElementById('tokenNum').value = tag;
@@ -974,7 +1032,6 @@
             if(photoArray.length > 0) { imgHTML = '<div style="display:flex; gap:5px; overflow-x:auto; margin-bottom:10px; padding-bottom:5px;">'; photoArray.forEach(img => { imgHTML += `<img src="${img}" style="width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #ccc; flex-shrink:0;">`; }); imgHTML += '</div>'; }
             document.getElementById('scanMatchDetails').innerHTML = `${imgHTML}<p style="margin:0 0 5px 0;"><strong>Customer:</strong> ${t.name}</p><p style="margin:0 0 5px 0;"><strong>Tag:</strong> #${t.tag}</p>${generateSmartStatusHTML(t)}<p style="margin:0 0 5px 0; font-size:13px; color:#555;"><strong>Amount:</strong> ₦${t.price}</p>`; 
             
-            // 🌟 SMART PIN PASSING: Because you scanned it, auto-fill the PIN!
             document.getElementById('btnScanCollect').onclick = () => { closeModal('modalScanMatch'); openCollect(t.id, true); }; 
             document.getElementById('btnScanEdit').onclick = () => { closeModal('modalScanMatch'); startEdit(t.id); }; 
             document.getElementById('modalScanMatch').style.display = 'flex'; 
@@ -1081,7 +1138,6 @@
         try { await updateDoc(doc(db, "tickets", id), updateData); closeModal('modalShelf'); } catch(e) { alert(e.message); }
     };
 
-    // 🌟 SMART PIN FIX: Only auto-fill if `fromScan` is passed as true!
     window.openCollect = (id, fromScan = false) => {
         const t = ticketsData.find(x => x.id === id); 
         document.getElementById('col-id').value = id; 
