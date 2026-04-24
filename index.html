@@ -467,12 +467,12 @@
 
     // ⚠️ REAL FIREBASE CONFIG HERE ⚠️
     const firebaseConfig = { 
-        apiKey: "AIzaSyCqmaIDptWNk8v5E5Sz5XKKSAmk6FNX6Yo", 
-        authDomain: "credit-record-24f1e.firebaseapp.com", 
-        projectId: "credit-record-24f1e", 
-        storageBucket: "credit-record-24f1e.firebasestorage.app", 
-        messagingSenderId: "181078991416", 
-        appId: "1:181078991416:web:6e562cccc19767561b7ccd" 
+        apiKey: "", 
+        authDomain: "", 
+        projectId: "", 
+        storageBucket: "", 
+        messagingSenderId: "", 
+        appId: "" 
     };
     
     const app = initializeApp(firebaseConfig); 
@@ -617,6 +617,26 @@
         }
     };
 
+    // 🌟 NEW: STAFF MANAGEMENT FUNCTIONS
+    window.addStaff = async () => {
+        const name = document.getElementById('newStaffName').value.trim();
+        const pin = document.getElementById('newStaffPin').value.trim();
+        const role = document.getElementById('newStaffRole').value;
+        if (!name || pin.length < 4) return alert("Please enter a name and a PIN (min 4 digits).");
+        try {
+            await addDoc(collection(db, `shops/${currentShopId}/staff`), { name, pin, role, addedAt: Date.now() });
+            document.getElementById('newStaffName').value = '';
+            document.getElementById('newStaffPin').value = '';
+            alert("Staff member added successfully!");
+        } catch (e) { alert("Error adding staff: " + e.message); }
+    };
+
+    window.deleteStaff = async (id) => {
+        if(confirm("Remove this staff member?")) {
+            try { await deleteDoc(doc(db, `shops/${currentShopId}/staff`, id)); } catch(e) { alert(e.message); }
+        }
+    };
+
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentShopId = user.uid;
@@ -688,6 +708,19 @@
         if(pricesUnsubscribe) pricesUnsubscribe();
         if(tagsUnsubscribe) tagsUnsubscribe();
 
+        // 🌟 LOAD STAFF MEMBERS LIVE
+        onSnapshot(collection(db, `shops/${currentShopId}/staff`), (snap) => {
+            let h = '';
+            snap.forEach(d => {
+                const s = d.data();
+                h += `<div style="background:#444; padding:10px; margin-bottom:5px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; color:#fff;">
+                    <div><b>${s.name}</b> (${s.role})<br><span style="color:#aaa; font-size:12px;">PIN: ${s.pin}</span></div>
+                    <button onclick="deleteStaff('${d.id}')" style="background:var(--danger); width:auto; padding:5px 10px; margin:0;">X</button>
+                </div>`;
+            });
+            document.getElementById('userList').innerHTML = h || '<p style="color:#aaa; font-size:13px;">No staff added yet.</p>';
+        });
+
         pricesUnsubscribe = onSnapshot(doc(db, `shops/${currentShopId}/config/prices`), (snap) => {
             if (snap.exists()) { 
                 const data = snap.data(); 
@@ -754,13 +787,12 @@
         });
     }
 
-    // 🌟 FIX: Placed pendingClaim inside setTimeout!
     window.acceptDropoff = async (docId, tag, name, phone, ph, pb) => {
         document.getElementById('tokenNum').value = tag;
         document.getElementById('tokenNum').dispatchEvent(new Event('input'));
         
         setTimeout(async () => {
-            window.pendingClaim = { ph: ph || 0, pb: pb || 0 }; // Memorize AFTER clear!
+            window.pendingClaim = { ph: ph || 0, pb: pb || 0 }; 
             document.getElementById('custName').value = name;
             document.getElementById('custPhone').value = phone;
             document.getElementById('phCount').value = ph || 0;
@@ -941,7 +973,9 @@
             let photoArray = t.photos || (t.photo ? [t.photo] : []); let imgHTML = '';
             if(photoArray.length > 0) { imgHTML = '<div style="display:flex; gap:5px; overflow-x:auto; margin-bottom:10px; padding-bottom:5px;">'; photoArray.forEach(img => { imgHTML += `<img src="${img}" style="width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #ccc; flex-shrink:0;">`; }); imgHTML += '</div>'; }
             document.getElementById('scanMatchDetails').innerHTML = `${imgHTML}<p style="margin:0 0 5px 0;"><strong>Customer:</strong> ${t.name}</p><p style="margin:0 0 5px 0;"><strong>Tag:</strong> #${t.tag}</p>${generateSmartStatusHTML(t)}<p style="margin:0 0 5px 0; font-size:13px; color:#555;"><strong>Amount:</strong> ₦${t.price}</p>`; 
-            document.getElementById('btnScanCollect').onclick = () => { closeModal('modalScanMatch'); openCollect(t.id); }; 
+            
+            // 🌟 SMART PIN PASSING: Because you scanned it, auto-fill the PIN!
+            document.getElementById('btnScanCollect').onclick = () => { closeModal('modalScanMatch'); openCollect(t.id, true); }; 
             document.getElementById('btnScanEdit').onclick = () => { closeModal('modalScanMatch'); startEdit(t.id); }; 
             document.getElementById('modalScanMatch').style.display = 'flex'; 
             return; 
@@ -1047,8 +1081,16 @@
         try { await updateDoc(doc(db, "tickets", id), updateData); closeModal('modalShelf'); } catch(e) { alert(e.message); }
     };
 
-    window.openCollect = (id) => {
-        const t = ticketsData.find(x => x.id === id); document.getElementById('col-id').value = id; document.getElementById('verifyPin').value = scannedPinMemory; scannedPinMemory = ""; 
+    // 🌟 SMART PIN FIX: Only auto-fill if `fromScan` is passed as true!
+    window.openCollect = (id, fromScan = false) => {
+        const t = ticketsData.find(x => x.id === id); 
+        document.getElementById('col-id').value = id; 
+        
+        let cleanTag = String(t.tag).replace(/^#+/, '');
+        let knownPin = secureTagsData[cleanTag];
+        document.getElementById('verifyPin').value = fromScan ? (scannedPinMemory || knownPin || "") : ""; 
+        scannedPinMemory = ""; 
+        
         let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); let bal = t.price - amtPaid;
         document.getElementById('col-total-bill').innerText = t.price; document.getElementById('col-already-paid').innerText = amtPaid; document.getElementById('col-balance').innerText = bal; document.getElementById('col-pay-now').value = 0; document.getElementById('col-selected-value').innerText = 0;
         let h=''; h+=renderColRow('Phones',t.ph,t.colPh,'in-col-ph'); h+=renderColRow('P-Banks',t.pb,t.colPb,'in-col-pb');
@@ -1229,7 +1271,6 @@
 
     window.cancelEdit = () => { editId=null; currentSockets=[]; resetForm(true); };
     
-    // 🌟 Make sure pending claims wipe when you cancel
     function clearFormFieldsOnly() { window.pendingClaim = null; stopCam(); currentPhotos = []; renderPhotoGallery(); ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput','syncPh','syncPb','syncOt'].forEach(id => { let el = document.getElementById(id); if(el) el.value=id.includes('Count')||id.includes('Price')||id.includes('amt')||id.includes('sync')?0:""; }); document.getElementById('payStatus').value="Later"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); document.getElementById('staffChatArea').style.display='none'; document.getElementById('staffChatHistory').innerHTML=''; document.getElementById('staffChatInput').value=''; }
     function resetForm(cT=false) { if(cT){ document.getElementById('tokenNum').value=""; document.getElementById('extendedForm').style.display='none'; document.getElementById('formAction').innerText="Enter Tag 🔵"; document.getElementById('saveBtn').style.display='none'; document.getElementById('cancelEditBtn').style.display="none"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; } currentSockets=[]; clearFormFieldsOnly(); autoCalc(); }
     window.closeModal = (id) => { document.getElementById(id).style.display='none'; if(id==='modalPrint') document.getElementById('receiptPreview').style.border="2px solid #333"; };
