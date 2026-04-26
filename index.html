@@ -576,16 +576,9 @@
     window.hasShownExpiryWarning = false;
     window.pendingClaim = null; 
 
-// 🌟 NOTIFICATION PERMISSION REQUEST (WITH TEST FIRE)
-    window.requestNotificationPermission = () => {
-        if ("Notification" in window) {
-            Notification.requestPermission().then(permission => {
-                if (permission === "granted") {
-                    alert("✅ Permission granted! A test banner will appear in 3 seconds. Please close this box and wait.");
-                    
-                    // Fire a test notification 3 seconds after they click OK
-                    setTimeout(() => {
-                        // 🌟 REGISTER THE INVISIBLE BACKGROUND WORKER
+
+
+// 🌟 REGISTER THE INVISIBLE BACKGROUND WORKER
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').then(() => {
             console.log("Android Background Worker Ready");
@@ -605,17 +598,31 @@
                 });
             } catch(e) {
                 // Fallback for Windows/Mac laptops
-                new Notification(title, { body: body });
+                new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/3579/3579135.png" });
             }
         }
     };
-    // 🌟 THE MASTER NOTIFICATION PUSHER
-    window.sendPushNotification = (title, body) => {
-        if ("Notification" in window && Notification.permission === "granted") {
-            new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/3579/3579135.png" });
+
+    // 🌟 NOTIFICATION PERMISSION REQUEST (WITH TEST FIRE)
+    window.requestNotificationPermission = () => {
+        if ("Notification" in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    alert("✅ Permission granted! A test banner will appear in 3 seconds. Please close this box and wait.");
+                    
+                    // Fire a test notification 3 seconds after they click OK
+                    setTimeout(() => {
+                        window.sendPushNotification("🚀 Starbite Systems", "Notifications are working perfectly! You are ready for business.");
+                    }, 3000);
+                    
+                } else {
+                    alert("❌ Notifications blocked. Please allow permissions in your phone's browser settings.");
+                }
+            });
+        } else {
+            alert("This device does not support standard web notifications.");
         }
     };
-
     document.getElementById('priceBasicDisplay').innerText = `₦${SAAS_PRICING.basic.toLocaleString()}`;
     document.getElementById('pricePremiumDisplay').innerText = `₦${SAAS_PRICING.premium.toLocaleString()}`;
 
@@ -1824,4 +1831,4 @@
     window.downloadSingleTag = (elementId, tagNum) => { const el = document.getElementById(elementId); html2canvas(el, { scale: 3, useCORS: true, allowTaint: true }).then(canvas => { const link = document.createElement('a'); link.download = `Starbite-Tag-${tagNum}.png`; link.href = canvas.toDataURL('image/png'); link.click(); }); };
   </script>
 </body>
-            </html>
+                                    </html>
