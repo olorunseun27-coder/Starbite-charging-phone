@@ -585,15 +585,28 @@
                     
                     // Fire a test notification 3 seconds after they click OK
                     setTimeout(() => {
-                        window.sendPushNotification("🚀 Starbite Systems", "Notifications are working perfectly! You are ready for business.");
-                    }, 3000);
-                    
-                } else {
-                    alert("❌ Notifications blocked. Please allow permissions in your phone's browser settings.");
-                }
-            });
-        } else {
-            alert("This device does not support standard web notifications.");
+                        // 🌟 REGISTER THE INVISIBLE BACKGROUND WORKER
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').then(() => {
+            console.log("Android Background Worker Ready");
+        });
+    }
+
+    // 🌟 THE MASTER NOTIFICATION PUSHER (ANDROID FIX)
+    window.sendPushNotification = async (title, body) => {
+        if ("Notification" in window && Notification.permission === "granted") {
+            try {
+                // Force Android to use the background worker to show the banner
+                const reg = await navigator.serviceWorker.ready;
+                reg.showNotification(title, { 
+                    body: body, 
+                    icon: "https://cdn-icons-png.flaticon.com/512/3579/3579135.png",
+                    vibrate: [200, 100, 200] // Makes the phone buzz!
+                });
+            } catch(e) {
+                // Fallback for Windows/Mac laptops
+                new Notification(title, { body: body });
+            }
         }
     };
     // 🌟 THE MASTER NOTIFICATION PUSHER
@@ -1811,4 +1824,4 @@
     window.downloadSingleTag = (elementId, tagNum) => { const el = document.getElementById(elementId); html2canvas(el, { scale: 3, useCORS: true, allowTaint: true }).then(canvas => { const link = document.createElement('a'); link.download = `Starbite-Tag-${tagNum}.png`; link.href = canvas.toDataURL('image/png'); link.click(); }); };
   </script>
 </body>
-          </html>
+            </html>
