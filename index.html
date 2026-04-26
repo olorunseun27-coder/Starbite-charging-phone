@@ -144,6 +144,8 @@
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
               <span id="shopBadge" style="font-weight: bold; font-size: 14px; padding: 5px 10px; background: #e3f2fd; color: var(--primary); border-radius: 6px;"></span>
               
+              <button id="btnNotif" style="width: auto; padding: 8px 12px; background: #6f42c1; color: white; border: 2px solid #fff; box-shadow: 0 0 8px rgba(111, 66, 193, 0.5);" onclick="requestNotificationPermission()">🔔 Enable Alerts</button>
+
               <span id="activeStaffBadge" style="font-weight: 900; font-size: 14px; padding: 5px 10px; background: #fff3cd; color: #856404; border: 2px solid #ffeeba; border-radius: 6px;">👑 Owner</span>
               <button style="width: auto; padding: 8px 12px; background: var(--dark);" onclick="lockScreen()">🔒 Switch User</button>
               
@@ -250,6 +252,8 @@
         </div>
         <div id="extendedForm" style="display: none; margin-top: 15px; animation: fadeIn 0.3s;">
             <div id="securityCheckAlert"></div>
+            
+            <div id="walletAlert"></div>
             <div id="debtAlert"></div>
             <div id="vipAlert"></div>
             
@@ -500,6 +504,14 @@
                 <div style="background:#fff; padding:10px; border-radius:6px; border:1px solid #ccc;">
                     <label style="font-size:12px; font-weight:bold; color:#333; display:block; margin-bottom:5px;">💰 Payment Received NOW:</label>
                     <input type="number" id="col-pay-now" value="0" min="0" style="font-size:24px; font-weight:bold; color:var(--success); text-align:center; padding:10px; margin:0;">
+                    
+                    <select id="col-pay-method" style="margin-top:10px; padding:10px; font-size:16px; font-weight:bold; width:100%; border:1px solid #ccc; border-radius:6px; background:#f8f9fa; color:#000;">
+                        <option value="Cash">💵 Cash</option>
+                        <option value="POS">💳 POS</option>
+                        <option value="Transfer">🏦 Transfer</option>
+                        <option value="Wallet">📱 Wallet</option>
+                    </select>
+                    
                     <small style="color:#666; display:block; text-align:center; margin-top:5px;">(Value of items selected: ₦<span id="col-selected-value">0</span>)</small>
                 </div>
             </div>
@@ -545,18 +557,46 @@
     let ticketsData=[], secureTagsData={}, powerData={state:'ON', offAt:null}, editId=null, priceConfig={ph:200, pb:300, chFull:100, chUsb:50, chHead:50, maxSockets:50, loyalty:'ON', closeTime:'21:00', bankName:'', accName:'', accNumber:''}, currentSockets=[], scannedPinMemory="";
     let currentShopId = null;
     let currentShopData = null;
-    let walletsData = {}; // 🌟 RESTORED WALLET MEMORY
+    let walletsData = {}; 
 
     window.staffMembers = [];
     window.currentStaffName = "Owner";
     window.currentStaffRole = "admin";
     window.isUnlocked = true;
-    window.isFreeEligible = false; // 🌟 RESTORED FREE ELIGIBILITY
+    window.isFreeEligible = false; 
 
     window.lastAlertMin = null;
+    
+    // 🌟 THE NOTIFICATION MEMORY ENGINES
+    window.notifiedPending = new Set();
+    window.notifiedChats = new Set();
+    window.notifiedFull = new Set();
     window.notifiedOnTheWay = new Set();
+    
     window.hasShownExpiryWarning = false;
     window.pendingClaim = null; 
+
+    // 🌟 NOTIFICATION PERMISSION REQUEST
+    window.requestNotificationPermission = () => {
+        if ("Notification" in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    alert("✅ Notifications enabled! Your wrapper app will now push banners to your phone.");
+                } else {
+                    alert("❌ Notifications blocked. Please allow permissions in your app settings.");
+                }
+            });
+        } else {
+            alert("This device does not support standard web notifications.");
+        }
+    };
+
+    // 🌟 THE MASTER NOTIFICATION PUSHER
+    window.sendPushNotification = (title, body) => {
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/3579/3579135.png" });
+        }
+    };
 
     document.getElementById('priceBasicDisplay').innerText = `₦${SAAS_PRICING.basic.toLocaleString()}`;
     document.getElementById('pricePremiumDisplay').innerText = `₦${SAAS_PRICING.premium.toLocaleString()}`;
@@ -776,7 +816,6 @@
         } catch(e) { alert("Error: " + e.message); }
     };
 
-    // 🌟 RESTORED STREAK CALCULATOR
     function getStreak(phone) {
         const tix = ticketsData.filter(t => t.phone === phone && t.collected);
         if(tix.length === 0) return 0;
@@ -903,7 +942,6 @@
         if(pricesUnsubscribe) pricesUnsubscribe();
         if(tagsUnsubscribe) tagsUnsubscribe();
 
-        // 🌟 LOAD WALLETS LIVE
         onSnapshot(collection(db, `shops/${currentShopId}/wallets`), (snap) => {
             walletsData = {};
             snap.forEach(d => walletsData[d.id] = d.data());
@@ -981,6 +1019,12 @@
                 
                 window.pendingQueue.push(data);
                 
+                // 🌟 THE NOTIFICATION TRIGGER FOR NEW DROP-OFFS
+                if (!window.notifiedPending.has(data.docId)) {
+                    window.notifiedPending.add(data.docId);
+                    window.sendPushNotification("🔔 New Drop-off Request!", `${data.name} wants to drop off devices (Tag #${data.tag}).`);
+                }
+                
                 let devStr = "";
                 if(data.ph > 0) devStr += `${data.ph}📱 `;
                 if(data.pb > 0) devStr += `${data.pb}🔋 `;
@@ -1025,6 +1069,7 @@
         const p = e.target.value.trim(); 
         const vAlert = document.getElementById('vipAlert'); vAlert.innerHTML = '';
         const dAlert = document.getElementById('debtAlert'); dAlert.innerHTML = '';
+        const wAlert = document.getElementById('walletAlert'); if(wAlert) wAlert.innerHTML = ''; 
         
         window.isFreeEligible = false; 
         
@@ -1040,7 +1085,11 @@
             }
             
             if(walletsData[p] && walletsData[p].balance > 0) {
-                vAlert.innerHTML += `<div style="background:#d4edda; color:#155724; padding:10px; margin-bottom:10px; border-radius:8px; border:2px solid var(--success); font-weight:bold;">💳 Wallet Balance: ₦${walletsData[p].balance.toLocaleString()}</div>`;
+                wAlert.innerHTML = `
+                <div style="background:#d4edda; color:#155724; padding:12px; border:2px solid var(--success); margin-bottom:10px; border-radius:8px; font-size:14px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div><b>💳 Wallet Active:</b><br><span style="font-size:18px; font-weight:900;">₦${walletsData[p].balance.toLocaleString()}</span></div>
+                    <button type="button" onclick="document.getElementById('payStatus').value='Wallet'; window.autoCalc(); this.innerText='✅ Wallet Selected'; this.style.background='#155724';" style="background:var(--success); color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px; margin:0; width:auto; font-weight:bold;">Pay with Wallet</button>
+                </div>`;
             }
 
             if(priceConfig.loyalty === 'ON') {
@@ -1073,6 +1122,9 @@
             window.pendingClaim = { ph: ph || 0, pb: pb || 0, chFull: chFull || 0, chUsb: chUsb || 0, chHead: chHead || 0 }; 
             document.getElementById('custName').value = name;
             document.getElementById('custPhone').value = phone;
+            
+            document.getElementById('custPhone').dispatchEvent(new Event('input'));
+            
             document.getElementById('phCount').value = ph || 0;
             document.getElementById('pbCount').value = pb || 0;
             document.getElementById('chFullCount').value = chFull || 0;
@@ -1153,7 +1205,15 @@
         document.getElementById('btnSnapCam').style.display='none'; document.getElementById('btnStopCam').style.display='none'; 
     };
 
-    window.exportCSV = () => { let csv = "Date,Customer Name,Tag Number,Phone,Items,Price,Amount Paid,Status,Logged By,Collected By,Rating,Review,Conditions\n"; ticketsData.forEach(t => { let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); csv += `"${t.jsDate?t.jsDate.toLocaleDateString():''}","${(t.name||"").replace(/"/g, '""')}","${t.tag}","${t.phone||''}","${t.ph||0}📱 ${t.pb||0}🔋",${t.price},${amtPaid},"${t.collected?'Collected':(t.shelved?'Shelved':'Active')}","${t.staff||''}","${t.collectedBy||''}","${t.rating||''}","${(t.reviewText||'').replace(/"/g, '""')}","${(t.cond||[]).join(', ')}"\n`; }); const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))); link.setAttribute("download", `Starbite_Report_${new Date().toISOString().split('T')[0]}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); };
+    window.exportCSV = () => { 
+        let csv = "Date,Customer Name,Tag Number,Phone,Items,Price,Amount Paid,Payment Method,Status,Logged By,Collected By,Rating,Review,Conditions\n"; 
+        ticketsData.forEach(t => { 
+            let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); 
+            let pMethod = t.colPaymentMethod || (t.payStatus === 'Now' ? 'Cash/Transfer (Creation)' : (t.payStatus === 'Wallet' ? 'Wallet (Creation)' : 'N/A'));
+            csv += `"${t.jsDate?t.jsDate.toLocaleDateString():''}","${(t.name||"").replace(/"/g, '""')}","${t.tag}","${t.phone||''}","${t.ph||0}📱 ${t.pb||0}🔋",${t.price},${amtPaid},"${pMethod}","${t.collected?'Collected':(t.shelved?'Shelved':'Active')}","${t.staff||''}","${t.collectedBy||''}","${t.rating||''}","${(t.reviewText||'').replace(/"/g, '""')}","${(t.cond||[]).join(', ')}"\n`; 
+        }); 
+        const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))); link.setAttribute("download", `Starbite_Report_${new Date().toISOString().split('T')[0]}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); 
+    };
 
     window.sendWhatsApp = (id) => {
         const t = ticketsData.find(x => x.id === id);
@@ -1414,6 +1474,9 @@
         
         let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); let bal = t.price - amtPaid;
         document.getElementById('col-total-bill').innerText = t.price; document.getElementById('col-already-paid').innerText = amtPaid; document.getElementById('col-balance').innerText = bal; document.getElementById('col-pay-now').value = 0; document.getElementById('col-selected-value').innerText = 0;
+        
+        document.getElementById('col-pay-method').value = 'Cash';
+
         let h=''; h+=renderColRow('Phones',t.ph,t.colPh,'in-col-ph'); h+=renderColRow('P-Banks',t.pb,t.colPb,'in-col-pb');
         if(t.chFull>0||t.chUsb>0||t.chHead>0){ h+=renderColRow('Full Chrg',t.chFull,t.colChFull,'in-col-chFull'); h+=renderColRow('USB',t.chUsb,t.colChUsb,'in-col-chUsb'); h+=renderColRow('Head',t.chHead,t.colChHead,'in-col-chHead'); } else if(t.ch>0) { h+=renderColRow('Leg Chrg',t.ch,t.colCh,'in-col-ch'); } h+=renderColRow('Others',t.ot,t.colOt,'in-col-ot');
         document.getElementById('collect-items-list').innerHTML = h; ['in-col-ph', 'in-col-pb', 'in-col-chFull', 'in-col-chUsb', 'in-col-chHead', 'in-col-ch', 'in-col-ot'].forEach(elId => { let el = document.getElementById(elId); if(el) el.addEventListener('input', window.calcColValue); });
@@ -1434,24 +1497,59 @@
 
     window.confirmCollect = async () => {
         const id=document.getElementById('col-id').value, t=ticketsData.find(x=>x.id===id); if(isFakeTicket(t.tag)) return; if(!confirm("⚠️ STOP! \n\nHave you physically removed the Tag from the customer's device?")) return;
-        let payNow = +(document.getElementById('col-pay-now').value || 0), amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0);
+        
+        let payNow = +(document.getElementById('col-pay-now').value || 0);
+        let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0);
+        let payMethod = document.getElementById('col-pay-method').value;
+
+        if (payNow > 0 && payMethod === 'Wallet') {
+            let bal = walletsData[t.phone] ? walletsData[t.phone].balance : 0;
+            if (bal < payNow) {
+                alert(`❌ INSUFFICIENT WALLET FUNDS!\n\nWallet Balance: ₦${bal}\nTrying to pay: ₦${payNow}\n\nPlease select another payment method (Cash, POS, Transfer).`);
+                return;
+            }
+            await setDoc(doc(db, `shops/${currentShopId}/wallets`, t.phone), { balance: bal - payNow }, { merge: true });
+        }
+
         const u={ colPh:(t.colPh||0)+(+(document.getElementById('in-col-ph')?.value||0)), colPb:(t.colPb||0)+(+(document.getElementById('in-col-pb')?.value||0)), colChFull:(t.colChFull||0)+(+(document.getElementById('in-col-chFull')?.value||0)), colChUsb:(t.colChUsb||0)+(+(document.getElementById('in-col-chUsb')?.value||0)), colChHead:(t.colChHead||0)+(+(document.getElementById('in-col-chHead')?.value||0)), colOt:(t.colOt||0)+(+(document.getElementById('in-col-ot')?.value||0)), amountPaid: amtPaid + payNow };
         if(t.ch>0) u.colCh=(t.colCh||0)+(+(document.getElementById('in-col-ch')?.value||0));
         
+        if (payNow > 0) u.colPaymentMethod = payMethod;
+
         if((u.colPh>=(t.ph||0))&&(u.colPb>=(t.pb||0))&&(u.colChFull>=(t.chFull||0))&&(u.colChUsb>=(t.chUsb||0))&&(u.colChHead>=(t.chHead||0))&&((u.colCh||0)>=(t.ch||0))&&(u.colOt>=(t.ot||0))) { u.collected=true; u.collDate=new Date().toLocaleDateString(); u.sockets=[]; u.collectedBy = window.currentStaffName; }
         
-        await updateDoc(doc(db,"tickets",id), u); playChaChing(); closeModal('mod-collect'); document.getElementById('tokenNum').value=""; document.getElementById('formAction').innerText="Enter Tag to Start 🔵"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML='';
+        await updateDoc(doc(db,"tickets",id), u); playChaChing(); closeModal('mod-collect'); document.getElementById('tokenNum').value=""; document.getElementById('formAction').innerText="Enter Tag to Start 🔵"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML='';
     };
 
     window.quickCollectAll = async () => {
         const id=document.getElementById('col-id').value, t=ticketsData.find(x=>x.id===id); if(isFakeTicket(t.tag)) return; 
-        let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); let bal = t.price - amtPaid; let payNow = 0;
-        if(bal > 0) { let p = prompt(`Customer still owes ₦${bal}.\n\nHow much are they paying now?`, bal); if(p === null) return; payNow = +p; }
+        
+        let payNow = +(document.getElementById('col-pay-now').value || 0);
+        let payMethod = document.getElementById('col-pay-method').value;
+        let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); 
+        let bal = t.price - amtPaid; 
+        
+        if(bal > 0 && payNow === 0) { 
+            if(!confirm(`Customer still owes ₦${bal}, but you entered ₦0 for payment inside the manager.\n\nContinue anyway?`)) return; 
+        }
+        
+        if (payNow > 0 && payMethod === 'Wallet') {
+            let wBal = walletsData[t.phone] ? walletsData[t.phone].balance : 0;
+            if (wBal < payNow) {
+                alert(`❌ INSUFFICIENT WALLET FUNDS!\n\nWallet Balance: ₦${wBal}\nTrying to pay: ₦${payNow}\n\nPlease select another payment method (Cash, POS, Transfer).`);
+                return;
+            }
+            await setDoc(doc(db, `shops/${currentShopId}/wallets`, t.phone), { balance: wBal - payNow }, { merge: true });
+        }
+
         if(!confirm("⚠️ STOP! \n\nHave you physically removed the Tag from the customer's device?")) return;
         
-        await updateDoc(doc(db,"tickets",id), { colPh:t.ph||0, colPb:t.pb||0, colChFull:t.chFull||0, colChUsb:t.chUsb||0, colChHead:t.chHead||0, colCh:t.ch||0, colOt:t.ot||0, sockets:[], collected:true, collDate:new Date().toLocaleDateString(), amountPaid: amtPaid + payNow, collectedBy: window.currentStaffName }); 
+        let updateObj = { colPh:t.ph||0, colPb:t.pb||0, colChFull:t.chFull||0, colChUsb:t.chUsb||0, colChHead:t.chHead||0, colCh:t.ch||0, colOt:t.ot||0, sockets:[], collected:true, collDate:new Date().toLocaleDateString(), amountPaid: amtPaid + payNow, collectedBy: window.currentStaffName }; 
+        if (payNow > 0) updateObj.colPaymentMethod = payMethod;
+
+        await updateDoc(doc(db,"tickets",id), updateObj); 
         
-        playChaChing(); closeModal('mod-collect'); document.getElementById('tokenNum').value=""; document.getElementById('formAction').innerText="Enter Tag to Start 🔵"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML='';
+        playChaChing(); closeModal('mod-collect'); document.getElementById('tokenNum').value=""; document.getElementById('formAction').innerText="Enter Tag to Start 🔵"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML='';
     };
 
     window.openReviews = () => {
@@ -1536,7 +1634,38 @@
         document.getElementById('valCash').innerText="₦"+stats.cash.toLocaleString(); document.getElementById('valPending').innerText="₦"+stats.pending.toLocaleString(); document.getElementById('valCount').innerHTML=`<span style="font-size:16px;">${stats.aPh}📱 ${stats.aPb}🔋 ${stats.aOt}📦</span>`; document.getElementById('countActive').innerText=active.length;
 
         updateAnalytics();
-        active.forEach(t => { if(t.onTheWay && !t.onTheWayAck && !window.notifiedOnTheWay.has(t.id)) { window.notifiedOnTheWay.add(t.id); playHonk(); } });
+        
+        // 🌟 THE NOTIFICATION TRIGGERS FOR ACTIVE TICKETS
+        active.forEach(t => { 
+            // 1. Customer Arriving
+            if(t.onTheWay && !t.onTheWayAck && !window.notifiedOnTheWay.has(t.id)) { 
+                window.notifiedOnTheWay.add(t.id); 
+                playHonk(); 
+                window.sendPushNotification("🏃‍♂️ Customer Arriving!", `${t.name} is on their way to pick up Tag #${t.tag}.`);
+            }
+            
+            // 2. New Chat Message
+            if(t.hasUnread && !window.notifiedChats.has(t.id)) {
+                window.notifiedChats.add(t.id);
+                window.sendPushNotification("💬 New Message", `Customer ${t.name} (Tag #${t.tag}) sent a message!`);
+            } else if (!t.hasUnread) {
+                window.notifiedChats.delete(t.id); 
+            }
+            
+            // 3. Battery at 100%
+            const nowMs = powerData.state === 'OFF' ? powerData.offAt : Date.now();
+            let activePh = (t.ph || 0) - (t.colPh || 0); let activePb = (t.pb || 0) - (t.colPb || 0); let activeOt = (t.ot || 0) - (t.colOt || 0);
+            let isFull = false;
+            
+            if(activePh > 0 && getPct(t, 'ph', nowMs) >= 100 && !t.shelfPh) isFull = true;
+            if(activePb > 0 && getPct(t, 'pb', nowMs) >= 100 && !t.shelfPb) isFull = true;
+            if(activePh <= 0 && activePb <= 0 && activeOt > 0 && getPct(t, 'ot', nowMs) >= 100 && !t.shelfOt) isFull = true;
+            
+            if (isFull && !t.shelved && !window.notifiedFull.has(t.id)) {
+                window.notifiedFull.add(t.id);
+                window.sendPushNotification("⚡ Device Full!", `Tag #${t.tag} (${t.name}) has reached 100%. Move to shelf!`);
+            }
+        });
     }
 
     function ticketTemplate(t) {
@@ -1562,9 +1691,8 @@
 
         let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); let bal = t.price - amtPaid; let badgeHtml = '';
         
-        // 🌟 FREE CHARGE BADGE OVERRIDE
         if(t.isLoyaltyFree) {
-            badgeHtml = `<span style="background:var(--gold); color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; border:1px solid #c3e6cb;">🔥 5th FREE!</span>`;
+            badgeHtml = `<span style="background:var(--gold); color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; border:1px solid #ffeeba;">🔥 5th FREE!</span>`;
         } else if(bal <= 0) { badgeHtml = `<span style="background:#d4edda; color:#155724; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; border:1px solid #c3e6cb;">✅ PAID IN FULL</span>`; } else if(amtPaid > 0) { badgeHtml = `<span style="background:#fff3cd; color:#856404; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; border:1px solid #ffeeba;">⏳ OWES ₦${bal}</span>`; } else { badgeHtml = `<span style="background:#f8d7da; color:#721c24; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; border:1px solid #f5c6cb;">⏳ PAY LATER</span>`; }
 
         let whatsappBtnHtml = '';
@@ -1574,9 +1702,48 @@
     }
 
     function historyTemplate(t) {
-        let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); let debtBtn = (amtPaid < t.price && !t.debtSettled) ? `<button onclick="settleDebt('${t.id}')" style="background:var(--warning); color:#000; padding:4px 8px; margin-top:5px; width:100%; border-radius:4px; font-size:12px; font-weight:bold;">💸 Pay Remaining ₦${t.price - amtPaid}</button>` : ''; let hasPhoto = (t.photos && t.photos.length > 0) || t.photo ? '📸 ' : '';
-        return `<div class="ticket" style="border-left-color:#ccc; opacity:0.8;"><b style="color:#000;">${hasPhoto}${t.name} (#${t.tag})</b> - <span style="color:#000;">Total: ₦${t.price}</span><br><small style="color:#000;">Out: ${t.collDate}</small>${debtBtn}<button onclick="revertCollection('${t.id}')" style="width:100%; padding:4px 8px; margin-top:5px; background:#666; border-radius:4px; color:white; border:none;">Re-activate</button></div>`; 
+        let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); 
+        let debtBtn = (amtPaid < t.price && !t.debtSettled) ? `<button onclick="settleDebt('${t.id}')" style="background:var(--warning); color:#000; padding:4px 8px; margin-top:5px; width:100%; border-radius:4px; font-size:12px; font-weight:bold;">💸 Pay Remaining ₦${t.price - amtPaid}</button>` : ''; 
+        let hasPhoto = (t.photos && t.photos.length > 0) || t.photo ? '📸 ' : '';
+        
+        let pMethodStr = t.colPaymentMethod || (t.payStatus === 'Now' ? 'Cash/Transfer (Creation)' : (t.payStatus === 'Wallet' ? 'Wallet (Creation)' : 'Unknown'));
+        
+        return `<div class="ticket" style="border-left-color:#ccc; opacity:0.8;"><b style="color:#000;">${hasPhoto}${t.name} (#${t.tag})</b> - <span style="color:#000;">Total: ₦${t.price}</span><br><small style="color:#000;">Out: ${t.collDate}</small><br><small style="color:#28a745; font-weight:bold;">Paid via: ${pMethodStr}</small>${debtBtn}<button onclick="revertCollection('${t.id}')" style="width:100%; padding:4px 8px; margin-top:5px; background:#666; border-radius:4px; color:white; border:none;">Re-activate</button></div>`; 
     }
+
+    window.settleDebt = async (id) => {
+        const t = ticketsData.find(x => x.id === id);
+        if (!t) return;
+        
+        let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0);
+        let owed = t.price - amtPaid;
+        
+        if (owed <= 0) {
+             await updateDoc(doc(db, "tickets", id), { debtSettled: true });
+             alert("✅ Fixed! This ticket was actually already paid, the system just refreshed the record.");
+             return;
+        }
+        
+        if (confirm(`💰 Clear the ₦${owed} debt for ${t.name}?\n\nClick OK if they have handed you the cash.`)) {
+            try {
+                await updateDoc(doc(db, "tickets", id), { 
+                    amountPaid: t.price, 
+                    debtSettled: true,
+                    debtSettledDate: new Date().toLocaleDateString(),
+                    debtSettledBy: window.currentStaffName
+                });
+                
+                playChaChing();
+                alert("✅ Debt cleared successfully! Their record is clean.");
+                
+                const phoneBox = document.getElementById('custPhone');
+                if (phoneBox && phoneBox.value) { phoneBox.dispatchEvent(new Event('input')); }
+                
+            } catch (e) {
+                alert("Error clearing debt: " + e.message);
+            }
+        }
+    };
 
     window.startEdit = (id) => {
         const t=ticketsData.find(x=>x.id===id); editId=id; currentSockets=t.sockets||[]; document.getElementById('custName').value=t.name; document.getElementById('tokenNum').value=t.tag; document.getElementById('phCount').value=t.ph||0; document.getElementById('pbCount').value=t.pb||0; document.getElementById('chFullCount').value=t.chFull||0; document.getElementById('chUsbCount').value=t.chUsb||0; document.getElementById('chHeadCount').value=t.chHead||0; document.getElementById('otCount').value=t.ot||0; document.getElementById('otPrice').value=t.otPrice||0; document.getElementById('amtPaidInput').value = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); document.getElementById('custPhone').value = t.phone || "";
@@ -1594,14 +1761,16 @@
 
         document.getElementById('extendedForm').style.display='block'; document.getElementById('formAction').innerHTML=`Edit #${t.tag} 🟢`; document.getElementById('saveBtn').style.display='block'; document.getElementById('saveBtn').innerText="💾 UPDATE"; document.getElementById('cancelEditBtn').style.display="block"; 
         
+        document.getElementById('custPhone').dispatchEvent(new Event('input'));
+        
         window.scrollTo({top:0}); window.autoCalc();
         if(plan === 'premium') { setTimeout(() => { const chatBox = document.getElementById('staffChatArea'); chatBox.scrollIntoView({ behavior: 'smooth', block: 'end' }); document.getElementById('staffChatInput').focus(); }, 300); }
     };
 
     window.cancelEdit = () => { editId=null; currentSockets=[]; window.isFreeEligible = false; resetForm(true); };
     
-    function clearFormFieldsOnly() { window.pendingClaim = null; window.isFreeEligible = false; stopCam(); currentPhotos = []; renderPhotoGallery(); ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput','syncPh','syncPb','syncOt'].forEach(id => { let el = document.getElementById(id); if(el) el.value=id.includes('Count')||id.includes('Price')||id.includes('amt')||id.includes('sync')?0:""; }); document.getElementById('payStatus').value="Later"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); document.getElementById('staffChatArea').style.display='none'; document.getElementById('staffChatHistory').innerHTML=''; document.getElementById('staffChatInput').value=''; }
-    function resetForm(cT=false) { if(cT){ document.getElementById('tokenNum').value=""; document.getElementById('extendedForm').style.display='none'; document.getElementById('formAction').innerText="Enter Tag 🔵"; document.getElementById('saveBtn').style.display='none'; document.getElementById('cancelEditBtn').style.display="none"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; } currentSockets=[]; clearFormFieldsOnly(); window.autoCalc(); }
+    function clearFormFieldsOnly() { window.pendingClaim = null; window.isFreeEligible = false; stopCam(); currentPhotos = []; renderPhotoGallery(); ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput','syncPh','syncPb','syncOt'].forEach(id => { let el = document.getElementById(id); if(el) el.value=id.includes('Count')||id.includes('Price')||id.includes('amt')||id.includes('sync')?0:""; }); document.getElementById('payStatus').value="Later"; document.getElementById('securityCheckAlert').innerHTML=''; if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); document.getElementById('staffChatArea').style.display='none'; document.getElementById('staffChatHistory').innerHTML=''; document.getElementById('staffChatInput').value=''; }
+    function resetForm(cT=false) { if(cT){ document.getElementById('tokenNum').value=""; document.getElementById('extendedForm').style.display='none'; document.getElementById('formAction').innerText="Enter Tag 🔵"; document.getElementById('saveBtn').style.display='none'; document.getElementById('cancelEditBtn').style.display="none"; document.getElementById('securityCheckAlert').innerHTML=''; if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; } currentSockets=[]; clearFormFieldsOnly(); window.autoCalc(); }
     window.closeModal = (id) => { document.getElementById(id).style.display='none'; if(id==='modalPrint') document.getElementById('receiptPreview').style.border="2px solid #333"; };
     
     window.saveSettings = async () => { const np={ ph:+document.getElementById('setPh').value, pb:+document.getElementById('setPb').value, chFull:+document.getElementById('setChFull').value, chUsb:+document.getElementById('setChUsb').value, chHead:+document.getElementById('setChHead').value, maxSockets:+document.getElementById('setMaxSockets').value, loyalty:document.getElementById('setLoyalty').value, closeTime:document.getElementById('setCloseTime').value, bankName:document.getElementById('setBankName').value, accName:document.getElementById('setAccName').value, accNumber:document.getElementById('setAccNumber').value }; await setDoc(doc(db,`shops/${currentShopId}/config/prices`), np); priceConfig=np; alert("Shop Settings Saved!"); };
@@ -1637,4 +1806,4 @@
     window.downloadSingleTag = (elementId, tagNum) => { const el = document.getElementById(elementId); html2canvas(el, { scale: 3, useCORS: true, allowTaint: true }).then(canvas => { const link = document.createElement('a'); link.download = `Starbite-Tag-${tagNum}.png`; link.href = canvas.toDataURL('image/png'); link.click(); }); };
   </script>
 </body>
-  </html>
+                </html>
