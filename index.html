@@ -64,6 +64,10 @@
     .plan-basic { background: #cce5ff; color: #004085; border: 1px solid #b8daff; }
     .plan-premium { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
 
+    /* 🌟 THE PERFECT CSS MODAL OVERLAY FOR EDITING */
+    #editBgOverlay { display: none; position: fixed; z-index: 199; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+    .form-modal-mode { position: fixed !important; z-index: 200 !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; width: 90% !important; max-width: 400px !important; max-height: 90vh !important; overflow-y: auto !important; margin: 0 !important; box-shadow: 0 10px 40px rgba(0,0,0,0.6) !important; }
+
     @media print {
         @page { size: A3 portrait; margin: 10mm; }
         body * { visibility: hidden; } #printArea, #printArea * { visibility: visible; }
@@ -76,6 +80,9 @@
   </style>
 </head>
 <body>
+
+  <!-- The Dark Background that sits behind the Edit Form -->
+  <div id="editBgOverlay" onclick="cancelEdit()"></div>
 
   <div id="authScreen" class="auth-container">
       <div id="loginBox" class="auth-box">
@@ -158,9 +165,7 @@
               <button id="btnStaffManage" style="width: auto; padding: 8px 12px; background: var(--primary);" onclick="document.getElementById('modalUsers').style.display='flex'">👥 Staff</button>
               <button id="btnTags" style="width: auto; padding: 8px 12px; background: var(--dark);" onclick="document.getElementById('modalTagGen').style.display='flex'">🖨️ Tags</button>
               <button id="btnUpgrade" style="width: auto; padding: 8px 12px; background: var(--success); font-weight:900; border: 2px solid #fff; box-shadow: 0 0 8px rgba(40,167,69,0.6);" onclick="document.getElementById('modalUpgrade').style.display='flex'">🚀 UPGRADE</button>
-              <button onclick="openClosingPanel()" style="background: #ff9800; color: #000; font-weight: bold; border: 2px solid #e65100;">
-   ⏰ 1-Hour Closing Reminders
-</button>
+              <button onclick="openClosingPanel()" style="background: #ff9800; color: #000; font-weight: bold; border: 2px solid #e65100;">⏰ 1-Hour Closing Reminders</button>
               <button id="btnRescue" style="width: auto; padding: 8px 12px; background: #6f42c1; color: white;" onclick="rescueOldData()">🚑 Rescue Old Data</button>
           </div>
       </div>
@@ -337,7 +342,7 @@
             </div>
 
             <button onclick="saveTicket()" id="saveBtn" style="margin-top:15px;">🚀 CREATE TICKET</button>
-            <button id="cancelEditBtn" style="display:none; background:#666;" onclick="cancelEdit()">Discard Changes</button>
+            <button id="cancelEditBtn" style="display:none; background:#666; margin-top:5px; width:100%;" onclick="cancelEdit()">Discard Changes</button>
         </div>
       </div>
 
@@ -375,19 +380,16 @@
               <button style="background: #666; width: 100%; margin-top:10px;" onclick="closeModal('modalExpiryWarning')">Remind Me Later</button>
           </div>
       </div>
-<!-- ⏰ CLOSING TIME MODAL -->
+
       <div id="modalClosing" class="modal">
         <div class="modal-content">
           <h3 style="text-align: center; color: #ff9800;">⏰ End-of-Day Clearance</h3>
           <p style="text-align: center; font-size: 13px; color: #666;">Send an urgent WhatsApp message to everyone who hasn't picked up their device.</p>
-          
-          <div id="closingTicketsList" style="margin-top: 15px; max-height: 350px; overflow-y: auto;">
-             <!-- JavaScript will generate the WhatsApp buttons here -->
-          </div>
-
+          <div id="closingTicketsList" style="margin-top: 15px; max-height: 350px; overflow-y: auto;"></div>
           <button style="background:#666; margin-top:15px; width: 100%;" onclick="closeModal('modalClosing')">Close Panel</button>
         </div>
       </div>
+      
       <div id="modalWallets" class="modal">
           <div class="modal-content" style="text-align: center; border: 4px solid var(--success);">
               <h1 style="font-size:40px; margin:0;">💳</h1>
@@ -484,12 +486,10 @@
       <div id="modalScanner" class="modal"><div class="modal-content" style="text-align: center; padding: 15px;"><h3 style="margin-top: 0; color: #000;">📷 Scan Tag</h3><p style="font-size: 12px; color: #666;">Point your phone camera at the tag.</p><div id="reader"></div><button style="background: var(--danger); margin-top: 15px; width: 100%;" onclick="closeScanner()">Cancel</button></div></div>
       <div id="modalScanMatch" class="modal"><div class="modal-content" style="text-align: center;"><h3 style="margin-top: 0; color: var(--primary);">📱 Tag Found!</h3><div id="scanMatchDetails" style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left; color: #000;"></div><button id="btnScanCollect" style="background: var(--success); width: 100%; margin-bottom: 10px;">📦 Process Collection</button><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button id="btnScanEdit" style="background: var(--warning); width: 100%; color: #000;">✏️ Edit Ticket</button></div><button style="background: #666; width: 100%;" onclick="closeModal('modalScanMatch'); cancelEdit();">Close</button></div></div>
       <div id="modalPrint" class="modal"><div class="modal-content" id="printArea" style="max-width: 900px; width: 95%;"><div id="receiptPreview" style="background: #ffffff; padding: 15px;"></div><div id="printActions" style="display:flex; gap:10px; margin-top:10px; flex-wrap: wrap;"><button class="btn-print" style="flex:1; min-width: 100px;" onclick="window.print()">🖨️ PRINT ALL</button><button id="btnDownload" class="btn-download" style="flex:1; min-width: 100px;" onclick="downloadImage()">📥 SAVE ALL (GRID)</button></div><button style="background:#666; margin-top:10px; width: 100%;" onclick="closeModal('modalPrint')">Close</button></div></div>
-<div id="modalTagGen" class="modal">
+      <div id="modalTagGen" class="modal">
         <div class="modal-content">
           <h3 style="text-align: center; color: #000;">🖨️ Generate Tags</h3>
-          
           <div class="row" style="margin-top: 15px;"><div class="device-box"><label>Start Tag #</label><input type="number" id="tagStart" value="1" min="1" style="color: #000; background: #fff;"></div><div class="device-box"><label>How Many Tags?</label><input type="number" id="tagCount" value="5" min="1" style="color: #000; background: #fff;"></div></div>
-          
           <div class="row" style="margin-top: 5px;">
               <div class="device-box" style="flex:1; border: 2px solid var(--primary);">
                   <label style="color:var(--primary);">PRINT LAYOUT</label>
@@ -500,7 +500,6 @@
                   </select>
               </div>
           </div>
-
           <div class="row" style="margin-top: 5px;"><div class="device-box" style="background: #e2e3e5;"><label style="color: #333;">Device PIN Stickers (per Tag)</label><input type="number" id="tagCopies" value="25" min="0" style="font-weight: bold; text-align: center; color: #000; background: #fff;"></div></div>
           <button id="genBtn" style="background:var(--dark); margin-top:15px;" onclick="printSecureTags()">🖨️ Generate Tags</button>
           <button style="background:#666; margin-top:5px;" onclick="closeModal('modalTagGen')">Cancel</button>
@@ -542,7 +541,21 @@
                 </div>
             </div>
 
-            <div class="verify-box" style="margin-top:0;"><label style="font-weight: 900; color: #856404; display:block; margin-bottom: 5px;">🔐 Verify System PIN</label><input type="text" id="verifyPin" placeholder="Enter PIN" style="text-transform: uppercase; text-align: center; font-family: monospace; font-size: 16px; font-weight: bold; border: 2px solid #856404; color: #000; background: #fff;"></div>
+            <!-- 🛡️ AFTER PHOTO PROOF UI -->
+            <div style="background:#e2e3e5; padding:10px; border-radius:8px; margin-top:10px; border: 2px dashed #999;">
+                <label style="font-size:12px; font-weight:bold; color:#333; display:block; margin-bottom:5px;">📸 Capture "After" Photo (Liability Proof)</label>
+                <video id="pickupVideo" autoplay playsinline style="display:none; width:100%; max-height:200px; border-radius:8px; object-fit:cover; margin-bottom:5px;"></video>
+                <canvas id="pickupCanvas" style="display:none;"></canvas>
+                <img id="pickupPreview" style="display:none; width:100px; height:100px; border-radius:8px; margin-bottom:5px; border:2px solid var(--success);">
+                
+                <div style="display:flex; gap:5px;">
+                    <button type="button" id="btnStartPickupCam" onclick="startPickupCam()" style="background:#17a2b8; flex:1; padding:8px;">📷 Open Camera</button>
+                    <button type="button" id="btnSnapPickupCam" onclick="capturePickupCam()" style="background:var(--success); flex:1; padding:8px; display:none;">📸 Snap Photo</button>
+                </div>
+            </div>
+            <!-- ------------------------- -->
+
+            <div class="verify-box" style="margin-top:10px;"><label style="font-weight: 900; color: #856404; display:block; margin-bottom: 5px;">🔐 Verify System PIN</label><input type="text" id="verifyPin" placeholder="Enter PIN" style="text-transform: uppercase; text-align: center; font-family: monospace; font-size: 16px; font-weight: bold; border: 2px solid #856404; color: #000; background: #fff;"></div>
             
             <button style="background:var(--success)" onclick="confirmCollect()">✅ Verify & Collect Selected</button>
             <button style="background:var(--primary); margin-top:5px;" onclick="quickCollectAll()">🚀 Verify & Collect Everything</button>
@@ -552,13 +565,11 @@
   </div> 
 
   <script type="module">
-   
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    
-   import { getFirestore, collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, query, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, query, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// ⚠️ REAL FIREBASE CONFIG HERE ⚠️
+    // ⚠️ REAL FIREBASE CONFIG HERE ⚠️
     const firebaseConfig = { 
         apiKey: "AIzaSyCqmaIDptWNk8v5E5Sz5XKKSAmk6FNX6Yo", 
         authDomain: "credit-record-24f1e.firebaseapp.com", 
@@ -595,7 +606,6 @@
 
     window.lastAlertMin = null;
     
-    // 🌟 THE NOTIFICATION MEMORY ENGINES
     window.notifiedPending = new Set();
     window.notifiedChats = new Set();
     window.notifiedFull = new Set();
@@ -604,45 +614,35 @@
     window.hasShownExpiryWarning = false;
     window.pendingClaim = null; 
 
-
-
-// 🌟 REGISTER THE INVISIBLE BACKGROUND WORKER
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').then(() => {
             console.log("Android Background Worker Ready");
         });
     }
 
-    // 🌟 THE MASTER NOTIFICATION PUSHER (ANDROID FIX)
     window.sendPushNotification = async (title, body) => {
         if ("Notification" in window && Notification.permission === "granted") {
             try {
-                // Force Android to use the background worker to show the banner
                 const reg = await navigator.serviceWorker.ready;
                 reg.showNotification(title, { 
                     body: body, 
                     icon: "https://cdn-icons-png.flaticon.com/512/3579/3579135.png",
-                    vibrate: [200, 100, 200] // Makes the phone buzz!
+                    vibrate: [200, 100, 200] 
                 });
             } catch(e) {
-                // Fallback for Windows/Mac laptops
                 new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/3579/3579135.png" });
             }
         }
     };
 
-    // 🌟 NOTIFICATION PERMISSION REQUEST (WITH TEST FIRE)
     window.requestNotificationPermission = () => {
         if ("Notification" in window) {
             Notification.requestPermission().then(permission => {
                 if (permission === "granted") {
                     alert("✅ Permission granted! A test banner will appear in 3 seconds. Please close this box and wait.");
-                    
-                    // Fire a test notification 3 seconds after they click OK
                     setTimeout(() => {
                         window.sendPushNotification("🚀 Starbite Systems", "Notifications are working perfectly! You are ready for business.");
                     }, 3000);
-                    
                 } else {
                     alert("❌ Notifications blocked. Please allow permissions in your phone's browser settings.");
                 }
@@ -651,6 +651,7 @@
             alert("This device does not support standard web notifications.");
         }
     };
+
     document.getElementById('priceBasicDisplay').innerText = `₦${SAAS_PRICING.basic.toLocaleString()}`;
     document.getElementById('pricePremiumDisplay').innerText = `₦${SAAS_PRICING.premium.toLocaleString()}`;
 
@@ -745,7 +746,6 @@
         
         if(document.getElementById('settingsCard')) document.getElementById('settingsCard').style.display = isStaff ? 'none' : 'block';
         if(document.getElementById('featureAnalytics')) document.getElementById('featureAnalytics').style.display = (isStaff || plan !== 'premium') ? 'none' : 'block';
-        
         if(document.getElementById('featureCamera')) document.getElementById('featureCamera').style.display = (plan !== 'premium') ? 'none' : 'block';
     };
 
@@ -1072,7 +1072,6 @@
                 
                 window.pendingQueue.push(data);
                 
-                // 🌟 THE NOTIFICATION TRIGGER FOR NEW DROP-OFFS
                 if (!window.notifiedPending.has(data.docId)) {
                     window.notifiedPending.add(data.docId);
                     window.sendPushNotification("🔔 New Drop-off Request!", `${data.name} wants to drop off devices (Tag #${data.tag}).`);
@@ -1083,7 +1082,7 @@
                 if(data.pb > 0) devStr += `${data.pb}🔋 `;
                 if(data.chFull > 0) devStr += `${data.chFull}🔌Full `;
                 if(data.chUsb > 0) devStr += `${data.chUsb}〰️USB `;
-                if(data.chHead > 0) devStr += `${data.chHead}🔌Head`;
+                if(data.chHead > 0) devStr += `${data.chHead}🔌Head `;
 
                 html += `
                 <div style="background:var(--warning); color:#000; padding:15px; border-radius:8px; margin-bottom:15px; border:2px dashed #000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display:flex; flex-direction:column; animation: pulse 2s infinite;">
@@ -1257,7 +1256,38 @@
         startBtn.style.display='block'; startBtn.innerText = currentPhotos.length > 0 ? "📷 Take More Photos" : "📷 Open Camera";
         document.getElementById('btnSnapCam').style.display='none'; document.getElementById('btnStopCam').style.display='none'; 
     };
+// 🛡️ AFTER PHOTO PROOF CAMERA LOGIC
+    let pickupCamStream = null;
+    window.currentPickupPhoto = null;
 
+    window.startPickupCam = async () => { 
+        const v = document.getElementById('pickupVideo'); 
+        try { 
+            const constraints = { video: { facingMode: { ideal: "environment" } } }; 
+            pickupCamStream = await navigator.mediaDevices.getUserMedia(constraints); 
+            v.srcObject = pickupCamStream; v.style.display = 'block'; 
+            document.getElementById('btnStartPickupCam').style.display = 'none'; 
+            document.getElementById('btnSnapPickupCam').style.display = 'block'; 
+            document.getElementById('pickupPreview').style.display = 'none';
+        } catch(e) { alert("Camera Access Denied."); } 
+    };
+
+    window.capturePickupCam = () => { 
+        const v = document.getElementById('pickupVideo'), c = document.getElementById('pickupCanvas'); 
+        const tW = 300, tH = (v.videoHeight / v.videoWidth) * tW; 
+        c.width = tW; c.height = tH; c.getContext('2d').drawImage(v, 0, 0, tW, tH); 
+        window.currentPickupPhoto = c.toDataURL('image/jpeg', 0.6); 
+        
+        if(pickupCamStream) pickupCamStream.getTracks().forEach(t => t.stop());
+        v.style.display = 'none';
+        document.getElementById('btnSnapPickupCam').style.display = 'none';
+        document.getElementById('btnStartPickupCam').style.display = 'block';
+        document.getElementById('btnStartPickupCam').innerText = '🔄 Retake Photo';
+        
+        const preview = document.getElementById('pickupPreview');
+        preview.src = window.currentPickupPhoto;
+        preview.style.display = 'block';
+    };
     window.exportCSV = () => { 
         let csv = "Date,Customer Name,Tag Number,Phone,Items,Price,Amount Paid,Payment Method,Status,Logged By,Collected By,Rating,Review,Conditions\n"; 
         ticketsData.forEach(t => { 
@@ -1285,6 +1315,67 @@
 
         let msg = `Hello ${t.name}! 👋\n\nThis is ${currentShopData.shopName}.\nYour device (Tag #${t.tag}) is ${status}\n\n${finText}\n\nTrack your live charging progress or chat with us here:\n${link}\n\nSee you soon!`;
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
+    window.openClosingPanel = async () => {
+        document.getElementById('modalClosing').style.display = 'flex';
+        const listDiv = document.getElementById('closingTicketsList');
+        listDiv.innerHTML = "<div style='text-align:center;'>⏳ Grouping left-behind devices by customer...</div>";
+
+        try {
+            const q = query(collection(db, "tickets"), where("shopId", "==", currentShopId), where("collected", "==", false));
+            const querySnapshot = await getDocs(q);
+            
+            let groupedCustomers = {};
+            let totalDevices = 0;
+
+            querySnapshot.forEach((docSnap) => {
+                const ticket = docSnap.data();
+                
+                if (ticket.phone && ticket.phone.length > 7) {
+                    totalDevices++;
+                    let cleanPhone = ticket.phone.replace(/\D/g, ''); 
+                    if(cleanPhone.startsWith('0')) { cleanPhone = '234' + cleanPhone.substring(1); }
+                    else if(!cleanPhone.startsWith('234') && !cleanPhone.startsWith('+')) { cleanPhone = '234' + cleanPhone; }
+
+                    if (!groupedCustomers[cleanPhone]) {
+                        groupedCustomers[cleanPhone] = { name: ticket.name || "Customer", tags: [] };
+                    }
+                    groupedCustomers[cleanPhone].tags.push(ticket.tag);
+                }
+            });
+
+            let html = "";
+            let customerCount = Object.keys(groupedCustomers).length;
+
+            for (let phone in groupedCustomers) {
+                let data = groupedCustomers[phone];
+                let tagString = data.tags.join(', #');
+                let tagLabel = data.tags.length > 1 ? `Tags #${tagString}` : `Tag #${tagString}`;
+                const message = encodeURIComponent(`⚠️ Hello ${data.name}! From Starbite: We are closing in 1 hour. Please come pick up your device(s) (${tagLabel}) to avoid them being locked in overnight!`);
+                const waLink = `https://wa.me/${phone}?text=${message}`;
+
+                html += `
+                <div style="background: #f8f9fa; border-left: 4px solid #ff9800; padding: 10px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: bold; color: #000;">${data.name}</div>
+                        <div style="font-size: 12px; color: #555;">📞 ${phone} | <span style="color:var(--danger); font-weight:bold;">${tagLabel}</span></div>
+                    </div>
+                    <a href="${waLink}" target="_blank" style="background: #25D366; color: white; padding: 8px 12px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 13px; white-space: nowrap; margin-left: 10px;">
+                        💬 Send Warning
+                    </a>
+                </div>`;
+            }
+
+            if (customerCount === 0) {
+                listDiv.innerHTML = "<div style='text-align:center; color: #28a745; font-weight: bold; padding: 20px;'>🎉 All clear! Every phone with a registered number has been picked up!</div>";
+            } else {
+                listDiv.innerHTML = `<div style="margin-bottom: 10px; font-weight: bold; color: #dc3545;">🚨 ${totalDevices} devices left (belonging to ${customerCount} customers)</div>` + html;
+            }
+        } catch (error) {
+            console.error("Error scanning tickets:", error);
+            listDiv.innerHTML = "<div style='color:red;'>Error scanning database.</div>";
+        }
     };
 
     window.sendStaffChat = async () => {
@@ -1410,26 +1501,23 @@
         allocateSockets(ph + pb + otCount); 
     }
 
-// 🧠 PREDICTIVE BATTERY AI: Calculates percentage based on dynamic historical rates
-function getPct(t, type, nowMs) { 
-    let baseTs = t.baseTs || t.jsDate.getTime(); 
-    let diffMins = Math.floor((nowMs - baseTs) / 60000); 
-    
-    // Default fallback rates (mins per 100%)
-    let rate = type === 'pb' ? 600 : 150; 
-    
-    // AI OVERRIDE: Use the custom smart rate if the system generated one for this user
-    if (t.smartRates && t.smartRates[type]) {
-        rate = t.smartRates[type];
+    function getPct(t, type, nowMs) { 
+        let baseTs = t.baseTs || t.jsDate.getTime(); 
+        let diffMins = Math.floor((nowMs - baseTs) / 60000); 
+        
+        let rate = type === 'pb' ? 600 : 150; 
+        
+        if (t.smartRates && t.smartRates[type]) {
+            rate = t.smartRates[type];
+        }
+
+        let basePct = 0;
+        if(type === 'ph') basePct = t.phBasePct || 0;
+        if(type === 'pb') basePct = t.pbBasePct || 0;
+        if(type === 'ot') basePct = t.otBasePct || 0;
+
+        return Math.min(100, basePct + Math.floor((diffMins / rate) * 100)); 
     }
-
-    let basePct = 0;
-    if(type === 'ph') basePct = t.phBasePct || 0;
-    if(type === 'pb') basePct = t.pbBasePct || 0;
-    if(type === 'ot') basePct = t.otBasePct || 0;
-
-    return Math.min(100, basePct + Math.floor((diffMins / rate) * 100)); 
-}
 
     window.saveTicket = async () => {
         const plan = currentShopData.plan || 'free'; const limit = PLAN_LIMITS[plan].sockets; const activeCount = ticketsData.filter(t => !t.collected && t.id !== editId).length;
@@ -1474,53 +1562,33 @@ function getPct(t, type, nowMs) {
                 if(!confirm(`⚠️ ADJUSTMENT DETECTED!\n\nCustomer claimed: ${claimStr}\nYou entered: ${actualStr}\n\nClicking OK will securely save the actual items you received and politely notify the customer.`)) {
                     return; 
                 }
-                
                 hasMismatch = true;
                 mismatchMsg = `Hello ${name}! 👋\n\nThank you for dropping off your device (Tag #${tag}).\n\nJust a quick polite notice: Your app registration stated ${claimStr}, but we safely received ${actualStr} at the counter.\n\nWe have securely logged the items we received and started charging them! ⚡ If this is a mistake, please chat with us via your tracking link.`;
             }
         }
 
-        const syncPh = parseInt(document.getElementById('syncPh').value) || 0; const syncPb = parseInt(document.getElementById('syncPb').value) || 0; const syncOt = parseInt(document.getElementById('syncOt').value) || 0;
-       // 🧠 PREDICTIVE BATTERY AI: Calculates percentage based on dynamic historical rates
-function getPct(t, type, nowMs) { 
-    let baseTs = t.baseTs || t.jsDate.getTime(); 
-    let diffMins = Math.floor((nowMs - baseTs) / 60000); 
-    
-    // Default fallback rates (mins per 100%)
-    let rate = type === 'pb' ? 600 : 150; 
-    
-    // AI OVERRIDE: Use the custom smart rate if the system generated one for this user
-    if (t.smartRates && t.smartRates[type]) {
-        rate = t.smartRates[type];
-    }
+        const syncPh = parseInt(document.getElementById('syncPh').value) || 0; 
+        const syncPb = parseInt(document.getElementById('syncPb').value) || 0; 
+        const syncOt = parseInt(document.getElementById('syncOt').value) || 0;
 
-    let basePct = 0;
-    if(type === 'ph') basePct = t.phBasePct || 0;
-    if(type === 'pb') basePct = t.pbBasePct || 0;
-    if(type === 'ot') basePct = t.otBasePct || 0;
-
-    return Math.min(100, basePct + Math.floor((diffMins / rate) * 100)); 
-} 
-    // --- 🧠 PREDICTIVE AI CALCULATION ---
-        // Look at the customer's past completed tickets to learn their device speed
         let pastTix = ticketsData.filter(x => x.phone === phoneNum && x.collected && x.shelvedAt && x.baseTs);
-        let dynamicRates = { ph: 150, pb: 600, ot: 150 }; // Defaults
+        let dynamicRates = { ph: 150, pb: 600, ot: 150 }; 
         
         if (pastTix.length > 0) {
-            let totalMins = 0; let validCharges = 0;
+            let totalEstimatedFullTime = 0; let validCharges = 0;
             pastTix.forEach(pt => {
                 let chargeDuration = Math.floor((pt.shelvedAt - pt.baseTs) / 60000);
-                // Sanity check: Ensure the charge took between 30 mins and 5 hours
-                if(chargeDuration > 30 && chargeDuration < 300) { 
-                    totalMins += chargeDuration; validCharges++;
+                let startPct = pt.phBasePct || 0; 
+                let pctCharged = 100 - startPct;  
+                if(pctCharged > 10 && chargeDuration > 10) { 
+                    let estimatedFullTime = (chargeDuration / pctCharged) * 100;
+                    if(estimatedFullTime > 30 && estimatedFullTime < 300) { 
+                        totalEstimatedFullTime += estimatedFullTime; validCharges++;
+                    }
                 }
             });
-            if (validCharges > 0) {
-                let avgMinsToFull = Math.round(totalMins / validCharges);
-                dynamicRates.ph = avgMinsToFull; // Apply custom speed for their phone
-            }
+            if (validCharges > 0) dynamicRates.ph = Math.round(totalEstimatedFullTime / validCharges); 
         }
-        // ------------------------------------
 
         const data = { 
             name, tag, cond, photos: currentPhotos, phone: phoneNum, debtSettled: false, ph: phActual, pb: pbActual, chFull: chFullActual, chUsb: chUsbActual, chHead: chHeadActual, ot: +document.getElementById('otCount').value, otPrice: +document.getElementById('otPrice').value, price: finalPrice, amountPaid: +document.getElementById('amtPaidInput').value, sockets: JSON.parse(document.getElementById('assignedSockets').value || "[]"), phBasePct: syncPh, pbBasePct: syncPb, otBasePct: syncOt, baseTs: Date.now(), shopId: currentShopId,
@@ -1556,7 +1624,7 @@ function getPct(t, type, nowMs) {
             } 
         } catch(e) { alert("Error: " + e.message); }
     };
-    
+
     window.ackOnTheWay = async (id) => { try { await updateDoc(doc(db, "tickets", id), { onTheWayAck: true }); } catch(e) { alert(e.message); } };
 
     window.openShelf = (id) => {
@@ -1593,6 +1661,11 @@ function getPct(t, type, nowMs) {
         let h=''; h+=renderColRow('Phones',t.ph,t.colPh,'in-col-ph'); h+=renderColRow('P-Banks',t.pb,t.colPb,'in-col-pb');
         if(t.chFull>0||t.chUsb>0||t.chHead>0){ h+=renderColRow('Full Chrg',t.chFull,t.colChFull,'in-col-chFull'); h+=renderColRow('USB',t.chUsb,t.colChUsb,'in-col-chUsb'); h+=renderColRow('Head',t.chHead,t.colChHead,'in-col-chHead'); } else if(t.ch>0) { h+=renderColRow('Leg Chrg',t.ch,t.colCh,'in-col-ch'); } h+=renderColRow('Others',t.ot,t.colOt,'in-col-ot');
         document.getElementById('collect-items-list').innerHTML = h; ['in-col-ph', 'in-col-pb', 'in-col-chFull', 'in-col-chUsb', 'in-col-chHead', 'in-col-ch', 'in-col-ot'].forEach(elId => { let el = document.getElementById(elId); if(el) el.addEventListener('input', window.calcColValue); });
+        
+        window.currentPickupPhoto = null; 
+        if(document.getElementById('pickupPreview')) document.getElementById('pickupPreview').style.display = 'none'; 
+        if(document.getElementById('btnStartPickupCam')) document.getElementById('btnStartPickupCam').innerText = '📷 Open Camera';
+        
         if(t.onTheWay && !t.onTheWayAck) ackOnTheWay(t.id); document.getElementById('mod-collect').style.display = 'flex';
     };
 
@@ -1624,7 +1697,16 @@ function getPct(t, type, nowMs) {
             await setDoc(doc(db, `shops/${currentShopId}/wallets`, t.phone), { balance: bal - payNow }, { merge: true });
         }
 
-        const u={ colPh:(t.colPh||0)+(+(document.getElementById('in-col-ph')?.value||0)), colPb:(t.colPb||0)+(+(document.getElementById('in-col-pb')?.value||0)), colChFull:(t.colChFull||0)+(+(document.getElementById('in-col-chFull')?.value||0)), colChUsb:(t.colChUsb||0)+(+(document.getElementById('in-col-chUsb')?.value||0)), colChHead:(t.colChHead||0)+(+(document.getElementById('in-col-chHead')?.value||0)), colOt:(t.colOt||0)+(+(document.getElementById('in-col-ot')?.value||0)), amountPaid: amtPaid + payNow };
+        const u={ 
+            colPh:(t.colPh||0)+(+(document.getElementById('in-col-ph')?.value||0)), 
+            colPb:(t.colPb||0)+(+(document.getElementById('in-col-pb')?.value||0)), 
+            colChFull:(t.colChFull||0)+(+(document.getElementById('in-col-chFull')?.value||0)), 
+            colChUsb:(t.colChUsb||0)+(+(document.getElementById('in-col-chUsb')?.value||0)), 
+            colChHead:(t.colChHead||0)+(+(document.getElementById('in-col-chHead')?.value||0)), 
+            colOt:(t.colOt||0)+(+(document.getElementById('in-col-ot')?.value||0)), 
+            amountPaid: amtPaid + payNow,
+            pickupPhoto: window.currentPickupPhoto || null 
+        };
         if(t.ch>0) u.colCh=(t.colCh||0)+(+(document.getElementById('in-col-ch')?.value||0));
         
         if (payNow > 0) u.colPaymentMethod = payMethod;
@@ -1657,7 +1739,13 @@ function getPct(t, type, nowMs) {
 
         if(!confirm("⚠️ STOP! \n\nHave you physically removed the Tag from the customer's device?")) return;
         
-        let updateObj = { colPh:t.ph||0, colPb:t.pb||0, colChFull:t.chFull||0, colChUsb:t.chUsb||0, colChHead:t.chHead||0, colCh:t.ch||0, colOt:t.ot||0, sockets:[], collected:true, collDate:new Date().toLocaleDateString(), amountPaid: amtPaid + payNow, collectedBy: window.currentStaffName }; 
+        let updateObj = { 
+            colPh:t.ph||0, colPb:t.pb||0, colChFull:t.chFull||0, colChUsb:t.chUsb||0, colChHead:t.chHead||0, colCh:t.ch||0, colOt:t.ot||0, 
+            sockets:[], collected:true, collDate:new Date().toLocaleDateString(), 
+            amountPaid: amtPaid + payNow, 
+            collectedBy: window.currentStaffName,
+            pickupPhoto: window.currentPickupPhoto || null
+        }; 
         if (payNow > 0) updateObj.colPaymentMethod = payMethod;
 
         await updateDoc(doc(db,"tickets",id), updateObj); 
@@ -1748,24 +1836,17 @@ function getPct(t, type, nowMs) {
 
         updateAnalytics();
         
-        // 🌟 THE NOTIFICATION TRIGGERS FOR ACTIVE TICKETS
         active.forEach(t => { 
-            // 1. Customer Arriving
             if(t.onTheWay && !t.onTheWayAck && !window.notifiedOnTheWay.has(t.id)) { 
-                window.notifiedOnTheWay.add(t.id); 
-                playHonk(); 
-                window.sendPushNotification("🏃‍♂️ Customer Arriving!", `${t.name} is on their way to pick up Tag #${t.tag}.`);
+                window.notifiedOnTheWay.add(t.id); playHonk(); window.sendPushNotification("🏃‍♂️ Customer Arriving!", `${t.name} is on their way to pick up Tag #${t.tag}.`);
             }
             
-            // 2. New Chat Message
             if(t.hasUnread && !window.notifiedChats.has(t.id)) {
-                window.notifiedChats.add(t.id);
-                window.sendPushNotification("💬 New Message", `Customer ${t.name} (Tag #${t.tag}) sent a message!`);
+                window.notifiedChats.add(t.id); window.sendPushNotification("💬 New Message", `Customer ${t.name} (Tag #${t.tag}) sent a message!`);
             } else if (!t.hasUnread) {
                 window.notifiedChats.delete(t.id); 
             }
             
-            // 3. Battery at 100%
             const nowMs = powerData.state === 'OFF' ? powerData.offAt : Date.now();
             let activePh = (t.ph || 0) - (t.colPh || 0); let activePb = (t.pb || 0) - (t.colPb || 0); let activeOt = (t.ot || 0) - (t.colOt || 0);
             let isFull = false;
@@ -1775,8 +1856,7 @@ function getPct(t, type, nowMs) {
             if(activePh <= 0 && activePb <= 0 && activeOt > 0 && getPct(t, 'ot', nowMs) >= 100 && !t.shelfOt) isFull = true;
             
             if (isFull && !t.shelved && !window.notifiedFull.has(t.id)) {
-                window.notifiedFull.add(t.id);
-                window.sendPushNotification("⚡ Device Full!", `Tag #${t.tag} (${t.name}) has reached 100%. Move to shelf!`);
+                window.notifiedFull.add(t.id); window.sendPushNotification("⚡ Device Full!", `Tag #${t.tag} (${t.name}) has reached 100%. Move to shelf!`);
             }
         });
     }
@@ -1818,94 +1898,30 @@ function getPct(t, type, nowMs) {
         let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); 
         let debtBtn = (amtPaid < t.price && !t.debtSettled) ? `<button onclick="settleDebt('${t.id}')" style="background:var(--warning); color:#000; padding:4px 8px; margin-top:5px; width:100%; border-radius:4px; font-size:12px; font-weight:bold;">💸 Pay Remaining ₦${t.price - amtPaid}</button>` : ''; 
         let hasPhoto = (t.photos && t.photos.length > 0) || t.photo ? '📸 ' : '';
-        
         let pMethodStr = t.colPaymentMethod || (t.payStatus === 'Now' ? 'Cash/Transfer (Creation)' : (t.payStatus === 'Wallet' ? 'Wallet (Creation)' : 'Unknown'));
         
         return `<div class="ticket" style="border-left-color:#ccc; opacity:0.8;"><b style="color:#000;">${hasPhoto}${t.name} (#${t.tag})</b> - <span style="color:#000;">Total: ₦${t.price}</span><br><small style="color:#000;">Out: ${t.collDate}</small><br><small style="color:#28a745; font-weight:bold;">Paid via: ${pMethodStr}</small>${debtBtn}<button onclick="revertCollection('${t.id}')" style="width:100%; padding:4px 8px; margin-top:5px; background:#666; border-radius:4px; color:white; border:none;">Re-activate</button></div>`; 
     }
 
     window.settleDebt = async (id) => {
-        const t = ticketsData.find(x => x.id === id);
-        if (!t) return;
-        
-        let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0);
-        let owed = t.price - amtPaid;
-        
-        if (owed <= 0) {
-             await updateDoc(doc(db, "tickets", id), { debtSettled: true });
-             alert("✅ Fixed! This ticket was actually already paid, the system just refreshed the record.");
-             return;
-        }
-        
+        const t = ticketsData.find(x => x.id === id); if (!t) return;
+        let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); let owed = t.price - amtPaid;
+        if (owed <= 0) { await updateDoc(doc(db, "tickets", id), { debtSettled: true }); alert("✅ Fixed! This ticket was actually already paid."); return; }
         if (confirm(`💰 Clear the ₦${owed} debt for ${t.name}?\n\nClick OK if they have handed you the cash.`)) {
             try {
-                await updateDoc(doc(db, "tickets", id), { 
-                    amountPaid: t.price, 
-                    debtSettled: true,
-                    debtSettledDate: new Date().toLocaleDateString(),
-                    debtSettledBy: window.currentStaffName
-                });
-                
-                playChaChing();
-                alert("✅ Debt cleared successfully! Their record is clean.");
-                
-                const phoneBox = document.getElementById('custPhone');
-                if (phoneBox && phoneBox.value) { phoneBox.dispatchEvent(new Event('input')); }
-                
-            } catch (e) {
-                alert("Error clearing debt: " + e.message);
-            }
+                await updateDoc(doc(db, "tickets", id), { amountPaid: t.price, debtSettled: true, debtSettledDate: new Date().toLocaleDateString(), debtSettledBy: window.currentStaffName });
+                playChaChing(); alert("✅ Debt cleared successfully!"); const phoneBox = document.getElementById('custPhone'); if (phoneBox && phoneBox.value) { phoneBox.dispatchEvent(new Event('input')); }
+            } catch (e) { alert("Error clearing debt: " + e.message); }
         }
     };
-window.openClosingPanel = async () => {
-    document.getElementById('modalClosing').style.display = 'flex';
-    const listDiv = document.getElementById('closingTicketsList');
-    listDiv.innerHTML = "<div style='text-align:center;'>⏳ Scanning database for left-behind devices...</div>";
 
-    try {
-        // FIX 1 & 2: Correct collection path and use 'collected == false' instead of status
-        const q = query(collection(db, "tickets"), where("shopId", "==", currentShopId), where("collected", "==", false));
-        const querySnapshot = await getDocs(q);
-        let html = "";
-        let count = 0;
-
-        querySnapshot.forEach((docSnap) => {
-            const ticket = docSnap.data();
-            
-            // FIX 3: Check for 'phone' instead of 'customerPhone'
-            if (ticket.phone && ticket.phone.length > 7) {
-                count++;
-                let cleanPhone = ticket.phone.replace(/\D/g, ''); 
-                if(cleanPhone.startsWith('0')) { cleanPhone = '234' + cleanPhone.substring(1); }
-                else if(!cleanPhone.startsWith('234') && !cleanPhone.startsWith('+')) { cleanPhone = '234' + cleanPhone; }
-
-                // FIX 4: Use 'tag' instead of 'tagNumber'
-                const message = encodeURIComponent(`⚠️ Hello from Starbite! We are closing in 1 hour. Please come pick up your device (Tag #${ticket.tag}) to avoid it being locked in overnight!`);
-                const waLink = `https://wa.me/${cleanPhone}?text=${message}`;
-
-                html += `
-                <div style="background: #f8f9fa; border-left: 4px solid #ff9800; padding: 10px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-weight: bold; color: #000;">Tag #${ticket.tag}</div>
-                        <div style="font-size: 12px; color: #555;">📞 ${ticket.phone}</div>
-                    </div>
-                    <a href="${waLink}" target="_blank" style="background: #25D366; color: white; padding: 8px 12px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 13px;">
-                        💬 Send Warning
-                    </a>
-                </div>`;
-            }
-        });
-
-        if (count === 0) {
-            listDiv.innerHTML = "<div style='text-align:center; color: #28a745; font-weight: bold; padding: 20px;'>🎉 All clear! Every phone with a registered number has been picked up!</div>";
-        } else {
-            listDiv.innerHTML = `<div style="margin-bottom: 10px; font-weight: bold; color: #dc3545;">🚨 ${count} devices still here!</div>` + html;
-        }
-    } catch (error) {
-        console.error("Error scanning tickets:", error);
-        listDiv.innerHTML = "<div style='color:red;'>Error scanning database.</div>";
+    function clearFormFieldsOnly() { 
+        window.pendingClaim = null; window.isFreeEligible = false; stopCam(); currentPhotos = []; renderPhotoGallery(); 
+        ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput','syncPh','syncPb','syncOt'].forEach(id => { let el = document.getElementById(id); if(el) el.value=id.includes('Count')||id.includes('Price')||id.includes('amt')||id.includes('sync')?0:""; }); 
+        document.getElementById('payStatus').value="Later"; document.getElementById('securityCheckAlert').innerHTML=''; if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); document.getElementById('staffChatArea').style.display='none'; document.getElementById('staffChatHistory').innerHTML=''; document.getElementById('staffChatInput').value=''; 
     }
-};
+
+    // 🌟 CSS-BASED TRUE MODAL IMPLEMENTATION
     window.startEdit = (id) => {
         const t=ticketsData.find(x=>x.id===id); editId=id; currentSockets=t.sockets||[]; document.getElementById('custName').value=t.name; document.getElementById('tokenNum').value=t.tag; document.getElementById('phCount').value=t.ph||0; document.getElementById('pbCount').value=t.pb||0; document.getElementById('chFullCount').value=t.chFull||0; document.getElementById('chUsbCount').value=t.chUsb||0; document.getElementById('chHeadCount').value=t.chHead||0; document.getElementById('otCount').value=t.ot||0; document.getElementById('otPrice').value=t.otPrice||0; document.getElementById('amtPaidInput').value = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); document.getElementById('custPhone').value = t.phone || "";
         document.querySelectorAll('.cond-chk').forEach(c => c.checked = (t.cond||[]).includes(c.value));
@@ -1920,18 +1936,49 @@ window.openClosingPanel = async () => {
         const plan = currentShopData.plan || 'free';
         if (plan === 'premium') { document.getElementById('staffChatArea').style.display = 'block'; renderStaffChat(t.chats || []); if(t.hasUnread) updateDoc(doc(db, "tickets", id), { hasUnread: false }); } else { document.getElementById('staffChatArea').style.display = 'none'; }
 
-        document.getElementById('extendedForm').style.display='block'; document.getElementById('formAction').innerHTML=`Edit #${t.tag} 🟢`; document.getElementById('saveBtn').style.display='block'; document.getElementById('saveBtn').innerText="💾 UPDATE"; document.getElementById('cancelEditBtn').style.display="block"; 
+        document.getElementById('extendedForm').style.display='block'; 
+        document.getElementById('formAction').innerHTML=`<h3 style="margin:0; color:var(--primary); text-align:center; padding-bottom:10px; border-bottom:2px dashed #ccc; margin-bottom:15px;">Edit #${t.tag} 🟢</h3>`; 
+        document.getElementById('saveBtn').style.display='block'; 
+        document.getElementById('saveBtn').innerText="💾 UPDATE"; 
+        document.getElementById('cancelEditBtn').style.display="block"; 
         
         document.getElementById('custPhone').dispatchEvent(new Event('input'));
         
-        window.scrollTo({top:0}); window.autoCalc();
+        // 👇 TRIGGER CSS-BASED MODAL TO LOCK BACKGROUND SCROLLING 👇
+        document.getElementById('editBgOverlay').style.display = 'block';
+        document.getElementById('formCard').classList.add('form-modal-mode');
+        document.body.style.overflow = 'hidden'; // Locks the background
+        
+        window.autoCalc();
         if(plan === 'premium') { setTimeout(() => { const chatBox = document.getElementById('staffChatArea'); chatBox.scrollIntoView({ behavior: 'smooth', block: 'end' }); document.getElementById('staffChatInput').focus(); }, 300); }
     };
 
     window.cancelEdit = () => { editId=null; currentSockets=[]; window.isFreeEligible = false; resetForm(true); };
     
-    function clearFormFieldsOnly() { window.pendingClaim = null; window.isFreeEligible = false; stopCam(); currentPhotos = []; renderPhotoGallery(); ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput','syncPh','syncPb','syncOt'].forEach(id => { let el = document.getElementById(id); if(el) el.value=id.includes('Count')||id.includes('Price')||id.includes('amt')||id.includes('sync')?0:""; }); document.getElementById('payStatus').value="Later"; document.getElementById('securityCheckAlert').innerHTML=''; if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); document.getElementById('staffChatArea').style.display='none'; document.getElementById('staffChatHistory').innerHTML=''; document.getElementById('staffChatInput').value=''; }
-    function resetForm(cT=false) { if(cT){ document.getElementById('tokenNum').value=""; document.getElementById('extendedForm').style.display='none'; document.getElementById('formAction').innerText="Enter Tag 🔵"; document.getElementById('saveBtn').style.display='none'; document.getElementById('cancelEditBtn').style.display="none"; document.getElementById('securityCheckAlert').innerHTML=''; if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; } currentSockets=[]; clearFormFieldsOnly(); window.autoCalc(); }
+    function resetForm(cT=false) { 
+        // 👇 CLOSE CSS MODAL AND UNLOCK BACKGROUND 👇
+        document.getElementById('editBgOverlay').style.display = 'none';
+        const fc = document.getElementById('formCard');
+        if (fc) fc.classList.remove('form-modal-mode');
+        document.body.style.overflow = ''; 
+
+        if(cT){ 
+            document.getElementById('tokenNum').value=""; 
+            const form = document.getElementById('extendedForm');
+            if(form) form.style.display='none'; 
+            document.getElementById('formAction').innerText="Enter Tag 🔵"; 
+            document.getElementById('saveBtn').style.display='none'; 
+            document.getElementById('cancelEditBtn').style.display="none"; 
+            document.getElementById('securityCheckAlert').innerHTML=''; 
+            if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML=''; 
+            document.getElementById('debtAlert').innerHTML=''; 
+            document.getElementById('vipAlert').innerHTML=''; 
+        } 
+        currentSockets=[]; 
+        clearFormFieldsOnly(); 
+        window.autoCalc(); 
+    }
+
     window.closeModal = (id) => { document.getElementById(id).style.display='none'; if(id==='modalPrint') document.getElementById('receiptPreview').style.border="2px solid #333"; };
     
     window.saveSettings = async () => { const np={ ph:+document.getElementById('setPh').value, pb:+document.getElementById('setPb').value, chFull:+document.getElementById('setChFull').value, chUsb:+document.getElementById('setChUsb').value, chHead:+document.getElementById('setChHead').value, maxSockets:+document.getElementById('setMaxSockets').value, loyalty:document.getElementById('setLoyalty').value, closeTime:document.getElementById('setCloseTime').value, bankName:document.getElementById('setBankName').value, accName:document.getElementById('setAccName').value, accNumber:document.getElementById('setAccNumber').value }; await setDoc(doc(db,`shops/${currentShopId}/config/prices`), np); priceConfig=np; alert("Shop Settings Saved!"); };
@@ -1939,12 +1986,12 @@ window.openClosingPanel = async () => {
     window.revertCollection = async (id) => { if(confirm("Re-activate?")) await updateDoc(doc(db,"tickets",id), {collected:false, collDate:null, shelved:false, shelfPh:false, shelfPb:false, shelfOt:false, rating:null, reviewText:null}); };
     const upSt=() => { const sb = document.getElementById('status'); if(navigator.onLine) { sb.className="status-bar on"; sb.innerText="🟢 CONNECTED & SYNCED"; } else { sb.className="status-bar off"; sb.innerText="📡 OFFLINE (Saving to Phone Memory...)"; } }; window.addEventListener('online', upSt); window.addEventListener('offline', upSt); upSt();
 
- window.printSecureTags = async () => {
+    window.printSecureTags = async () => {
         const start = +document.getElementById('tagStart').value||1; const count = +document.getElementById('tagCount').value||5;
         const plan = currentShopData.plan || 'free'; const limit = PLAN_LIMITS[plan].tags;
         if ((start + count - 1) > limit) { alert(`🔒 UPGRADE REQUIRED!\nYour ${plan.toUpperCase()} plan only allows generating up to Tag #${limit}.\nPlease upgrade to generate more.`); return; }
         const copies = +document.getElementById('tagCopies').value||25; 
-        const tagStyle = document.getElementById('tagStyleOpt').value; // 'qr', 'text', or 'stickers'
+        const tagStyle = document.getElementById('tagStyleOpt').value; 
 
         const btn = document.getElementById('genBtn'); btn.innerText = "⏳ Saving..."; btn.disabled = true; 
         let html = `<div id="captureArea" style="padding:20px; background:white; width:100%; min-width:1000px; max-width:1122px; margin:0 auto; box-sizing:border-box;">`; 
@@ -1962,7 +2009,6 @@ window.openClosingPanel = async () => {
 
                 html += `<div id="st-${i}" style="width:100%; padding:20px 0; background:#fff; margin-bottom:30px; border-bottom:2px dashed #999; text-align:center; page-break-inside:avoid;">`;
 
-                // 🌟 ONLY RENDER THE BIG CUSTOMER CARD IF NOT IN 'STICKERS ONLY' MODE
                 if (tagStyle !== 'stickers') {
                     if (tagStyle === 'qr') {
                         if (plan === 'premium') { 
@@ -1979,7 +2025,6 @@ window.openClosingPanel = async () => {
                     html += `<div style="display:block; border:2px solid #000; padding:20px; border-radius:8px; width:280px; box-sizing:border-box; background:#fff; margin:0 auto 20px auto;"><div style="margin:0 0 10px 0; font-size:22px; font-weight:900; font-family:Arial; color:#000; border-bottom:2px solid #ccc; padding-bottom:5px;">⚡ STARBITE</div>${qrImageHtml}<div style="font-size:50px; font-weight:900; margin-top:5px; color:#000; font-family:Arial; line-height:1;">#${i}</div><div style="margin-top:15px; padding-top:10px; border-top:2px dashed #999; font-size:12px; font-weight:bold; color:#000; line-height:1.4;">${infoText}</div></div>`;
                 }
                 
-                // 🌟 ALWAYS RENDER THE SMALL DEVICE STICKERS (If copies > 0)
                 if(copies>0) { 
                     html+=`<div style="width:100%; text-align:center; font-size:0;">`; 
                     for(let c=0; c<copies; c++){ 
@@ -2003,4 +2048,4 @@ window.openClosingPanel = async () => {
     
   </script>
 </body>
-  </html>
+                    </html>
