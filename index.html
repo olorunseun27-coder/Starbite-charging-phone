@@ -3,573 +3,648 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>STARBITE SaaS: Business Dashboard</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <style>
-    :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --bg: #f4f7f6; --dark: #343a40; --gold: #ffd700; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; background-color: var(--bg); padding-bottom: 70px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 90vh; }
+    :root { 
+        --primary: #2563eb; --primary-hover: #1d4ed8; 
+        --success: #10b981; --danger: #ef4444; --warning: #f59e0b; 
+        --bg: #f8fafc; --dark: #0f172a; --gold: #fbbf24; 
+        --surface: #ffffff; --text: #1e293b; --text-muted: #64748b;
+        --border: #e2e8f0;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
     
-    .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; margin-top: 20px;}
+    body { 
+        font-family: 'Inter', sans-serif; 
+        margin: 0; padding: 15px; 
+        background-color: var(--bg); 
+        color: var(--text);
+        padding-bottom: 70px; display: flex; flex-direction: column; 
+        align-items: center; justify-content: flex-start; min-height: 90vh; 
+    }
+    
+    .container { background: var(--surface); padding: 30px; border-radius: 16px; box-shadow: var(--shadow); width: 100%; max-width: 400px; text-align: center; margin-top: 20px; border: 1px solid var(--border);}
     
     .auth-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
-    .auth-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 350px; text-align: center; }
-    .toggle-link { color: var(--primary); font-weight: bold; cursor: pointer; font-size: 14px; margin-top: 15px; display: inline-block; text-decoration: underline; }
+    .auth-box { background: var(--surface); padding: 40px 30px; border-radius: 16px; box-shadow: var(--shadow-lg); border: 1px solid var(--border); width: 90%; max-width: 380px; text-align: center; }
+    .toggle-link { color: var(--primary); font-weight: 600; cursor: pointer; font-size: 14px; margin-top: 15px; display: inline-block; transition: 0.2s;}
+    .toggle-link:hover { color: var(--primary-hover); text-decoration: underline; }
 
     #mainApp, #paywallScreen { width: 100%; max-width: 900px; }
     
-    .dash-row { display: flex; gap: 10px; margin-bottom: 15px; }
-    .dash-card { flex: 1; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; border-bottom: 3px solid transparent; }
-    .dash-val { font-size: 20px; font-weight: 900; color: #333; margin-top: 5px; }
-    .d-green { border-bottom-color: var(--success); } .d-green .dash-val { color: var(--success); }
-    .d-blue { border-bottom-color: var(--primary); } .d-blue .dash-val { color: var(--primary); }
-    .d-purp { border-bottom-color: #6f42c1; } .d-purp .dash-val { color: #6f42c1; }
-    .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; transition: all 0.3s ease; }
-    .settings-card { background: #fff3cd; border: 1px solid #ffeeba; }
-    h2, h3 { color: var(--primary); margin: 0 0 10px 0; }
+    .dash-row { display: flex; gap: 15px; margin-bottom: 20px; }
+    .dash-card { flex: 1; background: var(--surface); padding: 20px; border-radius: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); text-align: center; transition: 0.3s; }
+    .dash-card h4 { margin: 0 0 5px 0; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;}
+    .dash-val { font-size: 24px; font-weight: 900; color: var(--text); }
+    .d-green .dash-val { color: var(--success); }
+    .d-blue .dash-val { color: var(--primary); }
+    .d-purp .dash-val { color: #8b5cf6; }
     
-    input, button, select { padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 16px; transition: 0.2s; }
-    button { cursor: pointer; background-color: var(--primary); color: white; border: none; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
-    button:hover { filter: brightness(90%); } button:active { transform: scale(0.98); }
+    .card { background: var(--surface); padding: 20px; border-radius: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); margin-bottom: 20px; }
+    .settings-card { background: #fefce8; border: 1px solid #fef08a; }
     
-    .btn-print { background-color: var(--dark); color: #fff; } .btn-download { background-color: #6f42c1; color: #fff; }
-    .btn-edit { background-color: var(--warning); color: #000; } .btn-shelf { background-color: #6c757d; color: #fff; } 
-    .row { display: flex; gap: 8px; align-items: center; margin-bottom: 5px; }
-    .device-box { flex: 1; text-align: center; background: #f8f9fa; padding: 5px; border-radius: 8px; border: 1px solid #eee; }
-    .device-box label { font-size: 10px; display: block; color: #666; font-weight: bold; white-space: nowrap;}
-    .ticket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-    .ticket { border-left: 6px solid var(--primary); padding: 12px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; justify-content: space-between;}
-    .timer-area { background: #e3f2fd; padding: 10px; border-radius: 6px; margin: 10px 0; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
-    .time-val { font-family: 'Courier New', monospace; font-size: 18px; font-weight: bold; color: #333; }
-    .time-val.danger { color: #d32f2f; font-weight: 900; font-size: 20px; animation: pulse 2s infinite; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-    .code-badge { background: #333; color: #fff; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 14px; font-weight: bold; }
-    .modal { display: none; position: fixed; z-index: 200; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
-    .modal-content { background: #fff; padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; overflow-x: auto; }
-    .status-bar { position: fixed; bottom: 0; left: 0; width: 100%; padding: 5px; text-align: center; font-size: 12px; font-weight: bold; z-index: 100;}
-    .status-bar.on { background: #28a745; color: white; } .status-bar.off { background: #dc3545; color: white; }
-    #receiptPreview { font-family: Arial, sans-serif; text-align: center; border: 2px solid #333; padding: 10px; background: #fff; color: black; overflow-x: auto; }
-    .pin-display-box { background: #e2e3e5; padding: 10px; text-align: center; border-radius: 8px; margin: 10px 0; font-weight: bold; border: 2px dashed #6c757d; color: #000; }
-    .pin-text { font-family: monospace; font-size: 22px; color: #d32f2f; letter-spacing: 2px; }
-    .verify-box { margin: 15px 0; padding: 15px; background: #fff3cd; border: 2px solid #ffeeba; border-radius: 8px; text-align: center; }
-    .socket-display { font-size: 18px; font-weight: 900; color: #6f42c1; padding: 10px; background: #e0d4f5; border-radius: 8px; margin-top: 10px; text-align: center; border: 2px solid #6f42c1; }
-    #reader { width: 100%; border-radius: 8px; overflow: hidden; } #reader video { object-fit: cover; }
-    .chat-bubble { padding: 8px 12px; border-radius: 12px; margin-bottom: 5px; max-width: 85%; word-wrap: break-word; clear: both; font-size: 13px;}
-    .chat-c { background: var(--primary); color: white; float: right; border-bottom-right-radius: 2px; }
-    .chat-s { background: #e2e3e5; color: black; float: left; border-bottom-left-radius: 2px; }
+    h2, h3 { color: var(--text); margin: 0 0 15px 0; font-weight: 700; letter-spacing: -0.5px;}
+    
+    input, select { 
+        padding: 12px 16px; margin: 5px 0 15px 0; 
+        border: 1px solid var(--border); border-radius: 10px; 
+        width: 100%; box-sizing: border-box; font-size: 15px; 
+        background: #f8fafc; color: var(--text);
+        transition: all 0.2s; font-family: 'Inter', sans-serif;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); background: #fff;}
+    
+    button { 
+        cursor: pointer; background-color: var(--primary); color: white; 
+        border: none; font-weight: 600; border-radius: 10px;
+        padding: 12px 20px; font-size: 14px; transition: all 0.2s; 
+        box-shadow: var(--shadow-sm); font-family: 'Inter', sans-serif;
+    }
+    button:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow);} 
+    button:active { transform: translateY(0); }
+    
+    .btn-print { background-color: var(--dark); } 
+    .btn-download { background-color: #8b5cf6; }
+    .btn-edit { background-color: var(--bg); color: var(--text); border: 1px solid var(--border); box-shadow: none;} 
+    .btn-edit:hover { background-color: #e2e8f0; }
+    .btn-shelf { background-color: var(--text-muted); } 
+    
+    .row { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
+    .device-box { flex: 1; text-align: center; background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid var(--border); }
+    .device-box label { font-size: 11px; display: block; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px;}
+    .device-box input { margin: 0; text-align: center; padding: 8px; font-weight: bold;}
+    
+    .ticket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 15px; }
+    .ticket { border: 1px solid var(--border); padding: 16px; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;}
+    .ticket::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary); }
+    
+    .timer-area { background: #f1f5f9; padding: 12px; border-radius: 8px; margin: 12px 0; font-size: 14px; display: flex; justify-content: space-between; align-items: center; font-weight: 500;}
+    .time-val { font-family: 'ui-monospace', 'SFMono-Regular', Menlo, Monaco, Consolas, monospace; font-size: 16px; font-weight: 700; color: var(--text); }
+    .time-val.danger { color: var(--danger); animation: pulse 2s infinite; }
+    
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+    
+    .code-badge { background: var(--text); color: #fff; padding: 3px 8px; border-radius: 6px; font-family: monospace; font-size: 13px; font-weight: 700; }
+    
+    .modal { display: none; position: fixed; z-index: 200; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box;}
+    .modal-content { background: var(--surface); padding: 24px; border-radius: 16px; box-shadow: var(--shadow-lg); width: 100%; max-width: 420px; max-height: 85vh; overflow-y: auto; overflow-x: hidden; border: 1px solid rgba(255,255,255,0.1);}
+    
+    .status-bar { position: fixed; bottom: 0; left: 0; width: 100%; padding: 8px; text-align: center; font-size: 12px; font-weight: 700; z-index: 100; letter-spacing: 0.5px;}
+    .status-bar.on { background: var(--success); color: white; } .status-bar.off { background: var(--danger); color: white; }
+    
+    #receiptPreview { font-family: 'Inter', sans-serif; text-align: center; border: 1px solid var(--border); border-radius: 8px; padding: 15px; background: #fff; color: black; overflow-x: auto; }
+    
+    .pin-display-box { background: #f8fafc; padding: 15px; text-align: center; border-radius: 10px; margin: 15px 0; font-weight: 600; border: 1px dashed var(--border); color: var(--text); }
+    .pin-text { font-family: monospace; font-size: 24px; color: var(--primary); letter-spacing: 3px; font-weight: 900;}
+    
+    .verify-box { margin: 15px 0; padding: 15px; background: #fefce8; border: 1px solid #fef08a; border-radius: 10px; text-align: center; }
+    .socket-display { font-size: 16px; font-weight: 700; color: #8b5cf6; padding: 12px; background: #f5f3ff; border-radius: 10px; margin-top: 10px; text-align: center; border: 1px solid #ede9fe; }
+    
+    #reader { width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);} #reader video { object-fit: cover; }
+    
+    .chat-bubble { padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; max-width: 85%; word-wrap: break-word; clear: both; font-size: 14px;}
+    .chat-c { background: var(--primary); color: white; float: right; border-bottom-right-radius: 4px; }
+    .chat-s { background: #f1f5f9; color: var(--text); float: left; border-bottom-left-radius: 4px; }
     .chat-clear { clear: both; }
     
-    .plan-badge { font-size: 12px; font-weight: 900; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 10px; }
-    .plan-free { background: #e2e3e5; color: #333; border: 1px solid #ccc; }
-    .plan-basic { background: #cce5ff; color: #004085; border: 1px solid #b8daff; }
-    .plan-premium { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    .plan-badge { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; margin-left: 10px; letter-spacing: 0.5px;}
+    .plan-free { background: #f1f5f9; color: var(--text-muted); }
+    .plan-basic { background: #dbeafe; color: #1e40af; }
+    .plan-premium { background: #fef08a; color: #854d0e; }
 
-    /* 🌟 THE PERFECT CSS MODAL OVERLAY FOR EDITING */
-    #editBgOverlay { display: none; position: fixed; z-index: 199; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
-    .form-modal-mode { position: fixed !important; z-index: 200 !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; width: 90% !important; max-width: 400px !important; max-height: 90vh !important; overflow-y: auto !important; margin: 0 !important; box-shadow: 0 10px 40px rgba(0,0,0,0.6) !important; }
+    #editBgOverlay { display: none; position: fixed; z-index: 199; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px);}
+    .form-modal-mode { position: fixed !important; z-index: 200 !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; width: 90% !important; max-width: 450px !important; max-height: 90vh !important; overflow-y: auto !important; margin: 0 !important; box-shadow: var(--shadow-lg) !important; padding: 25px !important;}
 
+    .header-actions button {
+        padding: 8px 14px; border-radius: 8px; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; box-shadow: none; border: 1px solid transparent;
+    }
+    
     @media print {
         @page { size: A3 portrait; margin: 10mm; }
         body * { visibility: hidden; } #printArea, #printArea * { visibility: visible; }
         #printArea { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; border: none; }
         #captureArea { display: block !important; width: 100% !important; }
         .modal { display: block !important; background: white; position: absolute; top: 0; left: 0;}
-        .modal-content { width: 100%; max-width: 100%; box-shadow: none; padding: 0;}
+        .modal-content { width: 100%; max-width: 100%; box-shadow: none; padding: 0; border: none;}
         button, .single-dl-btn { display: none !important; }
     }
   </style>
 </head>
 <body>
 
-  <!-- The Dark Background that sits behind the Edit Form -->
   <div id="editBgOverlay" onclick="cancelEdit()"></div>
 
   <div id="authScreen" class="auth-container">
       <div id="loginBox" class="auth-box">
-          <h2 style="margin-top: 0; font-size: 28px;">⚡️ STARBITE SaaS</h2>
-          <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Shop Owner Login</p>
-          <input type="email" id="loginEmail" placeholder="Shop Email" style="color: #000; background: #fff; margin-bottom: 10px; font-weight:bold;">
-          <input type="password" id="loginPass" placeholder="Password" style="color: #000; background: #fff; margin-bottom: 15px;">
-          <button id="btnLogin" onclick="loginShop()" style="width: 100%; padding: 14px; font-size: 18px;">🔐 LOGIN TO SHOP</button>
+          <h2 style="font-size: 26px; font-weight: 800; color: var(--text);">⚡ STARBITE</h2>
+          <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 25px;">Business Dashboard Login</p>
+          <input type="email" id="loginEmail" placeholder="Shop Email">
+          <input type="password" id="loginPass" placeholder="Password">
+          <button id="btnLogin" onclick="loginShop()" style="width: 100%; padding: 14px; font-size: 16px; margin-top: 10px;">Login Securely</button>
           
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-              <span class="toggle-link" style="margin-top: 0;" onclick="toggleAuth('register')">New Shop? Register</span>
-              <span class="toggle-link" style="margin-top: 0; color: #dc3545; text-decoration: none;" onclick="resetPassword()">Forgot Password?</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
+              <span class="toggle-link" onclick="toggleAuth('register')">Create an account</span>
+              <span class="toggle-link" style="color: var(--text-muted);" onclick="resetPassword()">Forgot Password?</span>
           </div>
       </div>
 
       <div id="registerBox" class="auth-box" style="display:none;">
-          <h2 style="margin-top: 0; font-size: 28px;">⚡️ STARBITE SaaS</h2>
-          <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Register Your Charging Shop</p>
-          <input type="text" id="regShopName" placeholder="Business Name (e.g. Sam Chargers)" style="color: #000; background: #fff; margin-bottom: 10px; font-weight:bold;">
-          <input type="tel" id="regPhone" placeholder="Your Phone Number" style="color: #000; background: #fff; margin-bottom: 10px;">
-          <input type="email" id="regEmail" placeholder="Email Address" style="color: #000; background: #fff; margin-bottom: 10px;">
-          <input type="password" id="regPass" placeholder="Create Password (min 6 chars)" style="color: #000; background: #fff; margin-bottom: 15px;">
-          <button id="btnRegister" onclick="registerShop()" style="width: 100%; padding: 14px; font-size: 18px; background: var(--dark);">🚀 CREATE FREE ACCOUNT</button>
-          <span class="toggle-link" onclick="toggleAuth('login')">Already registered? Log in</span>
+          <h2 style="font-size: 26px; font-weight: 800; color: var(--text);">⚡ STARBITE</h2>
+          <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 25px;">Register Your Business</p>
+          <input type="text" id="regShopName" placeholder="Business Name">
+          <input type="tel" id="regPhone" placeholder="Phone Number">
+          <input type="email" id="regEmail" placeholder="Email Address">
+          <input type="password" id="regPass" placeholder="Create Password (min 6 chars)">
+          <button id="btnRegister" onclick="registerShop()" style="width: 100%; padding: 14px; font-size: 16px; background: var(--dark); margin-top: 10px;">Create Free Account</button>
+          <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
+              <span class="toggle-link" onclick="toggleAuth('login')">Already have an account? Sign in</span>
+          </div>
       </div>
   </div>
 
-  <div id="staffLockScreen" class="auth-container" style="display:none; z-index: 99999; background: rgba(30, 30, 30, 0.98);">
-      <div class="auth-box" style="background: #fff; border: 4px solid var(--primary);">
-          <div style="font-size:50px; margin-bottom:10px;">🔒</div>
-          <h2 style="margin-top: 0; font-size: 24px; color: #000;">System Locked</h2>
-          <p style="color: #666; font-size: 14px; margin-bottom: 20px; font-weight:bold;">Enter PIN to access the dashboard</p>
-          <input type="password" id="staffPinInput" placeholder="4-Digit PIN" style="color: #000; background: #e3f2fd; margin-bottom: 15px; font-size:24px; text-align:center; font-weight:900; letter-spacing:10px;">
-          <button onclick="unlockStaff()" style="width: 100%; padding: 15px; font-size: 18px; background:var(--primary);">🔓 UNLOCK</button>
+  <div id="staffLockScreen" class="auth-container" style="display:none; z-index: 99999; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px);">
+      <div class="auth-box" style="background: var(--surface); border: none;">
+          <div style="font-size:40px; margin-bottom:15px;">🔒</div>
+          <h2 style="font-size: 22px;">System Locked</h2>
+          <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Enter PIN to access the dashboard</p>
+          <input type="password" id="staffPinInput" placeholder="••••" style="background: #f8fafc; font-size:32px; text-align:center; font-weight:900; letter-spacing:12px; padding: 20px;">
+          <button onclick="unlockStaff()" style="width: 100%; padding: 15px; font-size: 16px; margin-top: 10px;">Unlock POS</button>
           
-          <div style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px;">
-              <p style="font-size: 12px; color: #999; margin:0 0 10px 0;">Are you the Owner? Click below to fully logout.</p>
-              <button onclick="logoutShop()" style="background: var(--danger); padding: 8px; width: 100%; font-size: 14px;">🚪 Log Out of Shop</button>
+          <div style="margin-top: 25px; padding-top: 20px;">
+              <button onclick="logoutShop()" style="background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 10px; width: 100%; box-shadow: none;">🚪 Log Out Entirely</button>
           </div>
       </div>
   </div>
 
   <div id="paywallScreen" style="display: none; padding-top: 50px;">
-      <div class="card" style="max-width: 500px; margin: 0 auto; text-align: center; border: 4px solid var(--warning);">
-          <div style="font-size: 60px; margin-bottom: 10px;">🔒</div>
-          <h2 style="color: var(--dark); margin-bottom: 5px;">Account Pending Activation</h2>
-          <p style="color: #666; line-height: 1.5; margin-bottom: 20px;">Welcome to STARBITE Pro! Your shop apartment has been created, but it is currently locked.</p>
+      <div class="card" style="max-width: 500px; margin: 0 auto; text-align: center; border: 1px solid var(--warning);">
+          <div style="font-size: 50px; margin-bottom: 15px;">🔒</div>
+          <h2 style="color: var(--dark);">Pending Activation</h2>
+          <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 25px;">Welcome to STARBITE Pro! Your account is created but requires administrative activation.</p>
           
-          <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px;">
-              <h4 style="margin: 0 0 10px 0; color: var(--danger);">Subscription Required</h4>
-              <p style="margin: 0; font-size: 14px;">Contact the Admin to complete activation.</p>
+          <div style="background: #fffbeb; padding: 20px; border-radius: 12px; border: 1px solid #fef08a; margin-bottom: 25px;">
+              <h4 style="margin: 0 0 10px 0; color: #b45309;">Subscription Required</h4>
+              <p style="margin: 0; font-size: 14px; color: #92400e;">Please contact support to complete your setup.</p>
           </div>
 
-          <button onclick="sendReceipt()" style="background: #25D366; font-size: 18px; padding: 15px;"><span style="font-size:20px;">💬</span> I Have Paid (Send Receipt)</button>
+          <button onclick="sendReceipt()" style="background: #10b981; font-size: 16px; padding: 15px; width: 100%;"><span style="margin-right:8px;">💬</span> Contact Admin on WhatsApp</button>
           
-          <div style="margin-top: 30px; border-top: 1px dashed #ccc; padding-top: 15px;">
-              <p style="font-size: 12px; color: #999;">Logged in as: <span id="paywallEmail"></span></p>
-              <button onclick="logoutShop()" style="background: var(--dark); padding: 8px; width: auto; font-size: 14px;">Log Out</button>
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
+              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Logged in as: <span id="paywallEmail" style="font-weight:600; color:var(--text);"></span></p>
+              <button onclick="logoutShop()" style="background: var(--bg); color: var(--text); border: 1px solid var(--border); box-shadow: none;">Log Out</button>
           </div>
       </div>
   </div>
 
   <div id="mainApp" style="display: none;">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
-          <h2 style="margin: 0; display:flex; align-items:center;">⚡️ STARBITE <span id="planIndicator" class="plan-badge">...</span></h2>
-          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-              <span id="shopBadge" style="font-weight: bold; font-size: 14px; padding: 5px 10px; background: #e3f2fd; color: var(--primary); border-radius: 6px;"></span>
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px;">
+          <h2 style="margin: 0; display:flex; align-items:center; font-weight: 800;">⚡ STARBITE <span id="planIndicator" class="plan-badge">...</span></h2>
+          <div class="header-actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <span id="shopBadge" style="font-weight: 600; font-size: 13px; padding: 6px 12px; background: #f1f5f9; color: var(--text); border-radius: 8px; border: 1px solid var(--border);"></span>
               
-              <button id="btnNotif" style="width: auto; padding: 8px 12px; background: #6f42c1; color: white; border: 2px solid #fff; box-shadow: 0 0 8px rgba(111, 66, 193, 0.5);" onclick="requestNotificationPermission()">🔔 Enable Alerts</button>
+              <button id="btnNotif" style="background: #8b5cf6;" onclick="requestNotificationPermission()">🔔 Alerts</button>
 
-              <span id="activeStaffBadge" style="font-weight: 900; font-size: 14px; padding: 5px 10px; background: #fff3cd; color: #856404; border: 2px solid #ffeeba; border-radius: 6px;">👑 Owner</span>
-              <button style="width: auto; padding: 8px 12px; background: var(--dark);" onclick="lockScreen()">🔒 Switch User</button>
+              <span id="activeStaffBadge" style="font-weight: 600; font-size: 13px; padding: 6px 12px; background: #fffbeb; color: #b45309; border-radius: 8px; border: 1px solid #fef08a;">👑 Owner</span>
               
-              <button id="btnWallets" style="width: auto; padding: 8px 12px; background: #28a745; color: white; border: 2px solid #fff; box-shadow: 0 0 8px rgba(40,167,69,0.5);" onclick="openWalletManager()">💳 Wallets</button>
+              <button style="background: var(--bg); color: var(--text); border: 1px solid var(--border);" onclick="lockScreen()">🔒 Lock</button>
               
-              <button id="btnPower" style="width: auto; padding: 8px 12px; background: var(--success);" onclick="togglePower()">⚡ Power: ON</button>
-              <button id="btnCsv" style="width: auto; padding: 8px 12px; background: #17a2b8;" onclick="exportCSV()">📊 CSV</button>
-              <button id="btnReviews" style="width: auto; padding: 8px 12px; background: var(--gold); color: #000;" onclick="openReviews()">⭐ Reviews</button>
+              <button id="btnWallets" style="background: var(--success);" onclick="openWalletManager()">💳 Wallets</button>
+              <button id="btnCsv" style="background: var(--dark);" onclick="exportCSV()">📊 Export</button>
+              <button id="btnReviews" style="background: var(--gold); color: #000;" onclick="openReviews()">⭐ Reviews</button>
               
-              <button id="btnStaffManage" style="width: auto; padding: 8px 12px; background: var(--primary);" onclick="document.getElementById('modalUsers').style.display='flex'">👥 Staff</button>
-              <button id="btnTags" style="width: auto; padding: 8px 12px; background: var(--dark);" onclick="document.getElementById('modalTagGen').style.display='flex'">🖨️ Tags</button>
-              <button id="btnUpgrade" style="width: auto; padding: 8px 12px; background: var(--success); font-weight:900; border: 2px solid #fff; box-shadow: 0 0 8px rgba(40,167,69,0.6);" onclick="document.getElementById('modalUpgrade').style.display='flex'">🚀 UPGRADE</button>
-              <button onclick="openClosingPanel()" style="background: #ff9800; color: #000; font-weight: bold; border: 2px solid #e65100;">⏰ 1-Hour Closing Reminders</button>
-              <button id="btnRescue" style="width: auto; padding: 8px 12px; background: #6f42c1; color: white;" onclick="rescueOldData()">🚑 Rescue Old Data</button>
+              <button id="btnStaffManage" style="background: var(--primary);" onclick="document.getElementById('modalUsers').style.display='flex'">👥 Staff</button>
+              <button id="btnTags" style="background: var(--bg); color: var(--text); border: 1px solid var(--border);" onclick="document.getElementById('modalTagGen').style.display='flex'">🖨️ Tags</button>
+              <button id="btnUpgrade" style="background: var(--success);" onclick="document.getElementById('modalUpgrade').style.display='flex'">🚀 Upgrade</button>
+              <button onclick="openClosingPanel()" style="background: var(--warning); color: #fff;">⏰ Closing Panel</button>
           </div>
       </div>
 
       <details id="settingsCard" class="card settings-card">
-        <summary style="font-weight:bold; cursor:pointer; color: #000;">⚙️ Shop Settings & Price List</summary>
-        <div style="display:flex; flex-wrap: wrap; gap:5px; margin-top:10px;">
-          <div class="device-box"><label>PHONE (₦)</label><input type="number" id="setPh" value="200"></div>
-          <div class="device-box"><label>P-BANK (₦)</label><input type="number" id="setPb" value="300"></div>
-          <div class="device-box" style="background:#e3f2fd; border-color:var(--primary);"><label style="color:var(--primary);">MAX SOCKETS</label><input type="number" id="setMaxSockets" value="50" style="color:var(--primary); font-weight:bold;"></div>
+        <summary style="font-weight:600; cursor:pointer; color: #854d0e; list-style: none;">⚙️ Manage Pricing & Shop Settings</summary>
+        <div style="display:flex; flex-wrap: wrap; gap:10px; margin-top:20px;">
+          <div class="device-box" style="background: #fff;"><label>Phone (₦)</label><input type="number" id="setPh" value="200"></div>
+          <div class="device-box" style="background: #fff;"><label>P-Bank (₦)</label><input type="number" id="setPb" value="300"></div>
+          <div class="device-box" style="background: #eff6ff; border-color: #bfdbfe;"><label style="color:var(--primary);">Max Sockets</label><input type="number" id="setMaxSockets" value="50" style="color:var(--primary); background: transparent; border: none;"></div>
         </div>
-        <div style="display:flex; flex-wrap: wrap; gap:5px; margin-top:5px;">
-          <div class="device-box"><label>FULL CHRG</label><input type="number" id="setChFull" value="100"></div>
-          <div class="device-box"><label>USB CABLE</label><input type="number" id="setChUsb" value="50"></div>
-          <div class="device-box"><label>CHRG HEAD</label><input type="number" id="setChHead" value="50"></div>
+        <div style="display:flex; flex-wrap: wrap; gap:10px; margin-top:10px;">
+          <div class="device-box" style="background: #fff;"><label>Full Charge</label><input type="number" id="setChFull" value="100"></div>
+          <div class="device-box" style="background: #fff;"><label>USB Cable</label><input type="number" id="setChUsb" value="50"></div>
+          <div class="device-box" style="background: #fff;"><label>Charge Head</label><input type="number" id="setChHead" value="50"></div>
         </div>
         
-        <div style="margin-top:10px; display:flex; gap:5px;">
-            <div class="device-box" style="background:#fff3cd; border-color:var(--warning); flex:1;">
-                <label style="color:#856404; font-size:12px;">🏆 VIP LOYALTY (5th Free)</label>
-                <select id="setLoyalty" style="color:#856404; font-weight:bold; background:#fff;">
-                    <option value="ON">🟢 Strict Consecutive ON</option>
-                    <option value="OFF">🔴 OFF</option>
+        <div style="margin-top:15px; display:flex; gap:10px;">
+            <div class="device-box" style="background:#fffbeb; border-color:#fef08a; flex:1;">
+                <label style="color:#b45309;">🏆 VIP Loyalty (5th Free)</label>
+                <select id="setLoyalty" style="color:#b45309; font-weight:600; background:#fff;">
+                    <option value="ON">🟢 Enabled</option>
+                    <option value="OFF">🔴 Disabled</option>
                 </select>
             </div>
-            <div class="device-box" style="background:#f8d7da; border-color:var(--danger); flex:1;">
-                <label style="color:#721c24; font-size:12px;">⏰ SHOP CLOSE TIME</label>
-                <input type="time" id="setCloseTime" value="21:00" style="color:#721c24; font-weight:bold; background:#fff; font-size: 14px;">
+            <div class="device-box" style="background:#fef2f2; border-color:#fecaca; flex:1;">
+                <label style="color:#b91c1c;">⏰ Shop Close Time</label>
+                <input type="time" id="setCloseTime" value="21:00" style="color:#b91c1c; font-weight:600; background:#fff;">
             </div>
         </div>
 
-        <div style="margin-top:15px; padding-top:15px; border-top:1px dashed #ccc;">
-            <label style="font-weight:bold; color:var(--dark); font-size:12px; display:block; margin-bottom:5px;">🏦 BANK ACCOUNT DETAILS</label>
-            <div style="display:flex; flex-wrap:wrap; gap:5px;">
-                <input type="text" id="setBankName" placeholder="Bank Name (e.g. Opay)" style="flex:1; min-width:120px;">
-                <input type="text" id="setAccName" placeholder="Account Name" style="flex:2; min-width:150px;">
-                <input type="number" id="setAccNumber" placeholder="Account Number" style="flex:2; min-width:150px; font-weight:bold; color:var(--primary);">
+        <div style="margin-top:20px; padding-top:20px; border-top:1px solid #fef08a;">
+            <label style="font-weight:700; color:#854d0e; font-size:12px; text-transform: uppercase; display:block; margin-bottom:10px;">🏦 Bank Account Details</label>
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                <input type="text" id="setBankName" placeholder="Bank Name" style="flex:1; min-width:120px; background:#fff;">
+                <input type="text" id="setAccName" placeholder="Account Name" style="flex:2; min-width:150px; background:#fff;">
+                <input type="number" id="setAccNumber" placeholder="Account Number" style="flex:2; min-width:150px; font-weight:600; color:var(--primary); background:#fff;">
             </div>
         </div>
 
-        <button onclick="saveSettings()" class="btn-edit" style="margin-top: 15px;">💾 SAVE ALL SETTINGS</button>
+        <button onclick="saveSettings()" style="background: var(--dark); margin-top: 10px; width: 100%;">💾 Save All Settings</button>
         
-        <div style="margin-top:15px; padding-top:15px; border-top:2px dashed #d6a206;">
-            <label style="font-weight:bold; color:var(--danger); display:block; margin-bottom:5px;">🚨 Kill / Reset Stolen Tag</label>
-            <div style="display:flex; gap:5px;"><input type="number" id="killTagNum" placeholder="Tag # (e.g. 5)" style="flex:1;"><button onclick="killTag()" style="background:var(--danger); flex:1;">☠️ Reset PIN</button></div>
+        <div style="margin-top:20px; padding-top:20px; border-top:1px solid #fef08a;">
+            <label style="font-weight:700; color:var(--danger); font-size:12px; text-transform: uppercase; display:block; margin-bottom:10px;">🚨 Reset Stolen/Lost Tag</label>
+            <div style="display:flex; gap:10px;"><input type="number" id="killTagNum" placeholder="Tag # (e.g. 5)" style="flex:2; background:#fff;"><button onclick="killTag()" style="background:var(--danger); flex:1;">Reset Tag PIN</button></div>
         </div>
       </details>
 
       <div class="dash-row">
         <div class="dash-card d-green" id="cardCash"><h4>Cash Today</h4><div class="dash-val" id="valCash">₦0</div></div>
         <div class="dash-card d-blue" id="cardPending"><h4>Pending</h4><div class="dash-val" id="valPending">₦0</div></div>
-        <div class="dash-card d-purp"><h4>Active</h4><div class="dash-val" id="valCount">0</div></div>
+        <div class="dash-card d-purp"><h4>Active Items</h4><div class="dash-val" id="valCount">0</div></div>
       </div>
 
       <div id="pendingDropoffsArea"></div>
 
-      <details class="card" id="featureAnalytics" style="margin-bottom: 15px; display: none; border: 2px solid var(--gold);">
-          <summary style="font-weight:900; cursor:pointer; color: #000; font-size: 18px;">📈 CEO Analytics Dashboard <span style="font-size:12px; color:var(--gold); text-transform:uppercase;">(Premium)</span></summary>
-          <div style="padding-top:15px;">
-              <select id="analyticsTimeframe" onchange="updateAnalytics()" style="margin-bottom:15px; background:#fff; color:#000;">
+      <details class="card" id="featureAnalytics" style="display: none; border-color: var(--border);">
+          <summary style="font-weight:700; cursor:pointer; color: var(--text); font-size: 16px; list-style: none;">📈 Analytics Dashboard <span style="font-size:11px; background:#fef08a; color:#854d0e; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">PRO</span></summary>
+          <div style="padding-top:20px;">
+              <select id="analyticsTimeframe" onchange="updateAnalytics()">
                   <option value="today">Today's Data</option>
                   <option value="week">Past 7 Days</option>
                   <option value="month">This Month</option>
                   <option value="all">All Time History</option>
               </select>
               
-              <div style="display:flex; flex-wrap:wrap; gap:15px;">
-                  <div style="flex:1; min-width:250px; background:#f8f9fa; padding:10px; border-radius:8px; border:1px solid #ddd; text-align:center;">
-                      <h4 style="margin-top:0; color:var(--dark);">Revenue by Device</h4>
+              <div style="display:flex; flex-wrap:wrap; gap:15px; margin-top: 10px;">
+                  <div style="flex:1; min-width:250px; background:#fff; padding:15px; border-radius:12px; border:1px solid var(--border); text-align:center;">
+                      <h4 style="margin:0 0 15px 0; color:var(--text-muted); font-size:13px; text-transform:uppercase;">Revenue by Device</h4>
                       <canvas id="deviceChart" style="max-height:200px; width: 100%;"></canvas>
                   </div>
                   
-                  <div style="flex:1; min-width:250px; background:#f8f9fa; padding:10px; border-radius:8px; border:1px solid #ddd; text-align:center;">
-                      <h4 style="margin-top:0; color:var(--dark);">Peak Drop-off Hours</h4>
+                  <div style="flex:1; min-width:250px; background:#fff; padding:15px; border-radius:12px; border:1px solid var(--border); text-align:center;">
+                      <h4 style="margin:0 0 15px 0; color:var(--text-muted); font-size:13px; text-transform:uppercase;">Peak Drop-off Hours</h4>
                       <canvas id="hoursChart" style="max-height:200px; width: 100%;"></canvas>
                   </div>
               </div>
 
-              <div style="margin-top:15px; background:#f8f9fa; padding:10px; border-radius:8px; border:1px solid #ddd;">
-                  <h4 style="margin-top:0; color:var(--dark); text-align:center;">👥 Staff Leaderboard (Revenue)</h4>
-                  <div id="staffLeaderboard" style="display:flex; flex-direction:column; gap:5px;"></div>
+              <div style="margin-top:15px; background:#fff; padding:15px; border-radius:12px; border:1px solid var(--border);">
+                  <h4 style="margin:0 0 15px 0; color:var(--text-muted); font-size:13px; text-transform:uppercase;">👥 Staff Leaderboard</h4>
+                  <div id="staffLeaderboard" style="display:flex; flex-direction:column; gap:8px;"></div>
               </div>
           </div>
       </details>
 
       <div class="card" id="formCard">
-        <h3 id="formAction" style="text-align: center;">Enter Tag to Start 🔵</h3>
-        <div style="display: flex; gap: 10px; align-items: stretch;">
-            <input type="tel" id="tokenNum" placeholder="TAG # (Scan or Type)" style="flex: 1; width: 100%; font-weight:900; border: 3px solid var(--primary); text-align: center; font-size: 24px; padding: 15px; margin: 0; color: #000; background: #fff;">
-            <button onclick="openScanner()" style="flex: 0 0 80px; width: 80px; background: var(--dark); border-radius: 8px; font-size: 28px; padding: 0; margin: 0; display: flex; align-items: center; justify-content: center;">📷</button>
+        <h3 id="formAction" style="text-align: center; color: var(--text); font-size: 18px;">Start a New Ticket</h3>
+        <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 5px;">
+            <input type="tel" id="tokenNum" placeholder="Scan or Type Tag #" style="flex: 1; font-weight:700; border: 2px solid var(--border); text-align: center; font-size: 20px; padding: 16px; margin: 0; background: var(--surface);">
+            <button onclick="openScanner()" style="flex: 0 0 70px; width: 70px; background: var(--bg); border: 2px solid var(--border); color: var(--text); border-radius: 10px; font-size: 24px; padding: 0; margin: 0; display: flex; align-items: center; justify-content: center; box-shadow: none;">📷</button>
         </div>
-        <div id="extendedForm" style="display: none; margin-top: 15px; animation: fadeIn 0.3s;">
+        <div id="extendedForm" style="display: none; margin-top: 20px; animation: fadeIn 0.3s;">
             <div id="securityCheckAlert"></div>
             
             <div id="walletAlert"></div>
             <div id="debtAlert"></div>
             <div id="vipAlert"></div>
             
-            <div id="featureCamera" style="background:#e2e3e5; padding:10px; border-radius:8px; margin-bottom:10px; border: 2px dashed #999;">
-                <label style="font-size:12px; font-weight:bold; color:#333; display:block; margin-bottom:5px;">📸 Snap Devices (Take Multiple Photos)</label>
-                <video id="camVideo" autoplay playsinline style="display:none; width:100%; max-height:250px; border-radius:8px; object-fit:cover; margin-bottom:5px;"></video>
+            <div id="featureCamera" style="background:#f8fafc; padding:15px; border-radius:12px; margin-bottom:15px; border: 1px dashed var(--border);">
+                <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:10px;">📸 Snapshot Devices</label>
+                <video id="camVideo" autoplay playsinline style="display:none; width:100%; max-height:250px; border-radius:8px; object-fit:cover; margin-bottom:10px;"></video>
                 <canvas id="camCanvas" style="display:none;"></canvas>
                 
                 <div id="photoGallery" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px; margin-bottom:10px;"></div>
                 
-                <div style="display:flex; gap:5px;">
-                    <button type="button" id="btnStartCam" onclick="startDeviceCam()" style="background:#17a2b8; flex:1; padding:8px;">📷 Open Camera</button>
-                    <button type="button" id="btnSnapCam" onclick="captureDeviceCam()" style="background:var(--success); flex:1; padding:8px; display:none;">📸 Snap Photo</button>
-                    <button type="button" id="btnStopCam" onclick="stopCam()" style="background:var(--dark); flex:1; padding:8px; display:none;">✅ Done</button>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" id="btnStartCam" onclick="startDeviceCam()" style="background:var(--bg); color:var(--text); border:1px solid var(--border); flex:1;">📷 Open Camera</button>
+                    <button type="button" id="btnSnapCam" onclick="captureDeviceCam()" style="background:var(--success); flex:1; display:none;">📸 Snap Photo</button>
+                    <button type="button" id="btnStopCam" onclick="stopCam()" style="background:var(--dark); flex:1; display:none;">✅ Done</button>
                 </div>
             </div>
 
             <datalist id="pastNames"></datalist>
             <datalist id="pastPhones"></datalist>
             
-            <input type="text" id="custName" placeholder="Customer Name" list="pastNames" style="color: #000; background: #fff; transition: 0.3s;">
+            <input type="text" id="custName" placeholder="Customer Name" list="pastNames">
             <div class="row">
-                <input type="tel" id="custPhone" placeholder="Phone Number (Important for WhatsApp)" list="pastPhones" style="flex:2; color: #000; background: #fff; transition: 0.3s;">
-                <select id="payStatus" style="flex:1; color: #000; background: #fff;" onchange="window.autoCalc()">
-                    <option value="Later">Pay Later ⏳</option>
-                    <option value="Now">Paid Now 💰</option>
-                    <option value="Wallet" style="font-weight:bold; color:var(--success);">💳 Wallet</option>
+                <input type="tel" id="custPhone" placeholder="Phone Number (For WhatsApp)" list="pastPhones" style="flex:2; margin: 0;">
+                <select id="payStatus" style="flex:1; margin: 0;" onchange="window.autoCalc()">
+                    <option value="Later">Pay Later</option>
+                    <option value="Now">Paid Now</option>
+                    <option value="Wallet">Wallet</option>
                 </select>
             </div>
             
-            <div style="background:#f8d7da; padding:10px; border-radius:8px; margin-top:5px; margin-bottom:5px;">
-                <label style="font-size:12px; font-weight:bold; color:#721c24;">⚠️ Liability Check (Device Condition):</label>
-                <div style="display:flex; gap:10px; flex-wrap:wrap; font-size:12px; margin-top:5px;">
-                    <label><input type="checkbox" class="cond-chk" value="Cracked Screen"> Cracked Screen</label>
-                    <label><input type="checkbox" class="cond-chk" value="Won't Turn On"> Won't Turn On</label>
-                    <label><input type="checkbox" class="cond-chk" value="Swollen Battery"> Swollen</label>
-                    <label><input type="checkbox" class="cond-chk" value="Broken Port"> Broken Port</label>
+            <div style="background:#fef2f2; padding:15px; border-radius:12px; margin:15px 0; border: 1px solid #fecaca;">
+                <label style="font-size:12px; font-weight:700; color:#b91c1c; text-transform:uppercase; margin-bottom:8px; display:block;">⚠️ Device Condition Check</label>
+                <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:13px; color:#7f1d1d;">
+                    <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" class="cond-chk" value="Cracked Screen" style="width:auto; margin:0;"> Cracked</label>
+                    <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" class="cond-chk" value="Won't Turn On" style="width:auto; margin:0;"> Dead</label>
+                    <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" class="cond-chk" value="Swollen Battery" style="width:auto; margin:0;"> Swollen</label>
+                    <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" class="cond-chk" value="Broken Port" style="width:auto; margin:0;"> Bad Port</label>
                 </div>
             </div>
 
             <div class="row">
-              <div class="device-box"><label>PHONES</label><input type="number" id="phCount" value="0" min="0" style="color: #000; background: #fff;" onchange="window.autoCalc()"></div>
-              <div class="device-box"><label>P-BANKS</label><input type="number" id="pbCount" value="0" min="0" style="color: #000; background: #fff;" onchange="window.autoCalc()"></div>
+              <div class="device-box"><label>Phones</label><input type="number" id="phCount" value="0" min="0" onchange="window.autoCalc()"></div>
+              <div class="device-box"><label>P-Banks</label><input type="number" id="pbCount" value="0" min="0" onchange="window.autoCalc()"></div>
             </div>
             <div class="row">
-              <div class="device-box"><label>FULL CHRG</label><input type="number" id="chFullCount" value="0" min="0" style="color: #000; background: #fff;" onchange="window.autoCalc()"></div>
-              <div class="device-box"><label>USB CABLE</label><input type="number" id="chUsbCount" value="0" min="0" style="color: #000; background: #fff;" onchange="window.autoCalc()"></div>
-              <div class="device-box"><label>CHRG HEAD</label><input type="number" id="chHeadCount" value="0" min="0" style="color: #000; background: #fff;" onchange="window.autoCalc()"></div>
+              <div class="device-box"><label>Full Chrg</label><input type="number" id="chFullCount" value="0" min="0" onchange="window.autoCalc()"></div>
+              <div class="device-box"><label>USB Cable</label><input type="number" id="chUsbCount" value="0" min="0" onchange="window.autoCalc()"></div>
+              <div class="device-box"><label>Chrg Head</label><input type="number" id="chHeadCount" value="0" min="0" onchange="window.autoCalc()"></div>
             </div>
-            <div class="row" style="background:#fff3cd; padding:10px; border-radius:8px; margin-top:5px;">
-              <div class="device-box" style="background:transparent; border:none;"><label>OTHERS QTY</label><input type="number" id="otCount" value="0" min="0" style="color: #000; background: #fff;" onchange="window.autoCalc()"></div>
-              <div class="device-box" style="background:transparent; border:none; flex:2;"><label>OTHERS PRICE (₦)</label><input type="number" id="otPrice" value="0" min="0" style="color: #000; background: #fff;" onchange="window.autoCalc()"></div>
+            <div class="row" style="background:#f8fafc; padding:10px; border-radius:12px; margin-top:10px; border: 1px solid var(--border);">
+              <div class="device-box" style="background:transparent; border:none; padding:0;"><label>Other QTY</label><input type="number" id="otCount" value="0" min="0" onchange="window.autoCalc()"></div>
+              <div class="device-box" style="background:transparent; border:none; padding:0; flex:2;"><label>Other Price (₦)</label><input type="number" id="otPrice" value="0" min="0" onchange="window.autoCalc()"></div>
             </div>
+
+            <!-- 🛒 Retail / Tab System -->
+            <div class="row" style="background:#fffbeb; padding:12px; border-radius:12px; margin-top:10px; border: 1px dashed #f59e0b;">
+              <div class="device-box" style="background:transparent; border:none; padding:0; flex:2;">
+                  <label style="color:#b45309;">🛒 Items Bought (Pay Later/Now)</label>
+                  <input type="text" id="retailDesc" placeholder="e.g. USB Cable, Pepsi" style="margin-bottom:0;">
+              </div>
+              <div class="device-box" style="background:transparent; border:none; padding:0; flex:1;">
+                  <label style="color:#b45309;">Cost (₦)</label>
+                  <input type="number" id="retailCost" value="0" min="0" onchange="window.autoCalc()" style="margin-bottom:0;">
+              </div>
+            </div>
+            
             <div id="socketUI" class="socket-display">🔌 Assigning Sockets...</div><input type="hidden" id="assignedSockets">
             
-            <div class="row" style="margin-top:10px;">
-                <div class="device-box" style="flex:1; border:2px solid var(--primary);"><label style="color:var(--primary);">TOTAL PRICE (₦)</label><input type="number" id="price" value="0" readonly style="font-weight:bold; color:var(--primary); font-size: 20px; text-align: center; background: #fff;"></div>
-                <div class="device-box" style="flex:1; background:#e3f2fd; border:2px solid var(--success);"><label style="color:var(--success);">AMOUNT PAID NOW (₦)</label><input type="number" id="amtPaidInput" value="0" min="0" style="font-weight:bold; color:var(--success); font-size: 20px; text-align: center; background: #fff;"></div>
+            <div class="row" style="margin-top:15px;">
+                <div class="device-box" style="flex:1; border:2px solid var(--border); background:#fff;"><label>Total Price (₦)</label><input type="number" id="price" value="0" readonly style="color:var(--text); font-size: 22px; background: transparent; border:none; margin:0; padding:0;"></div>
+                <div class="device-box" style="flex:1; background:#f0fdf4; border:2px solid #bbf7d0;"><label style="color:#166534;">Amount Paid (₦)</label><input type="number" id="amtPaidInput" value="0" min="0" style="color:#166534; font-size: 22px; background: transparent; border:none; margin:0; padding:0;"></div>
             </div>
 
-            <div style="background:#e3f2fd; padding:10px; border-radius:8px; margin-top:10px; border:2px dashed var(--primary);">
-                <label style="font-size:12px; font-weight:bold; color:var(--primary); display:block; margin-bottom:5px;">🔋 Manual Battery Sync (Enter exact % on device screen):</label>
+            <div style="background:#eff6ff; padding:15px; border-radius:12px; margin-top:15px; border:1px solid #bfdbfe;">
+                <label style="font-size:12px; font-weight:700; color:#1e40af; text-transform:uppercase; display:block; margin-bottom:10px;">🔋 Manual Battery Sync</label>
                 <div class="row">
-                    <div class="device-box" style="background:transparent; border:none;"><label style="color:var(--dark);">PHONE %</label><input type="number" id="syncPh" min="0" max="100" placeholder="0" style="background:#fff; text-align:center; font-weight:bold;"></div>
-                    <div class="device-box" style="background:transparent; border:none;"><label style="color:var(--dark);">P-BANK %</label><input type="number" id="syncPb" min="0" max="100" placeholder="0" style="background:#fff; text-align:center; font-weight:bold;"></div>
-                    <div class="device-box" style="background:transparent; border:none;"><label style="color:var(--dark);">OTHER %</label><input type="number" id="syncOt" min="0" max="100" placeholder="0" style="background:#fff; text-align:center; font-weight:bold;"></div>
+                    <div class="device-box" style="background:#fff; border:none; padding:8px;"><label>Phone %</label><input type="number" id="syncPh" min="0" max="100" placeholder="0" style="background:transparent; border:none; padding:0; margin:0;"></div>
+                    <div class="device-box" style="background:#fff; border:none; padding:8px;"><label>P-Bank %</label><input type="number" id="syncPb" min="0" max="100" placeholder="0" style="background:transparent; border:none; padding:0; margin:0;"></div>
+                    <div class="device-box" style="background:#fff; border:none; padding:8px;"><label>Other %</label><input type="number" id="syncOt" min="0" max="100" placeholder="0" style="background:transparent; border:none; padding:0; margin:0;"></div>
                 </div>
             </div>
 
-            <div class="pin-display-box" id="pinBox">🏷️ System PIN for this Tag:<br><span class="pin-text" id="displayPin">...</span></div>
+            <div class="pin-display-box" id="pinBox"><span style="font-size:12px; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:5px;">System PIN</span><span class="pin-text" id="displayPin">...</span></div>
             
-            <div id="staffChatArea" style="background:#f8f9fa; padding:15px; border-radius:8px; margin-top:15px; border:1px solid #ccc; display:none; text-align:left;">
-                <h4 style="margin:0 0 10px 0; color:var(--dark);">💬 Internal Chat with Customer (Premium)</h4>
-                <div id="staffChatHistory" style="max-height:150px; overflow-y:auto; margin-bottom:10px; background:#fff; padding:10px; border-radius:8px; border:1px solid #eee;"></div>
-                <div style="display:flex; gap:5px;">
-                    <input type="text" id="staffChatInput" placeholder="Reply to customer..." style="flex:1; margin:0; font-size:14px; padding:10px;">
-                    <button type="button" onclick="sendStaffChat()" style="width:auto; padding:10px 15px; margin:0; background:var(--primary); color:white; border-radius:8px;">Reply</button>
+            <div id="staffChatArea" style="background:#f8fafc; padding:15px; border-radius:12px; margin-top:15px; border:1px solid var(--border); display:none; text-align:left;">
+                <h4 style="margin:0 0 10px 0; color:var(--text); font-size:14px;">💬 Internal Chat</h4>
+                <div id="staffChatHistory" style="max-height:150px; overflow-y:auto; margin-bottom:10px; background:#fff; padding:15px; border-radius:8px; border:1px solid var(--border);"></div>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="staffChatInput" placeholder="Reply to customer..." style="flex:1; margin:0;">
+                    <button type="button" onclick="sendStaffChat()" style="width:auto; margin:0;">Send</button>
                 </div>
             </div>
 
-            <button onclick="saveTicket()" id="saveBtn" style="margin-top:15px;">🚀 CREATE TICKET</button>
-            <button id="cancelEditBtn" style="display:none; background:#666; margin-top:5px; width:100%;" onclick="cancelEdit()">Discard Changes</button>
+            <button onclick="saveTicket()" id="saveBtn" style="margin-top:20px; width:100%; padding: 16px; font-size: 16px;">Create Ticket</button>
+            <button id="cancelEditBtn" style="display:none; background:transparent; color:var(--text-muted); border:1px solid var(--border); margin-top:10px; width:100%; box-shadow:none;" onclick="cancelEdit()">Discard Changes</button>
         </div>
       </div>
 
-      <h3>Charging Now (<span id="countActive">0</span>)</h3>
+      <h3 style="margin-top: 30px; font-size: 16px; color: var(--text-muted); text-transform: uppercase;">Charging Now (<span id="countActive">0</span>)</h3>
       <div id="listActive" class="ticket-grid">Loading shop database...</div>
 
-      <details class="card" style="margin-bottom: 30px; margin-top: 15px;">
-        <summary>📂 Search History</summary>
-        <div style="padding-top:10px;">
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <input type="text" id="histSearch" placeholder="Search by name or Tag #..." oninput="render()" style="color: #000; background: #fff; flex: 2; min-width: 150px;">
-                <input type="date" id="histDate" onchange="render()" style="color: #000; background: #fff; flex: 1; min-width: 120px;">
-            </div><div id="listHistory" class="ticket-grid" style="margin-top:10px;"></div>
+      <details class="card" style="margin-bottom: 30px; margin-top: 25px; background: transparent; border: none; box-shadow: none; padding: 0;">
+        <summary style="background: var(--surface); padding: 15px 20px; border-radius: 12px; border: 1px solid var(--border); font-weight: 600; cursor: pointer; list-style: none;">📂 Search History</summary>
+        <div style="padding-top:15px;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="text" id="histSearch" placeholder="Search by name or Tag #..." oninput="render()" style="flex: 2; min-width: 150px; background: var(--surface);">
+                <input type="date" id="histDate" onchange="render()" style="flex: 1; min-width: 120px; background: var(--surface);">
+            </div><div id="listHistory" class="ticket-grid" style="margin-top:15px;"></div>
         </div>
       </details>
       <div id="status" class="status-bar off">OFFLINE</div>
 
       <div id="modalClosingAlert" class="modal">
-          <div class="modal-content" style="text-align: center; border: 4px solid var(--warning);">
-              <h1 style="font-size:50px; margin:0;">⏰</h1>
-              <h3 style="color: var(--danger); margin-top:10px;">Closing Time Alert!</h3>
-              <p style="color: #333; font-size: 15px; font-weight:bold;">Shop closes in exactly <span id="closeMinsLeft" style="font-size:20px; color:var(--danger);"></span> minutes.</p>
-              <p style="color: #666; font-size: 13px;">Please start wrapping up and reminding customers.</p>
-              <button style="background: var(--success); width: 100%; margin-top:15px;" onclick="closeModal('modalClosingAlert')">Acknowledge</button>
+          <div class="modal-content" style="text-align: center;">
+              <div style="font-size:50px; margin-bottom:10px;">⏰</div>
+              <h3 style="color: var(--danger);">Closing Time Alert</h3>
+              <p style="color: var(--text); font-size: 15px; font-weight:600;">Shop closes in exactly <span id="closeMinsLeft" style="font-size:20px; color:var(--danger);"></span> minutes.</p>
+              <p style="color: var(--text-muted); font-size: 14px;">Please start wrapping up and reminding customers.</p>
+              <button style="background: var(--dark); width: 100%; margin-top:20px;" onclick="closeModal('modalClosingAlert')">Acknowledge</button>
           </div>
       </div>
 
       <div id="modalExpiryWarning" class="modal">
-          <div class="modal-content" style="text-align: center; border: 4px solid var(--warning);">
-              <h1 style="font-size:50px; margin:0;">⚠️</h1>
-              <h3 style="color: #856404; margin-top:10px;">Subscription Expiring Soon!</h3>
-              <p style="color: #333; font-size: 15px; font-weight:bold;">Your <span id="expiryPlanName"></span> plan expires in exactly <span id="expiryDaysLeft" style="font-size:20px; color:var(--danger);"></span> days.</p>
-              <p style="color: #666; font-size: 13px;">Please renew now to avoid losing access to your premium features and unlimited sockets.</p>
-              <button style="background: var(--success); width: 100%; margin-top:15px; font-size: 16px;" onclick="document.getElementById('modalUpgrade').style.display='flex'; closeModal('modalExpiryWarning');">🚀 Renew Now</button>
-              <button style="background: #666; width: 100%; margin-top:10px;" onclick="closeModal('modalExpiryWarning')">Remind Me Later</button>
+          <div class="modal-content" style="text-align: center;">
+              <div style="font-size:50px; margin-bottom:10px;">⚠️</div>
+              <h3 style="color: var(--warning);">Subscription Expiring</h3>
+              <p style="color: var(--text); font-size: 15px; font-weight:600;">Your <span id="expiryPlanName"></span> plan expires in <span id="expiryDaysLeft" style="font-size:20px; color:var(--danger);"></span> days.</p>
+              <p style="color: var(--text-muted); font-size: 14px;">Please renew now to maintain access.</p>
+              <button style="background: var(--primary); width: 100%; margin-top:20px;" onclick="document.getElementById('modalUpgrade').style.display='flex'; closeModal('modalExpiryWarning');">Renew Now</button>
+              <button style="background: transparent; color: var(--text-muted); width: 100%; margin-top:10px; box-shadow: none;" onclick="closeModal('modalExpiryWarning')">Remind Me Later</button>
           </div>
       </div>
 
       <div id="modalClosing" class="modal">
         <div class="modal-content">
-          <h3 style="text-align: center; color: #ff9800;">⏰ End-of-Day Clearance</h3>
-          <p style="text-align: center; font-size: 13px; color: #666;">Send an urgent WhatsApp message to everyone who hasn't picked up their device.</p>
-          <div id="closingTicketsList" style="margin-top: 15px; max-height: 350px; overflow-y: auto;"></div>
-          <button style="background:#666; margin-top:15px; width: 100%;" onclick="closeModal('modalClosing')">Close Panel</button>
+          <h3 style="text-align: center; color: var(--warning);">⏰ End-of-Day Clearance</h3>
+          <p style="text-align: center; font-size: 14px; color: var(--text-muted);">Send an urgent WhatsApp message to everyone who hasn't picked up their device.</p>
+          <div id="closingTicketsList" style="margin-top: 20px; max-height: 350px; overflow-y: auto;"></div>
+          <button style="background:var(--bg); color:var(--text); border:1px solid var(--border); margin-top:20px; width: 100%; box-shadow:none;" onclick="closeModal('modalClosing')">Close Panel</button>
         </div>
       </div>
       
       <div id="modalWallets" class="modal">
-          <div class="modal-content" style="text-align: center; border: 4px solid var(--success);">
-              <h1 style="font-size:40px; margin:0;">💳</h1>
-              <h3 style="color: var(--success); margin-top:10px;">Customer Wallet Ledger</h3>
-              <p style="color: #666; font-size: 13px; margin-bottom:15px;">Add physical cash to a customer's digital balance.</p>
+          <div class="modal-content" style="text-align: center;">
+              <div style="font-size:40px; margin-bottom:10px;">💳</div>
+              <h3 style="color: var(--success);">Customer Wallet</h3>
+              <p style="color: var(--text-muted); font-size: 14px; margin-bottom:20px;">Manage digital balances for customers.</p>
               
               <div style="text-align:left;">
-                  <label style="font-size:12px; font-weight:bold; color:#333;">Customer Phone #</label>
-                  <input type="tel" id="walletPhone" placeholder="Enter phone number..." style="background:#fff; color:#000; font-weight:bold;">
+                  <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Customer Phone #</label>
+                  <input type="tel" id="walletPhone" placeholder="Enter phone number..." style="background:var(--surface);">
                   
-                  <div style="background:#e3f2fd; border:2px solid var(--primary); padding:10px; border-radius:8px; margin-bottom:10px; text-align:center;">
-                      <span style="font-size:12px; color:#555; display:block;">Current Balance:</span>
-                      <b id="walletCurrentBal" style="font-size:24px; color:var(--primary);">₦0</b>
+                  <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:15px; border-radius:12px; margin:15px 0; text-align:center;">
+                      <span style="font-size:12px; color:#166534; display:block; text-transform:uppercase; font-weight:700;">Current Balance</span>
+                      <b id="walletCurrentBal" style="font-size:32px; color:#15803d;">₦0</b>
                   </div>
                   
-                  <label style="font-size:12px; font-weight:bold; color:#333;">Amount to ADD (or subtract with -)</label>
-                  <input type="number" id="walletAmount" placeholder="e.g. 5000" style="background:#fff; color:#000; font-weight:bold;">
+                  <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Amount to Adjust (+ or -)</label>
+                  <input type="number" id="walletAmount" placeholder="e.g. 5000" style="background:var(--surface);">
                   
-                  <button onclick="updateWallet()" style="background: var(--success); width: 100%; margin-top:15px;">💰 Update Balance</button>
+                  <button onclick="updateWallet()" style="background: var(--success); width: 100%; margin-top:15px;">Update Balance</button>
               </div>
-              <button style="background: #666; width: 100%; margin-top:10px;" onclick="closeModal('modalWallets')">Close</button>
+              <button style="background: transparent; color: var(--text-muted); border: 1px solid var(--border); width: 100%; margin-top:10px; box-shadow: none;" onclick="closeModal('modalWallets')">Close</button>
           </div>
       </div>
 
       <div id="modalUpgrade" class="modal">
-          <div class="modal-content" style="text-align: center; padding:0; overflow:hidden;">
-              <div style="background:var(--dark); color:white; padding:20px;">
-                  <h2 style="margin:0; color:var(--gold);">🚀 UPGRADE PLAN</h2>
-                  <p style="margin:5px 0 0 0; font-size:14px;">Unlock the full power of Starbite.</p>
+          <div class="modal-content" style="padding:0; overflow:hidden;">
+              <div style="background:var(--dark); color:white; padding:30px 20px; text-align:center;">
+                  <h2 style="margin:0; color:var(--surface); font-size: 24px;">Upgrade Plan</h2>
+                  <p style="margin:8px 0 0 0; font-size:14px; color: #94a3b8;">Unlock the full power of Starbite.</p>
               </div>
               
-              <div style="padding:20px; text-align:left;">
-                  <div style="background:#f8f9fa; border:2px solid var(--primary); padding:15px; border-radius:8px; margin-bottom:15px;">
-                      <h3 style="margin:0 0 5px 0; color:var(--primary);">Basic Plan (<span id="priceBasicDisplay">₦0</span>/mo)</h3>
-                      <ul style="margin:0; padding-left:20px; font-size:14px; color:#333;">
+              <div style="padding:25px;">
+                  <div style="background:var(--surface); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:15px; box-shadow:var(--shadow-sm);">
+                      <h3 style="margin:0 0 10px 0; color:var(--text); font-size:18px;">Basic <span style="float:right; color:var(--primary);" id="priceBasicDisplay">₦0</span></h3>
+                      <ul style="margin:0; padding-left:20px; font-size:14px; color:var(--text-muted); line-height: 1.6;">
                           <li>Up to <b>30 Active Sockets</b></li>
                           <li>Generate up to <b>50 Tags</b></li>
                           <li>Staff Login Management</li>
                       </ul>
-                      <button onclick="requestUpgrade('Basic')" style="width:100%; margin-top:10px; background:var(--primary);">Pay for Basic</button>
+                      <button onclick="requestUpgrade('Basic')" style="width:100%; margin-top:15px;">Select Basic</button>
                   </div>
 
-                  <div style="background:#fff3cd; border:2px solid var(--gold); padding:15px; border-radius:8px;">
-                      <h3 style="margin:0 0 5px 0; color:#856404;">Premium Plan (<span id="pricePremiumDisplay">₦0</span>/mo)</h3>
-                      <ul style="margin:0; padding-left:20px; font-size:14px; color:#333;">
+                  <div style="background:#fffbeb; border:1px solid #fde047; padding:20px; border-radius:12px; box-shadow:var(--shadow-sm);">
+                      <h3 style="margin:0 0 10px 0; color:#854d0e; font-size:18px;">Premium <span style="float:right;" id="pricePremiumDisplay">₦0</span></h3>
+                      <ul style="margin:0; padding-left:20px; font-size:14px; color:#92400e; line-height: 1.6;">
                           <li><b>Unlimited</b> Sockets & Tags</li>
                           <li>Staff Login Management</li>
                           <li><b>Customer Tracking Portal</b></li>
-                          <li><b>CEO Analytics Dashboard</b></li>
+                          <li><b>Analytics Dashboard</b></li>
                           <li><b>WhatsApp Notifications</b></li>
                       </ul>
-                      <button onclick="requestUpgrade('Premium')" style="width:100%; margin-top:10px; background:var(--gold); color:#000;">Pay for Premium</button>
+                      <button onclick="requestUpgrade('Premium')" style="width:100%; margin-top:15px; background:var(--gold); color:#000;">Select Premium</button>
                   </div>
               </div>
-              <button style="background:#666; width:100%; border-radius:0; padding:15px;" onclick="closeModal('modalUpgrade')">Close</button>
+              <button style="background:transparent; color:var(--text-muted); width:100%; padding:15px; box-shadow:none; border-top:1px solid var(--border); border-radius: 0;" onclick="closeModal('modalUpgrade')">Close</button>
           </div>
       </div>
 
       <div id="modalUsers" class="modal">
-        <div class="modal-content" style="background: #2a2a2a; border: 1px solid #444;">
-          <h3 style="text-align: left; color: #fff; border-bottom: 1px solid #444; padding-bottom: 10px; margin-top:0;">👥 User Management</h3>
+        <div class="modal-content">
+          <h3 style="color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-top:0;">👥 Staff Management</h3>
           <div id="userList" style="margin-bottom: 20px; max-height: 250px; overflow-y: auto;"></div>
-          <h4 style="color: #ccc; margin-bottom: 10px;">➕ Add New Staff</h4>
-          <input type="text" id="newStaffName" placeholder="Staff Name" style="background:#fff; color:#000;">
-          <input type="number" id="newStaffPin" placeholder="4-Digit PIN" style="background:#fff; color:#000;">
-          <select id="newStaffRole" style="background:#fff; color:#000;">
-              <option value="staff">Staff (Charging Only)</option>
-              <option value="admin">Admin (All Access)</option>
-          </select>
-          <button onclick="addStaff()" style="background: var(--success); width: 100%; margin-top: 10px; padding:12px;">Add User</button>
-          <button style="background: #555; width: 100%; margin-top: 10px;" onclick="closeModal('modalUsers')">Close</button>
+          
+          <div style="background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+              <h4 style="color: var(--text); margin: 0 0 15px 0; font-size: 14px;">Add New Staff</h4>
+              <input type="text" id="newStaffName" placeholder="Full Name" style="background:var(--surface);">
+              <input type="password" id="newStaffPin" placeholder="4-Digit PIN" style="background:var(--surface);">
+              <select id="newStaffRole" style="background:var(--surface);">
+                  <option value="staff">Staff (Charging Only)</option>
+                  <option value="admin">Admin (All Access)</option>
+              </select>
+              <button onclick="addStaff()" style="background: var(--dark); width: 100%; margin-top: 5px;">Add Staff Member</button>
+          </div>
+          <button style="background: transparent; color: var(--text-muted); border: 1px solid var(--border); width: 100%; margin-top: 15px; box-shadow: none;" onclick="closeModal('modalUsers')">Close</button>
         </div>
       </div>
 
       <div id="modalReviews" class="modal">
-          <div class="modal-content" style="background: #fff;">
-              <h3 style="color: var(--primary); margin-top:0;">⭐ Staff Reviews</h3>
-              <div id="reviewsList" style="max-height: 300px; overflow-y: auto; text-align: left;"></div>
-              <button style="background: #666; width: 100%; margin-top: 15px;" onclick="closeModal('modalReviews')">Close</button>
+          <div class="modal-content">
+              <h3 style="color: var(--text); margin-top:0;">⭐ Customer Reviews</h3>
+              <div id="reviewsList" style="max-height: 350px; overflow-y: auto; text-align: left;"></div>
+              <button style="background: var(--bg); color: var(--text); border: 1px solid var(--border); width: 100%; margin-top: 20px; box-shadow: none;" onclick="closeModal('modalReviews')">Close</button>
           </div>
       </div>
 
       <div id="modalShelf" class="modal">
-        <div class="modal-content" style="text-align:center; background:#fff;">
-          <h3 style="color:var(--primary); margin-top:0;">📦 Move to Shelf</h3>
-          <p style="color:#666; font-size:13px; margin-bottom:15px;">Select which items are fully charged and ready for pickup:</p>
+        <div class="modal-content" style="text-align:center;">
+          <h3 style="color:var(--text); margin-top:0;">📦 Move to Shelf</h3>
+          <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">Select which items are fully charged and ready for pickup.</p>
           <input type="hidden" id="shelf-id">
-          <div id="shelf-options" style="text-align:left; background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #eee; margin-bottom:15px;"></div>
-          <button onclick="confirmShelf()" style="background:var(--success); width:100%;">✅ Confirm Shelf</button>
-          <button onclick="closeModal('modalShelf')" style="background:#666; width:100%; margin-top:10px;">Cancel</button>
+          <div id="shelf-options" style="text-align:left; background:#f8fafc; padding:20px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;"></div>
+          <button onclick="confirmShelf()" style="background:var(--dark); width:100%;">Confirm Action</button>
+          <button onclick="closeModal('modalShelf')" style="background:transparent; color:var(--text-muted); border:1px solid var(--border); width:100%; margin-top:10px; box-shadow: none;">Cancel</button>
         </div>
       </div>
 
-      <div id="modalScanner" class="modal"><div class="modal-content" style="text-align: center; padding: 15px;"><h3 style="margin-top: 0; color: #000;">📷 Scan Tag</h3><p style="font-size: 12px; color: #666;">Point your phone camera at the tag.</p><div id="reader"></div><button style="background: var(--danger); margin-top: 15px; width: 100%;" onclick="closeScanner()">Cancel</button></div></div>
-      <div id="modalScanMatch" class="modal"><div class="modal-content" style="text-align: center;"><h3 style="margin-top: 0; color: var(--primary);">📱 Tag Found!</h3><div id="scanMatchDetails" style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left; color: #000;"></div><button id="btnScanCollect" style="background: var(--success); width: 100%; margin-bottom: 10px;">📦 Process Collection</button><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button id="btnScanEdit" style="background: var(--warning); width: 100%; color: #000;">✏️ Edit Ticket</button></div><button style="background: #666; width: 100%;" onclick="closeModal('modalScanMatch'); cancelEdit();">Close</button></div></div>
-      <div id="modalPrint" class="modal"><div class="modal-content" id="printArea" style="max-width: 900px; width: 95%;"><div id="receiptPreview" style="background: #ffffff; padding: 15px;"></div><div id="printActions" style="display:flex; gap:10px; margin-top:10px; flex-wrap: wrap;"><button class="btn-print" style="flex:1; min-width: 100px;" onclick="window.print()">🖨️ PRINT ALL</button><button id="btnDownload" class="btn-download" style="flex:1; min-width: 100px;" onclick="downloadImage()">📥 SAVE ALL (GRID)</button></div><button style="background:#666; margin-top:10px; width: 100%;" onclick="closeModal('modalPrint')">Close</button></div></div>
+      <div id="modalScanner" class="modal"><div class="modal-content" style="text-align: center; padding: 25px;"><h3 style="margin-top: 0;">Scan Tag</h3><p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">Point your camera at the customer's QR code.</p><div id="reader"></div><button style="background: transparent; color: var(--danger); border: 1px solid var(--danger); margin-top: 20px; width: 100%; box-shadow: none;" onclick="closeScanner()">Cancel</button></div></div>
+      
+      <div id="modalScanMatch" class="modal"><div class="modal-content" style="text-align: center;"><div style="font-size: 40px; margin-bottom: 15px;">📱</div><h3 style="margin-top: 0; color: var(--text);">Tag Found!</h3><div id="scanMatchDetails" style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: left; border: 1px solid var(--border);"></div><button id="btnScanCollect" style="background: var(--success); width: 100%; margin-bottom: 10px;">Process Collection</button><div style="display: flex; gap: 10px; margin-bottom: 10px;"><button id="btnScanEdit" style="background: var(--bg); color: var(--text); border: 1px solid var(--border); width: 100%; box-shadow: none;">Edit Ticket</button></div><button style="background: transparent; color: var(--text-muted); width: 100%; box-shadow: none;" onclick="closeModal('modalScanMatch'); cancelEdit();">Close</button></div></div>
+      
+      <div id="modalPrint" class="modal"><div class="modal-content" id="printArea" style="max-width: 900px; width: 95%; background: var(--bg); border: none;"><div id="receiptPreview"></div><div id="printActions" style="display:flex; gap:10px; margin-top:20px; flex-wrap: wrap;"><button class="btn-print" style="flex:1; min-width: 150px; padding: 15px;" onclick="window.print()">🖨️ Print Layout</button><button id="btnDownload" class="btn-download" style="flex:1; min-width: 150px; padding: 15px;" onclick="downloadImage()">📥 Save as Image</button></div><button style="background:transparent; color:var(--text-muted); border:1px solid var(--border); margin-top:10px; width: 100%; box-shadow:none;" onclick="closeModal('modalPrint')">Close</button></div></div>
+      
       <div id="modalTagGen" class="modal">
         <div class="modal-content">
-          <h3 style="text-align: center; color: #000;">🖨️ Generate Tags</h3>
-          <div class="row" style="margin-top: 15px;"><div class="device-box"><label>Start Tag #</label><input type="number" id="tagStart" value="1" min="1" style="color: #000; background: #fff;"></div><div class="device-box"><label>How Many Tags?</label><input type="number" id="tagCount" value="5" min="1" style="color: #000; background: #fff;"></div></div>
-          <div class="row" style="margin-top: 5px;">
-              <div class="device-box" style="flex:1; border: 2px solid var(--primary);">
-                  <label style="color:var(--primary);">PRINT LAYOUT</label>
-                  <select id="tagStyleOpt" style="background:#fff; color:#000; font-weight:bold;">
-                      <option value="qr">📱 Customer Card + Stickers (QR Code)</option>
-                      <option value="text">🔤 Customer Card + Stickers (Code & PIN Only)</option>
-                      <option value="stickers" style="background: #fff3cd;">🏷️ Device Stickers ONLY (No Card)</option>
+          <h3 style="text-align: center; color: var(--text);">🖨️ Generate Tags</h3>
+          <div class="row" style="margin-top: 20px;"><div class="device-box" style="background: #fff;"><label>Start Tag #</label><input type="number" id="tagStart" value="1" min="1"></div><div class="device-box" style="background: #fff;"><label>How Many?</label><input type="number" id="tagCount" value="5" min="1"></div></div>
+          <div class="row" style="margin-top: 10px;">
+              <div class="device-box" style="flex:1; background: #fff;">
+                  <label>Print Layout Style</label>
+                  <select id="tagStyleOpt" style="background: #f8fafc;">
+                      <option value="qr">📱 Card + Stickers (QR Code)</option>
+                      <option value="text">🔤 Card + Stickers (PIN Only)</option>
+                      <option value="stickers">🏷️ Stickers ONLY (No Card)</option>
                   </select>
               </div>
           </div>
-          <div class="row" style="margin-top: 5px;"><div class="device-box" style="background: #e2e3e5;"><label style="color: #333;">Device PIN Stickers (per Tag)</label><input type="number" id="tagCopies" value="25" min="0" style="font-weight: bold; text-align: center; color: #000; background: #fff;"></div></div>
-          <button id="genBtn" style="background:var(--dark); margin-top:15px;" onclick="printSecureTags()">🖨️ Generate Tags</button>
-          <button style="background:#666; margin-top:5px;" onclick="closeModal('modalTagGen')">Cancel</button>
+          <div class="row" style="margin-top: 10px;"><div class="device-box" style="background: #f8fafc;"><label>Device Stickers (per Tag)</label><input type="number" id="tagCopies" value="25" min="0" style="background: #fff;"></div></div>
+          <button id="genBtn" style="background:var(--dark); margin-top:20px; width: 100%;" onclick="printSecureTags()">Generate Assets</button>
+          <button style="background:transparent; color:var(--text-muted); border:1px solid var(--border); margin-top:10px; width: 100%; box-shadow:none;" onclick="closeModal('modalTagGen')">Cancel</button>
         </div>
       </div>
 
       <div id="mod-collect" class="modal">
         <div class="modal-content">
-            <h3 style="color: #000; margin-top:0;">📦 Collection Manager</h3>
+            <h3 style="color: var(--text); margin-top:0;">📦 Process Collection</h3>
             <input type="hidden" id="col-id">
-            <div id="collect-items-list"></div>
+            <div id="collect-items-list" style="margin-top: 15px;"></div>
             
-            <div style="background:#e3f2fd; padding:10px; border-radius:8px; margin:15px 0; border: 1px solid var(--primary);">
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span style="color:#555; font-weight:bold;">Total Bill:</span>
-                    <span style="color:#000; font-weight:bold;">₦<span id="col-total-bill">0</span></span>
+            <div style="background:#f8fafc; padding:20px; border-radius:12px; margin:20px 0; border: 1px solid var(--border);">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size: 14px;">
+                    <span style="color:var(--text-muted);">Total Bill:</span>
+                    <span style="color:var(--text); font-weight:700;">₦<span id="col-total-bill">0</span></span>
                 </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span style="color:#555; font-weight:bold;">Already Paid:</span>
-                    <span style="color:var(--success); font-weight:bold;">₦<span id="col-already-paid">0</span></span>
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size: 14px;">
+                    <span style="color:var(--text-muted);">Already Paid:</span>
+                    <span style="color:var(--success); font-weight:700;">₦<span id="col-already-paid">0</span></span>
                 </div>
-                <div style="display:flex; justify-content:space-between; border-top:1px dashed #ccc; padding-top:5px; margin-bottom:10px;">
-                    <span style="color:var(--danger); font-weight:bold;">Oustanding Balance:</span>
-                    <span style="color:var(--danger); font-weight:bold;">₦<span id="col-balance">0</span></span>
+                <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border); padding-top:12px; margin-bottom:20px; font-size: 15px;">
+                    <span style="color:var(--danger); font-weight:700;">Outstanding Balance:</span>
+                    <span style="color:var(--danger); font-weight:700;">₦<span id="col-balance">0</span></span>
                 </div>
                 
-                <div style="background:#fff; padding:10px; border-radius:6px; border:1px solid #ccc;">
-                    <label style="font-size:12px; font-weight:bold; color:#333; display:block; margin-bottom:5px;">💰 Payment Received NOW:</label>
-                    <input type="number" id="col-pay-now" value="0" min="0" style="font-size:24px; font-weight:bold; color:var(--success); text-align:center; padding:10px; margin:0;">
+                <div style="background:var(--surface); padding:15px; border-radius:10px; border:1px solid var(--border);">
+                    <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:10px; text-align:center;">Payment Received Now</label>
+                    <input type="number" id="col-pay-now" value="0" min="0" style="font-size:28px; font-weight:800; color:var(--success); text-align:center; padding:15px; margin:0; background: #f0fdf4; border-color: #bbf7d0;">
                     
-                    <select id="col-pay-method" style="margin-top:10px; padding:10px; font-size:16px; font-weight:bold; width:100%; border:1px solid #ccc; border-radius:6px; background:#f8f9fa; color:#000;">
+                    <select id="col-pay-method" style="margin-top:15px; margin-bottom: 5px;">
                         <option value="Cash">💵 Cash</option>
                         <option value="POS">💳 POS</option>
                         <option value="Transfer">🏦 Transfer</option>
                         <option value="Wallet">📱 Wallet</option>
                     </select>
                     
-                    <small style="color:#666; display:block; text-align:center; margin-top:5px;">(Value of items selected: ₦<span id="col-selected-value">0</span>)</small>
+                    <small style="color:var(--text-muted); display:block; text-align:center;">(Value of items selected: ₦<span id="col-selected-value">0</span>)</small>
                 </div>
             </div>
 
-            <!-- 🛡️ AFTER PHOTO PROOF UI -->
-            <div style="background:#e2e3e5; padding:10px; border-radius:8px; margin-top:10px; border: 2px dashed #999;">
-                <label style="font-size:12px; font-weight:bold; color:#333; display:block; margin-bottom:5px;">📸 Capture "After" Photo (Liability Proof)</label>
-                <video id="pickupVideo" autoplay playsinline style="display:none; width:100%; max-height:200px; border-radius:8px; object-fit:cover; margin-bottom:5px;"></video>
+            <div style="background:#f8fafc; padding:15px; border-radius:12px; margin-top:15px; border: 1px dashed var(--border);">
+                <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:10px;">📸 Capture "After" Photo</label>
+                <video id="pickupVideo" autoplay playsinline style="display:none; width:100%; max-height:200px; border-radius:8px; object-fit:cover; margin-bottom:10px;"></video>
                 <canvas id="pickupCanvas" style="display:none;"></canvas>
-                <img id="pickupPreview" style="display:none; width:100px; height:100px; border-radius:8px; margin-bottom:5px; border:2px solid var(--success);">
+                <img id="pickupPreview" style="display:none; width:120px; height:120px; border-radius:8px; margin-bottom:10px; border:1px solid var(--border); box-shadow: var(--shadow-sm);">
                 
-                <div style="display:flex; gap:5px;">
-                    <button type="button" id="btnStartPickupCam" onclick="startPickupCam()" style="background:#17a2b8; flex:1; padding:8px;">📷 Open Camera</button>
-                    <button type="button" id="btnSnapPickupCam" onclick="capturePickupCam()" style="background:var(--success); flex:1; padding:8px; display:none;">📸 Snap Photo</button>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" id="btnStartPickupCam" onclick="startPickupCam()" style="background:var(--bg); color:var(--text); border:1px solid var(--border); flex:1;">📷 Open Camera</button>
+                    <button type="button" id="btnSnapPickupCam" onclick="capturePickupCam()" style="background:var(--success); flex:1; display:none;">📸 Snap Photo</button>
                 </div>
             </div>
-            <!-- ------------------------- -->
 
-            <div class="verify-box" style="margin-top:10px;"><label style="font-weight: 900; color: #856404; display:block; margin-bottom: 5px;">🔐 Verify System PIN</label><input type="text" id="verifyPin" placeholder="Enter PIN" style="text-transform: uppercase; text-align: center; font-family: monospace; font-size: 16px; font-weight: bold; border: 2px solid #856404; color: #000; background: #fff;"></div>
+            <div class="verify-box"><label style="font-weight: 700; color: #854d0e; text-transform:uppercase; font-size:12px; display:block; margin-bottom: 10px;">🔐 Verify System PIN</label><input type="text" id="verifyPin" placeholder="Enter PIN from Tag" style="text-transform: uppercase; text-align: center; font-family: monospace; font-size: 18px; font-weight: 800; background: #fff; margin: 0;"></div>
             
-            <button style="background:var(--success)" onclick="confirmCollect()">✅ Verify & Collect Selected</button>
-            <button style="background:var(--primary); margin-top:5px;" onclick="quickCollectAll()">🚀 Verify & Collect Everything</button>
-            <button style="background:#666; margin-top:5px;" onclick="closeModal('mod-collect')">Cancel</button>
+            <button style="background:var(--dark); width:100%; margin-bottom:10px; padding: 16px;" onclick="confirmCollect()">Verify & Collect Selected</button>
+            <button style="background:var(--bg); color:var(--primary); border:1px solid var(--primary); width:100%; box-shadow:none;" onclick="quickCollectAll()">Fast Collect Everything</button>
+            <button style="background:transparent; color:var(--text-muted); border:1px solid var(--border); width:100%; margin-top:15px; box-shadow:none;" onclick="closeModal('mod-collect')">Cancel</button>
         </div>
       </div>
   </div> 
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, query, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDocs, query, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    // ⚠️ REAL FIREBASE CONFIG HERE ⚠️
     const firebaseConfig = { 
         apiKey: "AIzaSyCqmaIDptWNk8v5E5Sz5XKKSAmk6FNX6Yo", 
         authDomain: "credit-record-24f1e.firebaseapp.com", 
@@ -580,7 +655,9 @@
     };
     
     const app = initializeApp(firebaseConfig); 
-    const db = getFirestore(app); 
+    const db = initializeFirestore(app, {
+      localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+    });
     const auth = getAuth(app);
 
     const SAAS_PRICING = { basic: 5000, premium: 15000 };
@@ -588,17 +665,17 @@
 
     let superAdminPhone = "2348000000000"; 
     let globalTrackingUrl = "https://trackyourdevice.netlify.app/"; 
-    let currentPhotos = [];
+    let currentPhotos =[];
     
     let deviceChartInstance = null;
     let hoursChartInstance = null;
 
-    let ticketsData=[], secureTagsData={}, powerData={state:'ON', offAt:null}, editId=null, priceConfig={ph:200, pb:300, chFull:100, chUsb:50, chHead:50, maxSockets:50, loyalty:'ON', closeTime:'21:00', bankName:'', accName:'', accNumber:''}, currentSockets=[], scannedPinMemory="";
+    let ticketsData=[], secureTagsData={}, editId=null, priceConfig={ph:200, pb:300, chFull:100, chUsb:50, chHead:50, maxSockets:50, loyalty:'ON', closeTime:'21:00', bankName:'', accName:'', accNumber:''}, currentSockets=[], scannedPinMemory="";
     let currentShopId = null;
     let currentShopData = null;
     let walletsData = {}; 
 
-    window.staffMembers = [];
+    window.staffMembers =[];
     window.currentStaffName = "Owner";
     window.currentStaffRole = "admin";
     window.isUnlocked = true;
@@ -627,7 +704,7 @@
                 reg.showNotification(title, { 
                     body: body, 
                     icon: "https://cdn-icons-png.flaticon.com/512/3579/3579135.png",
-                    vibrate: [200, 100, 200] 
+                    vibrate:[200, 100, 200] 
                 });
             } catch(e) {
                 new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/3579/3579135.png" });
@@ -639,9 +716,9 @@
         if ("Notification" in window) {
             Notification.requestPermission().then(permission => {
                 if (permission === "granted") {
-                    alert("✅ Permission granted! A test banner will appear in 3 seconds. Please close this box and wait.");
+                    alert("✅ Permission granted! A test banner will appear in 3 seconds.");
                     setTimeout(() => {
-                        window.sendPushNotification("🚀 Starbite Systems", "Notifications are working perfectly! You are ready for business.");
+                        window.sendPushNotification("🚀 Starbite Systems", "Notifications are working perfectly!");
                     }, 3000);
                 } else {
                     alert("❌ Notifications blocked. Please allow permissions in your phone's browser settings.");
@@ -687,17 +764,17 @@
         if(!name || !phone || !email || !pass) return alert("Please fill all fields.");
         if(pass.length < 6) return alert("Password must be at least 6 characters.");
 
-        btn.innerText = "⏳ Creating Shop..."; btn.disabled = true;
+        btn.innerText = "⏳ Creating..."; btn.disabled = true;
 
         try {
             const userCred = await createUserWithEmailAndPassword(auth, email, pass);
             const uid = userCred.user.uid;
             await setDoc(doc(db, "shops", uid), { shopName: name, phone: phone, email: email, status: "active", plan: "free", createdAt: serverTimestamp() });
             await setDoc(doc(db, `shops/${uid}/config/prices`), { ph:200, pb:300, chFull:100, chUsb:50, chHead:50, maxSockets:PLAN_LIMITS.free.sockets, loyalty:'ON', closeTime:'21:00' });
-            alert("Free Account Created! You have been logged in.");
+            alert("Account Created! You have been logged in.");
         } catch(error) {
             alert("Error: " + error.message);
-            btn.innerText = "🚀 CREATE FREE ACCOUNT"; btn.disabled = false;
+            btn.innerText = "Create Free Account"; btn.disabled = false;
         }
     };
 
@@ -708,7 +785,7 @@
         if(!email || !pass) return alert("Enter email and password.");
         btn.innerText = "⏳ Authenticating..."; btn.disabled = true;
         try { await signInWithEmailAndPassword(auth, email, pass); } 
-        catch(error) { alert("Login Failed: " + error.message); btn.innerText = "🔐 LOGIN TO SHOP"; btn.disabled = false; }
+        catch(error) { alert("Login Failed: " + error.message); btn.innerText = "Login Securely"; btn.disabled = false; }
     };
 
     window.logoutShop = async () => {
@@ -735,13 +812,12 @@
         if(document.getElementById('cardCash')) document.getElementById('cardCash').style.display = isStaff ? 'none' : 'block';
         if(document.getElementById('cardPending')) document.getElementById('cardPending').style.display = isStaff ? 'none' : 'block';
         
-        const bStyle = isStaff ? 'none' : 'inline-block';
+        const bStyle = isStaff ? 'none' : 'inline-flex';
         if(document.getElementById('btnCsv')) document.getElementById('btnCsv').style.display = bStyle;
         if(document.getElementById('btnReviews')) document.getElementById('btnReviews').style.display = bStyle;
         if(document.getElementById('btnStaffManage')) document.getElementById('btnStaffManage').style.display = plan === 'free' ? 'none' : bStyle;
         if(document.getElementById('btnTags')) document.getElementById('btnTags').style.display = bStyle;
         if(document.getElementById('btnUpgrade')) document.getElementById('btnUpgrade').style.display = bStyle;
-        if(document.getElementById('btnRescue')) document.getElementById('btnRescue').style.display = bStyle;
         if(document.getElementById('btnWallets')) document.getElementById('btnWallets').style.display = bStyle;
         
         if(document.getElementById('settingsCard')) document.getElementById('settingsCard').style.display = isStaff ? 'none' : 'block';
@@ -774,7 +850,7 @@
     };
 
     window.sendReceipt = () => {
-        const msg = `Hello! I just created a Starbite SaaS account for my shop and I am ready to pay my subscription.\n\nMy Shop Email is: ${currentShopData.email}`;
+        const msg = `Hello! I just created a Starbite SaaS account for my business and I am ready to pay my subscription.\n\nMy Shop Email is: ${currentShopData.email}`;
         window.open(`https://wa.me/${superAdminPhone}?text=${encodeURIComponent(msg)}`, '_blank');
     };
 
@@ -798,23 +874,6 @@
         badge.className = `plan-badge plan-${plan}`;
 
         window.applyRoleRestrictions();
-    };
-
-    window.rescueOldData = async () => {
-        if(confirm("Ready to rescue your old tags and move them to this new account?")) {
-            try {
-                let tagsCount = 0; let ticketsCount = 0;
-                const oldTags = await getDocs(collection(db, "secure_tags"));
-                const tagPromises = oldTags.docs.map(d => { tagsCount++; return setDoc(doc(db, `shops/${currentShopId}/secure_tags`, d.id), d.data()); });
-                await Promise.all(tagPromises);
-
-                const oldTickets = await getDocs(collection(db, "tickets"));
-                const ticketPromises = oldTickets.docs.map(d => { if(!d.data().shopId) { ticketsCount++; return updateDoc(doc(db, "tickets", d.id), { shopId: currentShopId }); } });
-                await Promise.all(ticketPromises);
-
-                alert(`✅ Success! Rescued ${tagsCount} Tags and ${ticketsCount} Tickets into your new Shop Apartment. Refreshing now...`); location.reload();
-            } catch(e) { alert("Error rescuing data: " + e.message); }
-        }
     };
 
     window.addStaff = async () => {
@@ -873,7 +932,7 @@
         const tix = ticketsData.filter(t => t.phone === phone && t.collected);
         if(tix.length === 0) return 0;
         
-        const dates = [...new Set(tix.map(t => {
+        const dates =[...new Set(tix.map(t => {
             const d = new Date(t.jsDate);
             return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         }))].sort().reverse();
@@ -967,8 +1026,8 @@
         } else {
             currentShopId = null; currentShopData = null;
             document.getElementById('authScreen').style.display = 'flex'; document.getElementById('mainApp').style.display = 'none'; document.getElementById('paywallScreen').style.display = 'none';
-            document.getElementById('btnLogin').innerText = "🔐 LOGIN TO SHOP"; document.getElementById('btnLogin').disabled = false;
-            document.getElementById('btnRegister').innerText = "🚀 CREATE FREE ACCOUNT"; document.getElementById('btnRegister').disabled = false;
+            document.getElementById('btnLogin').innerText = "Login Securely"; document.getElementById('btnLogin').disabled = false;
+            document.getElementById('btnRegister').innerText = "Create Free Account"; document.getElementById('btnRegister').disabled = false;
         }
     });
 
@@ -1002,16 +1061,16 @@
 
         onSnapshot(collection(db, `shops/${currentShopId}/staff`), (snap) => {
             let h = '';
-            window.staffMembers = []; 
+            window.staffMembers =[]; 
             snap.forEach(d => {
                 const s = d.data();
                 window.staffMembers.push(s);
-                h += `<div style="background:#444; padding:10px; margin-bottom:5px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; color:#fff;">
-                    <div><b>${s.name}</b> (${s.role})<br><span style="color:#aaa; font-size:12px;">PIN: ${s.pin}</span></div>
-                    <button onclick="deleteStaff('${d.id}')" style="background:var(--danger); width:auto; padding:5px 10px; margin:0;">X</button>
+                h += `<div style="background:var(--surface); padding:15px; margin-bottom:10px; border-radius:10px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; color:var(--text);">
+                    <div><b style="font-size:15px;">${s.name}</b> <span style="font-size:12px; color:var(--text-muted); text-transform:uppercase;">(${s.role})</span><br><span style="color:var(--primary); font-size:13px; font-weight:600;">PIN: ${s.pin}</span></div>
+                    <button onclick="deleteStaff('${d.id}')" style="background:transparent; color:var(--danger); border:1px solid var(--danger); width:auto; padding:6px 12px; margin:0; box-shadow:none;">Remove</button>
                 </div>`;
             });
-            document.getElementById('userList').innerHTML = h || '<p style="color:#aaa; font-size:13px;">No staff added yet.</p>';
+            document.getElementById('userList').innerHTML = h || '<p style="color:var(--text-muted); font-size:13px;">No staff added yet.</p>';
         });
 
         pricesUnsubscribe = onSnapshot(doc(db, `shops/${currentShopId}/config/prices`), (snap) => {
@@ -1040,13 +1099,13 @@
             ticketsData = rawTickets.sort((a,b) => b.jsDate - a.jsDate);
             render(); 
             if(document.getElementById('extendedForm').style.display === 'block') window.autoCalc(); 
-            if(editId) { const t = ticketsData.find(x=>x.id===editId); if(t) renderStaffChat(t.chats || []); }
+            if(editId) { const t = ticketsData.find(x=>x.id===editId); if(t) renderStaffChat(t.chats ||[]); }
             
             let nameOpts = new Set(); let phoneOpts = new Set();
             ticketsData.forEach(t => { if(t.name) nameOpts.add(t.name); if(t.phone && t.phone.length > 7) phoneOpts.add(t.phone); });
             
             let dlNames = document.getElementById('pastNames'); 
-            if(dlNames) dlNames.innerHTML = [...nameOpts].map(n => `<option value="${n}">`).join('');
+            if(dlNames) dlNames.innerHTML =[...nameOpts].map(n => `<option value="${n}">`).join('');
             
             let dlPhones = document.getElementById('pastPhones'); 
             if(dlPhones) dlPhones.innerHTML = [...phoneOpts].map(p => {
@@ -1056,13 +1115,13 @@
             }).join('');
         });
 
-        window.pendingQueue = [];
+        window.pendingQueue =[];
         onSnapshot(query(collection(db, "pending_dropoffs"), where("shopId", "==", currentShopId)), (snap) => {
             let html = '';
-            window.pendingQueue = [];
+            window.pendingQueue =[];
             let seenTags = new Set(); 
             
-            let docs = [];
+            let docs =[];
             snap.forEach(d => docs.push({ docId: d.id, ...d.data() }));
             docs.sort((a, b) => b.ts - a.ts);
 
@@ -1085,15 +1144,15 @@
                 if(data.chHead > 0) devStr += `${data.chHead}🔌Head `;
 
                 html += `
-                <div style="background:var(--warning); color:#000; padding:15px; border-radius:8px; margin-bottom:15px; border:2px dashed #000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display:flex; flex-direction:column; animation: pulse 2s infinite;">
-                    <div style="text-align: left; margin-bottom:10px;">
-                        <b style="font-size: 16px;">🔔 New Drop-off: ${data.name}</b><br>
-                        <span style="font-size: 14px; font-weight: bold; color: var(--danger);">Tag #${data.tag}</span> | ${data.phone}<br>
-                        <span style="font-size: 13px; color: #333; font-weight:bold;">Devices: ${devStr || 'None'}</span>
+                <div style="background:#fffbeb; color:var(--text); padding:20px; border-radius:12px; margin-bottom:20px; border:1px solid #fde047; box-shadow: var(--shadow-sm); display:flex; flex-direction:column; animation: pulse 2s infinite;">
+                    <div style="text-align: left; margin-bottom:15px;">
+                        <b style="font-size: 16px; color: #b45309;">🔔 Incoming Request: ${data.name}</b><br>
+                        <span style="font-size: 14px; font-weight: 700; color: var(--danger);">Tag #${data.tag}</span> | <span style="color:var(--text-muted); font-size:13px;">${data.phone}</span><br>
+                        <span style="font-size: 14px; color: var(--text); font-weight:600; margin-top: 5px; display: inline-block;">Items: ${devStr || 'None'}</span>
                     </div>
-                    <div style="display:flex; gap:5px;">
-                        <button onclick="acceptDropoff('${data.docId}', '${data.tag}', '${data.name}', '${data.phone}', ${data.ph || 0}, ${data.pb || 0}, ${data.chFull || 0}, ${data.chUsb || 0}, ${data.chHead || 0})" style="background:var(--success); padding:10px; width:100%; margin:0; font-size: 14px;">✅ Accept / Correct</button>
-                        <button onclick="rejectDropoff('${data.docId}', '${data.phone}')" style="background:var(--danger); padding:10px; width:100%; margin:0; font-size: 14px;">❌ Delete Request</button>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="acceptDropoff('${data.docId}', '${data.tag}', '${data.name}', '${data.phone}', ${data.ph || 0}, ${data.pb || 0}, ${data.chFull || 0}, ${data.chUsb || 0}, ${data.chHead || 0})" style="background:var(--success); flex:1; margin:0;">✅ Accept / Edit</button>
+                        <button onclick="rejectDropoff('${data.docId}', '${data.phone}')" style="background:transparent; color:var(--danger); border:1px solid var(--danger); flex:1; margin:0; box-shadow:none;">❌ Reject</button>
                     </div>
                 </div>`;
             });
@@ -1109,8 +1168,8 @@
                 const match = ticketsData.find(t => t.name && t.name.toLowerCase() === n && t.phone);
                 if(match) { 
                     pInput.value = match.phone; 
-                    pInput.style.border = '2px solid var(--success)'; 
-                    setTimeout(()=>pInput.style.border='1px solid #ccc', 2000);
+                    pInput.style.borderColor = 'var(--success)'; 
+                    setTimeout(()=>pInput.style.borderColor='var(--border)', 2000);
                     pInput.dispatchEvent(new Event('input'));
                 }
             }
@@ -1131,16 +1190,16 @@
                 const match = ticketsData.find(t => t.phone === p && t.name);
                 if(match) { 
                     nInput.value = match.name; 
-                    nInput.style.border = '2px solid var(--success)'; 
-                    setTimeout(()=>nInput.style.border='1px solid #ccc', 2000);
+                    nInput.style.borderColor = 'var(--success)'; 
+                    setTimeout(()=>nInput.style.borderColor='var(--border)', 2000);
                 }
             }
             
             if(walletsData[p] && walletsData[p].balance > 0) {
                 wAlert.innerHTML = `
-                <div style="background:#d4edda; color:#155724; padding:12px; border:2px solid var(--success); margin-bottom:10px; border-radius:8px; font-size:14px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                    <div><b>💳 Wallet Active:</b><br><span style="font-size:18px; font-weight:900;">₦${walletsData[p].balance.toLocaleString()}</span></div>
-                    <button type="button" onclick="document.getElementById('payStatus').value='Wallet'; window.autoCalc(); this.innerText='✅ Wallet Selected'; this.style.background='#155724';" style="background:var(--success); color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px; margin:0; width:auto; font-weight:bold;">Pay with Wallet</button>
+                <div style="background:#f0fdf4; color:#166534; padding:15px; border:1px solid #bbf7d0; margin-bottom:15px; border-radius:12px; font-size:14px; display:flex; justify-content:space-between; align-items:center;">
+                    <div><b style="text-transform:uppercase; font-size:12px;">💳 Wallet Balance</b><br><span style="font-size:20px; font-weight:800;">₦${walletsData[p].balance.toLocaleString()}</span></div>
+                    <button type="button" onclick="document.getElementById('payStatus').value='Wallet'; window.autoCalc(); this.innerText='Wallet Selected'; this.style.background='#166534';" style="background:var(--success); color:white; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-size:13px; margin:0; width:auto; font-weight:600; box-shadow:none;">Pay with Wallet</button>
                 </div>`;
             }
 
@@ -1152,7 +1211,7 @@
                     
                     if (!alreadyClaimedToday) {
                         window.isFreeEligible = true;
-                        vAlert.innerHTML += `<div style="background:var(--gold); color:#000; padding:15px; margin-bottom:10px; border-radius:8px; text-align:center; font-weight:bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); animation: pulse 2s infinite;">🔥 5th CONSECUTIVE DAY! THIS CHARGE IS FREE!</div><div style="font-size:10px; color:#666; margin-bottom:10px;">*T&C: Free charge applied automatically.</div>`;
+                        vAlert.innerHTML += `<div style="background:var(--gold); color:#000; padding:15px; margin-bottom:15px; border-radius:12px; text-align:center; font-weight:700; box-shadow: var(--shadow-sm); animation: pulse 2s infinite;">🔥 5th CONSECUTIVE DAY! THIS CHARGE IS FREE!</div>`;
                     }
                 }
             }
@@ -1160,7 +1219,7 @@
             const debts = ticketsData.filter(t => t.phone === p && t.amountPaid < t.price && !t.debtSettled); 
             if(debts.length > 0) { 
                 const owed = debts.reduce((s, t) => s + (t.price - (t.amountPaid || 0)), 0); 
-                dAlert.innerHTML = `<div style="background:#f8d7da; color:#721c24; padding:10px; border-left:4px solid #f5c6cb; margin-bottom:10px; border-radius:4px; font-size:13px;"><b>🚨 UNPAID DEBT:</b><br>This number owes <b>₦${owed}</b> from past visits!</div>`; 
+                dAlert.innerHTML = `<div style="background:#fef2f2; color:#b91c1c; padding:15px; border:1px solid #fecaca; margin-bottom:15px; border-radius:12px; font-size:14px;"><b>🚨 UNPAID DEBT DETECTED</b><br>This number owes <b style="font-size:16px;">₦${owed}</b> from past visits!</div>`; 
             } 
         } 
         window.autoCalc();
@@ -1212,7 +1271,7 @@
         if (minsUntilClose <= 30 && minsUntilClose > 0) {
             let threshold = null;
             if (minsUntilClose <= 30 && minsUntilClose > 20) threshold = 30; else if (minsUntilClose <= 20 && minsUntilClose > 10) threshold = 20; else if (minsUntilClose <= 10 && minsUntilClose > 0) threshold = 10;
-            if (threshold && window.lastAlertMin !== threshold) { window.lastAlertMin = threshold; title.innerText = "Shop Closes Soon!"; body.innerHTML = `We are closing in exactly <span style="font-size:22px; color:var(--danger);">${minsUntilClose}</span> minutes.<br><span style="color:#666; font-size:13px; font-weight:normal; display:block; margin-top:5px;">Please start wrapping up and reminding customers.</span>`; document.getElementById('modalClosingAlert').style.display = 'flex'; playBeep(); }
+            if (threshold && window.lastAlertMin !== threshold) { window.lastAlertMin = threshold; title.innerText = "Shop Closes Soon!"; body.innerHTML = `We are closing in exactly <span style="font-size:22px; color:var(--danger);">${minsUntilClose}</span> minutes.<br><span style="color:var(--text-muted); font-size:13px; font-weight:normal; display:block; margin-top:5px;">Please start wrapping up and reminding customers.</span>`; document.getElementById('modalClosingAlert').style.display = 'flex'; playBeep(); }
         }
     }
 
@@ -1241,8 +1300,8 @@
         if (currentPhotos.length === 0) { gal.innerHTML = ''; return; }
         gal.innerHTML = currentPhotos.map((photo, index) => `
             <div style="position:relative; flex-shrink:0; margin-top:10px;">
-                <img src="${photo}" style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:2px solid #fff; box-shadow:0 2px 4px rgba(0,0,0,0.2);">
-                <button type="button" onclick="removePhoto(${index})" style="position:absolute; top:-5px; right:-5px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; font-weight:bold; cursor:pointer; padding:0; line-height:1; box-shadow:0 2px 4px rgba(0,0,0,0.5);">×</button>
+                <img src="${photo}" style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:1px solid var(--border); box-shadow:var(--shadow-sm);">
+                <button type="button" onclick="removePhoto(${index})" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; font-weight:bold; cursor:pointer; padding:0; line-height:1; box-shadow:var(--shadow-sm);">×</button>
             </div>
         `).join('');
     };
@@ -1256,7 +1315,7 @@
         startBtn.style.display='block'; startBtn.innerText = currentPhotos.length > 0 ? "📷 Take More Photos" : "📷 Open Camera";
         document.getElementById('btnSnapCam').style.display='none'; document.getElementById('btnStopCam').style.display='none'; 
     };
-// 🛡️ AFTER PHOTO PROOF CAMERA LOGIC
+
     let pickupCamStream = null;
     window.currentPickupPhoto = null;
 
@@ -1288,6 +1347,7 @@
         preview.src = window.currentPickupPhoto;
         preview.style.display = 'block';
     };
+
     window.exportCSV = () => { 
         let csv = "Date,Customer Name,Tag Number,Phone,Items,Price,Amount Paid,Payment Method,Status,Logged By,Collected By,Rating,Review,Conditions\n"; 
         ticketsData.forEach(t => { 
@@ -1356,45 +1416,42 @@
                 const waLink = `https://wa.me/${phone}?text=${message}`;
 
                 html += `
-                <div style="background: #f8f9fa; border-left: 4px solid #ff9800; padding: 10px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="background: #fffbeb; border-left: 4px solid var(--warning); padding: 15px; margin-bottom: 10px; border-radius: 8px; border-top: 1px solid #fef08a; border-right: 1px solid #fef08a; border-bottom: 1px solid #fef08a; display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <div style="font-weight: bold; color: #000;">${data.name}</div>
-                        <div style="font-size: 12px; color: #555;">📞 ${phone} | <span style="color:var(--danger); font-weight:bold;">${tagLabel}</span></div>
+                        <div style="font-weight: 700; color: var(--text);">${data.name}</div>
+                        <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">📞 ${phone} | <span style="color:var(--danger); font-weight:600;">${tagLabel}</span></div>
                     </div>
-                    <a href="${waLink}" target="_blank" style="background: #25D366; color: white; padding: 8px 12px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 13px; white-space: nowrap; margin-left: 10px;">
+                    <a href="${waLink}" target="_blank" style="background: #10b981; color: white; padding: 10px 15px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 13px; white-space: nowrap; margin-left: 10px; box-shadow: var(--shadow-sm);">
                         💬 Send Warning
                     </a>
                 </div>`;
             }
 
             if (customerCount === 0) {
-                listDiv.innerHTML = "<div style='text-align:center; color: #28a745; font-weight: bold; padding: 20px;'>🎉 All clear! Every phone with a registered number has been picked up!</div>";
+                listDiv.innerHTML = "<div style='text-align:center; color: var(--success); font-weight: 600; padding: 20px;'>🎉 All clear! Every phone with a registered number has been picked up!</div>";
             } else {
-                listDiv.innerHTML = `<div style="margin-bottom: 10px; font-weight: bold; color: #dc3545;">🚨 ${totalDevices} devices left (belonging to ${customerCount} customers)</div>` + html;
+                listDiv.innerHTML = `<div style="margin-bottom: 15px; font-weight: 700; color: var(--danger);">🚨 ${totalDevices} devices left (belonging to ${customerCount} customers)</div>` + html;
             }
         } catch (error) {
             console.error("Error scanning tickets:", error);
-            listDiv.innerHTML = "<div style='color:red;'>Error scanning database.</div>";
+            listDiv.innerHTML = "<div style='color:var(--danger);'>Error scanning database.</div>";
         }
     };
 
     window.sendStaffChat = async () => {
         if(!editId) return; const inp = document.getElementById('staffChatInput'); const text = inp.value.trim(); if(!text) return;
         const t = ticketsData.find(x => x.id === editId); if(!t) return;
-        const newChats = t.chats || []; newChats.push({ s: 's', msg: text, ts: Date.now() });
+        const newChats = t.chats ||[]; newChats.push({ s: 's', msg: text, ts: Date.now() });
         inp.value = ''; await updateDoc(doc(db, "tickets", editId), { chats: newChats });
         setTimeout(() => { const box = document.getElementById('staffChatHistory'); box.scrollTop = box.scrollHeight; }, 50);
     };
     
     window.renderStaffChat = (chats) => {
         let chatHtml = chats.map(c => `<div class="chat-bubble ${c.s==='s'?'chat-c':'chat-s'}">${c.msg}</div><div class="chat-clear"></div>`).join('');
-        if(chats.length === 0) chatHtml = '<p style="color:#999; text-align:center; font-size:12px;">No messages yet.</p>';
+        if(chats.length === 0) chatHtml = '<p style="color:var(--text-muted); text-align:center; font-size:13px;">No messages yet.</p>';
         const box = document.getElementById('staffChatHistory'); box.innerHTML = chatHtml; box.scrollTop = box.scrollHeight;
     };
 
-    onSnapshot(doc(db,"config","power"), (snap) => { if(snap.exists()) powerData = snap.data(); const pb = document.getElementById('btnPower'); if(powerData.state === 'OFF') { pb.style.background = 'var(--danger)'; pb.innerText = '🛑 Paused (Grid Off)'; } else { pb.style.background = 'var(--success)'; pb.innerText = '⚡ Power: ON'; } if(ticketsData.length > 0) render(); });
-    window.togglePower = async () => { if(powerData.state === 'ON') { if(confirm("Grid power off? This will PAUSE all charging timers.")) await setDoc(doc(db,"config","power"), {state:'OFF', offAt:Date.now()}); } else { if(confirm("Power restored? This will RESUME all timers and adjust for the time offline.")) { const offDuration = Date.now() - powerData.offAt; ticketsData.filter(t => !t.collected).forEach(t => { if(t.jsDate && !t.shelved) updateDoc(doc(db,"tickets",t.id), { ts: new Date(t.jsDate.getTime() + offDuration) }); }); await setDoc(doc(db,"config","power"), {state:'ON', offAt:null}); } } };
-    
     document.getElementById('tokenNum').addEventListener('input', (e) => {
         let rawText = e.target.value;
         let tagVal = rawText;
@@ -1407,16 +1464,16 @@
         e.target.value = tagVal; 
 
         if (!tagVal) return cancelEdit(); 
-        editId = null; currentSockets = []; 
+        editId = null; currentSockets =[]; 
 
         const t = ticketsData.find(x => String(x.tag) === tagVal && !x.collected); 
         const f = document.getElementById('extendedForm'), act = document.getElementById('formAction'), btn = document.getElementById('saveBtn');
         if (t) {
-            f.style.display = 'none'; act.style.display = 'block'; btn.style.display = 'none'; document.getElementById('securityCheckAlert').innerHTML = ''; document.getElementById('vipAlert').innerHTML = ''; act.innerHTML = `<div style="background:#e3f2fd; padding:15px; border-radius:8px; border:2px solid var(--primary); text-align:left;"><h4 style="margin:0 0 10px 0; color:var(--primary); text-align:center;">📱 Tag #${tagVal} is Active</h4><p style="margin:0 0 5px 0; color:#000;"><strong>Customer:</strong> ${t.name}</p>${generateSmartStatusHTML(t)}<div style="display:flex; gap:10px;"><button onclick="startEdit('${t.id}')" style="flex:1; background:var(--warning); color:#000; padding:10px;">✏️ Edit</button><button onclick="openCollect('${t.id}')" style="flex:2; background:var(--success); padding:10px;">📦 Process Collection</button></div></div>`;
+            f.style.display = 'none'; act.style.display = 'block'; btn.style.display = 'none'; document.getElementById('securityCheckAlert').innerHTML = ''; document.getElementById('vipAlert').innerHTML = ''; act.innerHTML = `<div style="background:#eff6ff; padding:20px; border-radius:12px; border:1px solid #bfdbfe; text-align:left;"><h4 style="margin:0 0 15px 0; color:var(--primary); text-align:center; font-size:16px;">📱 Tag #${tagVal} is Active</h4><p style="margin:0 0 8px 0; color:var(--text);"><strong>Customer:</strong> ${t.name}</p>${generateSmartStatusHTML(t)}<div style="display:flex; gap:10px; margin-top:15px;"><button onclick="startEdit('${t.id}')" style="flex:1; background:var(--bg); color:var(--text); border:1px solid var(--border); box-shadow:none;">Edit Data</button><button onclick="openCollect('${t.id}')" style="flex:2; background:var(--success);">Process Collection</button></div></div>`;
         } else {
-            f.style.display = 'block'; const p = secureTagsData[tagVal]; document.getElementById('displayPin').innerText = p || "UNREGISTERED TAG"; document.getElementById('displayPin').style.color = p ? 'var(--success)' : 'var(--danger)';
-            const pastUses = ticketsData.filter(x => String(x.tag) === tagVal && x.collected).sort((a,b) => b.jsDate - a.jsDate); let histHTML = ''; if(pastUses.length > 0) { const lu = pastUses[0]; histHTML = `<div style="background:#fff3cd; color:#856404; padding:10px; border-left:4px solid #ffeeba; margin-bottom:15px; border-radius:4px; font-size:13px;"><b>🕵️ Anti-Fraud Memory:</b><br>This tag was last used by <b>${lu.name}</b>.<br>Collected on: ${lu.collDate}.</div>`; } document.getElementById('securityCheckAlert').innerHTML = histHTML;
-            act.innerHTML = p ? `New Entry for #${tagVal} 🔵` : `<span style="color:var(--danger);">❌ Print/Generate this tag first!</span>`; btn.style.display = p ? 'block' : 'none'; btn.innerText = "🚀 CREATE TICKET"; document.getElementById('cancelEditBtn').style.display = "none"; clearFormFieldsOnly(); window.autoCalc();
+            f.style.display = 'block'; const p = secureTagsData[tagVal]; document.getElementById('displayPin').innerText = p || "UNREGISTERED"; document.getElementById('displayPin').style.color = p ? 'var(--success)' : 'var(--danger)';
+            const pastUses = ticketsData.filter(x => String(x.tag) === tagVal && x.collected).sort((a,b) => b.jsDate - a.jsDate); let histHTML = ''; if(pastUses.length > 0) { const lu = pastUses[0]; histHTML = `<div style="background:#fffbeb; color:#854d0e; padding:15px; border:1px solid #fef08a; margin-bottom:20px; border-radius:10px; font-size:13px;"><b>🕵️ Anti-Fraud Memory:</b><br>This tag was last used by <b>${lu.name}</b>.<br>Collected on: ${lu.collDate}.</div>`; } document.getElementById('securityCheckAlert').innerHTML = histHTML;
+            act.innerHTML = p ? `New Entry for #${tagVal}` : `<span style="color:var(--danger);">❌ Print/Generate this tag first!</span>`; btn.style.display = p ? 'block' : 'none'; btn.innerText = "Create Ticket"; document.getElementById('cancelEditBtn').style.display = "none"; clearFormFieldsOnly(); window.autoCalc();
         }
     });
 
@@ -1434,7 +1491,7 @@
         }).catch(err => { html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess).catch(e => { alert("Scanner blocked."); closeScanner(); }); }); 
     };
 
-    function generateSmartStatusHTML(t) { let oStr="", rStr="", cStr=""; const bld = (l, tq, cq) => { let r=(tq||0)-(cq||0); if(tq>0) oStr+=`${tq}${l} `; if(cq>0) cStr+=`${cq}${l} `; if(r>0) rStr+=`${r}${l} `; }; bld('📱',t.ph,t.colPh); bld('🔋',t.pb,t.colPb); bld('🔌F',t.chFull,t.colChFull); bld('〰️U',t.chUsb,t.colChUsb); bld('🔌H',t.chHead,t.colChHead); bld('🔌L',t.ch,t.colCh); let html = `<p style="margin:0 0 5px 0; font-size:13px; color:#555;"><strong>Total Logged:</strong> ${oStr}</p>`; if(cStr!=="") html+=`<p style="margin:0 0 5px 0; font-size:13px; color:#28a745;"><strong>✅ Collected:</strong> ${cStr}</p>`; if(rStr!=="") html+=`<p style="margin:0 0 10px 0; font-size:15px; color:#000;"><strong>${t.shelved?'<span style="color:#28a745;">📦 ON SHELF (Ready)</span>':(t.shelfPh||t.shelfPb||t.shelfOt?'<span style="color:#ffc107;">⏳ PARTIALLY READY</span>':'<span style="color:#007bff;">⚡️ CHARGING</span>')}:</strong> <b>${rStr}</b></p>`; return html; }
+    function generateSmartStatusHTML(t) { let oStr="", rStr="", cStr=""; const bld = (l, tq, cq) => { let r=(tq||0)-(cq||0); if(tq>0) oStr+=`${tq}${l} `; if(cq>0) cStr+=`${cq}${l} `; if(r>0) rStr+=`${r}${l} `; }; bld('📱',t.ph,t.colPh); bld('🔋',t.pb,t.colPb); bld('🔌F',t.chFull,t.colChFull); bld('〰️U',t.chUsb,t.colChUsb); bld('🔌H',t.chHead,t.colChHead); bld('🔌L',t.ch,t.colCh); let html = `<p style="margin:0 0 5px 0; font-size:13px; color:var(--text-muted);"><strong>Total Logged:</strong> ${oStr}</p>`; if(cStr!=="") html+=`<p style="margin:0 0 5px 0; font-size:13px; color:var(--success);"><strong>✅ Collected:</strong> ${cStr}</p>`; if(rStr!=="") html+=`<p style="margin:0 0 10px 0; font-size:15px; color:var(--text);"><strong>${t.shelved?'<span style="color:var(--success);">📦 ON SHELF (Ready)</span>':(t.shelfPh||t.shelfPb||t.shelfOt?'<span style="color:var(--warning);">⏳ PARTIALLY READY</span>':'<span style="color:var(--primary);">⚡ CHARGING</span>')}:</strong> <b>${rStr}</b></p>`; return html; }
 
     function onScanSuccess(text) { 
         playBeep(); closeScanner(); 
@@ -1455,9 +1512,9 @@
         
         const t = ticketsData.find(x => String(x.tag) === tag && !x.collected); 
         if (t) { 
-            let photoArray = t.photos || (t.photo ? [t.photo] : []); let imgHTML = '';
-            if(photoArray.length > 0) { imgHTML = '<div style="display:flex; gap:5px; overflow-x:auto; margin-bottom:10px; padding-bottom:5px;">'; photoArray.forEach(img => { imgHTML += `<img src="${img}" style="width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #ccc; flex-shrink:0;">`; }); imgHTML += '</div>'; }
-            document.getElementById('scanMatchDetails').innerHTML = `${imgHTML}<p style="margin:0 0 5px 0;"><strong>Customer:</strong> ${t.name}</p><p style="margin:0 0 5px 0;"><strong>Tag:</strong> #${t.tag}</p>${generateSmartStatusHTML(t)}<p style="margin:0 0 5px 0; font-size:13px; color:#555;"><strong>Amount:</strong> ₦${t.price}</p>`; 
+            let photoArray = t.photos || (t.photo ? [t.photo] :[]); let imgHTML = '';
+            if(photoArray.length > 0) { imgHTML = '<div style="display:flex; gap:10px; overflow-x:auto; margin-bottom:15px; padding-bottom:5px;">'; photoArray.forEach(img => { imgHTML += `<img src="${img}" style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:1px solid var(--border); flex-shrink:0;">`; }); imgHTML += '</div>'; }
+            document.getElementById('scanMatchDetails').innerHTML = `${imgHTML}<p style="margin:0 0 8px 0;"><strong>Customer:</strong> ${t.name}</p><p style="margin:0 0 8px 0;"><strong>Tag:</strong> #${t.tag}</p>${generateSmartStatusHTML(t)}<p style="margin:0 0 5px 0; font-size:14px; color:var(--text-muted);"><strong>Amount:</strong> ₦${t.price}</p>`; 
             
             document.getElementById('btnScanCollect').onclick = () => { closeModal('modalScanMatch'); openCollect(t.id, true); }; 
             document.getElementById('btnScanEdit').onclick = () => { closeModal('modalScanMatch'); startEdit(t.id); }; 
@@ -1480,13 +1537,15 @@
     
     window.closeScanner = () => { if (html5QrCode) html5QrCode.stop().then(() => html5QrCode.clear()).catch(e=>{}); document.getElementById('modalScanner').style.display = 'none'; };
 
-    function allocateSockets(req) { let u = new Set(); ticketsData.filter(t => !t.collected && t.id !== editId).forEach(t => { if (t.sockets) t.sockets.forEach(s => u.add(s)); }); let a = [...currentSockets]; if (a.length > req) a = a.slice(0, req); let n = 1; while (a.length < req) { if (!u.has(n) && !a.includes(n)) a.push(n); n++; } currentSockets = a.sort((x,y) => x-y); document.getElementById('socketUI').innerHTML = a.length===0 ? "🔌 No Devices" : `🔌 Assigned Sockets: <b>${a.join(', ')}</b>`; document.getElementById('assignedSockets').value = JSON.stringify(a); }
+    function allocateSockets(req) { let u = new Set(); ticketsData.filter(t => !t.collected && t.id !== editId).forEach(t => { if (t.sockets) t.sockets.forEach(s => u.add(s)); }); let a =[...currentSockets]; if (a.length > req) a = a.slice(0, req); let n = 1; while (a.length < req) { if (!u.has(n) && !a.includes(n)) a.push(n); n++; } currentSockets = a.sort((x,y) => x-y); document.getElementById('socketUI').innerHTML = a.length===0 ? "🔌 No Devices" : `🔌 Assigned Sockets: <b>${a.join(', ')}</b>`; document.getElementById('assignedSockets').value = JSON.stringify(a); }
     
     window.autoCalc = () => { 
         const ph=+(document.getElementById('phCount').value||0), pb=+(document.getElementById('pbCount').value||0), chFull=+(document.getElementById('chFullCount').value||0), chUsb=+(document.getElementById('chUsbCount').value||0), chHead=+(document.getElementById('chHeadCount').value||0), otCount=+(document.getElementById('otCount').value||0), otPrice=+(document.getElementById('otPrice').value||0); 
-        let total = (ph*priceConfig.ph)+(pb*priceConfig.pb)+(chFull*priceConfig.chFull)+(chUsb*priceConfig.chUsb)+(chHead*priceConfig.chHead)+otPrice; 
         
-        if(window.isFreeEligible) total = 0;
+        const retailCost = +(document.getElementById('retailCost').value||0);
+        let total = (ph*priceConfig.ph)+(pb*priceConfig.pb)+(chFull*priceConfig.chFull)+(chUsb*priceConfig.chUsb)+(chHead*priceConfig.chHead)+otPrice+retailCost; 
+        
+        if(window.isFreeEligible) total = retailCost;
         
         document.getElementById('price').value = total; 
         
@@ -1534,6 +1593,9 @@
         const chHeadActual = +document.getElementById('chHeadCount').value;
         const finalPrice = +document.getElementById('price').value;
         const payStatusSelection = document.getElementById('payStatus').value;
+
+        const retailDesc = document.getElementById('retailDesc').value.trim();
+        const retailCost = +(document.getElementById('retailCost').value || 0);
         
         if (!editId && payStatusSelection === 'Wallet') {
             let bal = walletsData[phoneNum] ? walletsData[phoneNum].balance : 0;
@@ -1552,7 +1614,7 @@
         let hasMismatch = false;
         let mismatchMsg = null;
         
-        const bldStr = (ph, pb, cf, cu, ch) => { let s = []; if(ph>0) s.push(`${ph}📱`); if(pb>0) s.push(`${pb}🔋`); if(cf>0) s.push(`${cf}🔌Full`); if(cu>0) s.push(`${cu}〰️USB`); if(ch>0) s.push(`${ch}🔌Head`); return s.length > 0 ? s.join(', ') : 'Nothing'; };
+        const bldStr = (ph, pb, cf, cu, ch) => { let s =[]; if(ph>0) s.push(`${ph}📱`); if(pb>0) s.push(`${pb}🔋`); if(cf>0) s.push(`${cf}🔌Full`); if(cu>0) s.push(`${cu}〰️USB`); if(ch>0) s.push(`${ch}🔌Head`); return s.length > 0 ? s.join(', ') : 'Nothing'; };
         
         let claimStr = bldStr(claimedPh, claimedPb, claimedChFull, claimedChUsb, claimedChHead);
         let actualStr = bldStr(phActual, pbActual, chFullActual, chUsbActual, chHeadActual);
@@ -1591,7 +1653,9 @@
         }
 
         const data = { 
-            name, tag, cond, photos: currentPhotos, phone: phoneNum, debtSettled: false, ph: phActual, pb: pbActual, chFull: chFullActual, chUsb: chUsbActual, chHead: chHeadActual, ot: +document.getElementById('otCount').value, otPrice: +document.getElementById('otPrice').value, price: finalPrice, amountPaid: +document.getElementById('amtPaidInput').value, sockets: JSON.parse(document.getElementById('assignedSockets').value || "[]"), phBasePct: syncPh, pbBasePct: syncPb, otBasePct: syncOt, baseTs: Date.now(), shopId: currentShopId,
+            name, tag, cond, photos: currentPhotos, phone: phoneNum, debtSettled: false, ph: phActual, pb: pbActual, chFull: chFullActual, chUsb: chUsbActual, chHead: chHeadActual, ot: +document.getElementById('otCount').value, otPrice: +document.getElementById('otPrice').value, 
+            retailDesc: retailDesc, retailCost: retailCost, 
+            price: finalPrice, amountPaid: +document.getElementById('amtPaidInput').value, sockets: JSON.parse(document.getElementById('assignedSockets').value || "[]"), phBasePct: syncPh, pbBasePct: syncPb, otBasePct: syncOt, baseTs: Date.now(), shopId: currentShopId,
             claimedPh: claimedPh, claimedPb: claimedPb, claimedChFull: claimedChFull, claimedChUsb: claimedChUsb, claimedChHead: claimedChHead, hasMismatch: hasMismatch,
             staff: window.currentStaffName,
             isLoyaltyFree: window.isFreeEligible,
@@ -1608,7 +1672,7 @@
                 await updateDoc(doc(db, "tickets", editId), data); 
                 cancelEdit(); 
             } else { 
-                data.ts = serverTimestamp(); data.colPh = 0; data.colPb = 0; data.colChFull = 0; data.colChUsb = 0; data.colChHead = 0; data.colOt = 0; data.collected = false; data.shelved = false; data.chats = []; data.hasUnread = false; data.onTheWay = false; data.onTheWayAck = false; 
+                data.ts = serverTimestamp(); data.colPh = 0; data.colPb = 0; data.colChFull = 0; data.colChUsb = 0; data.colChHead = 0; data.colOt = 0; data.collected = false; data.shelved = false; data.chats =[]; data.hasUnread = false; data.onTheWay = false; data.onTheWayAck = false; 
                 await addDoc(collection(db, "tickets"), data); 
                 resetForm(true); 
                 
@@ -1629,10 +1693,10 @@
 
     window.openShelf = (id) => {
         const t = ticketsData.find(x => x.id === id); document.getElementById('shelf-id').value = id; let html = '';
-        if ((t.ph||0) - (t.colPh||0) > 0) { let checked = t.shelfPh ? 'checked disabled' : ''; html += `<label style="display:block; margin-bottom:10px; font-size:16px; font-weight:bold; cursor:pointer;"><input type="checkbox" id="sh-ph" value="ph" style="width:auto; margin-right:10px;" ${checked}> 📱 Phones</label>`; }
-        if ((t.pb||0) - (t.colPb||0) > 0) { let checked = t.shelfPb ? 'checked disabled' : ''; html += `<label style="display:block; margin-bottom:10px; font-size:16px; font-weight:bold; cursor:pointer;"><input type="checkbox" id="sh-pb" value="pb" style="width:auto; margin-right:10px;" ${checked}> 🔋 Powerbanks</label>`; }
-        if ((t.ot||0) - (t.colOt||0) > 0) { let checked = t.shelfOt ? 'checked disabled' : ''; html += `<label style="display:block; font-size:16px; font-weight:bold; cursor:pointer;"><input type="checkbox" id="sh-ot" value="ot" style="width:auto; margin-right:10px;" ${checked}> ⚡ Other Devices</label>`; }
-        if(html === '') html = '<p style="color:#dc3545;">All items are already fully shelved or collected!</p>'; document.getElementById('shelf-options').innerHTML = html; document.getElementById('modalShelf').style.display = 'flex';
+        if ((t.ph||0) - (t.colPh||0) > 0) { let checked = t.shelfPh ? 'checked disabled' : ''; html += `<label style="display:flex; align-items:center; gap:8px; margin-bottom:12px; font-size:15px; font-weight:600; cursor:pointer;"><input type="checkbox" id="sh-ph" value="ph" style="width:auto; margin:0;" ${checked}> 📱 Phones</label>`; }
+        if ((t.pb||0) - (t.colPb||0) > 0) { let checked = t.shelfPb ? 'checked disabled' : ''; html += `<label style="display:flex; align-items:center; gap:8px; margin-bottom:12px; font-size:15px; font-weight:600; cursor:pointer;"><input type="checkbox" id="sh-pb" value="pb" style="width:auto; margin:0;" ${checked}> 🔋 Powerbanks</label>`; }
+        if ((t.ot||0) - (t.colOt||0) > 0) { let checked = t.shelfOt ? 'checked disabled' : ''; html += `<label style="display:flex; align-items:center; gap:8px; font-size:15px; font-weight:600; cursor:pointer;"><input type="checkbox" id="sh-ot" value="ot" style="width:auto; margin:0;" ${checked}> ⚡ Other Devices</label>`; }
+        if(html === '') html = '<p style="color:var(--danger);">All items are already fully shelved or collected!</p>'; document.getElementById('shelf-options').innerHTML = html; document.getElementById('modalShelf').style.display = 'flex';
     };
 
     window.confirmShelf = async () => {
@@ -1640,7 +1704,7 @@
         if (document.getElementById('sh-ph') && document.getElementById('sh-ph').checked) updateData.shelfPh = true; if (document.getElementById('sh-ph') && !document.getElementById('sh-ph').checked) allShelved = false;
         if (document.getElementById('sh-pb') && document.getElementById('sh-pb').checked) updateData.shelfPb = true; if (document.getElementById('sh-pb') && !document.getElementById('sh-pb').checked) allShelved = false;
         if (document.getElementById('sh-ot') && document.getElementById('sh-ot').checked) updateData.shelfOt = true; if (document.getElementById('sh-ot') && !document.getElementById('sh-ot').checked) allShelved = false;
-        if(allShelved) { updateData.shelved = true; updateData.shelvedAt = Date.now(); updateData.sockets = []; }
+        if(allShelved) { updateData.shelved = true; updateData.shelvedAt = Date.now(); updateData.sockets =[]; }
         try { await updateDoc(doc(db, "tickets", id), updateData); closeModal('modalShelf'); } catch(e) { alert(e.message); }
     };
 
@@ -1654,13 +1718,15 @@
         scannedPinMemory = ""; 
         
         let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); let bal = t.price - amtPaid;
-        document.getElementById('col-total-bill').innerText = t.price; document.getElementById('col-already-paid').innerText = amtPaid; document.getElementById('col-balance').innerText = bal; document.getElementById('col-pay-now').value = 0; document.getElementById('col-selected-value').innerText = 0;
+        let retailNotice = t.retailCost > 0 ? ` <br><span style="color:#b45309; font-size:12px;">(+ ₦${t.retailCost} for ${t.retailDesc})</span>` : '';
+        document.getElementById('col-total-bill').innerHTML = t.price + retailNotice;
+        document.getElementById('col-already-paid').innerText = amtPaid; document.getElementById('col-balance').innerText = bal; document.getElementById('col-pay-now').value = 0; document.getElementById('col-selected-value').innerText = 0;
         
         document.getElementById('col-pay-method').value = 'Cash';
 
         let h=''; h+=renderColRow('Phones',t.ph,t.colPh,'in-col-ph'); h+=renderColRow('P-Banks',t.pb,t.colPb,'in-col-pb');
         if(t.chFull>0||t.chUsb>0||t.chHead>0){ h+=renderColRow('Full Chrg',t.chFull,t.colChFull,'in-col-chFull'); h+=renderColRow('USB',t.chUsb,t.colChUsb,'in-col-chUsb'); h+=renderColRow('Head',t.chHead,t.colChHead,'in-col-chHead'); } else if(t.ch>0) { h+=renderColRow('Leg Chrg',t.ch,t.colCh,'in-col-ch'); } h+=renderColRow('Others',t.ot,t.colOt,'in-col-ot');
-        document.getElementById('collect-items-list').innerHTML = h; ['in-col-ph', 'in-col-pb', 'in-col-chFull', 'in-col-chUsb', 'in-col-chHead', 'in-col-ch', 'in-col-ot'].forEach(elId => { let el = document.getElementById(elId); if(el) el.addEventListener('input', window.calcColValue); });
+        document.getElementById('collect-items-list').innerHTML = h;['in-col-ph', 'in-col-pb', 'in-col-chFull', 'in-col-chUsb', 'in-col-chHead', 'in-col-ch', 'in-col-ot'].forEach(elId => { let el = document.getElementById(elId); if(el) el.addEventListener('input', window.calcColValue); });
         
         window.currentPickupPhoto = null; 
         if(document.getElementById('pickupPreview')) document.getElementById('pickupPreview').style.display = 'none'; 
@@ -1669,13 +1735,14 @@
         if(t.onTheWay && !t.onTheWayAck) ackOnTheWay(t.id); document.getElementById('mod-collect').style.display = 'flex';
     };
 
-    function renderColRow(l, t, c, id) { let r=(t||0)-(c||0); return r>0 ? `<div class="row" style="justify-content:space-between; border-bottom:1px solid #eee; padding:5px 0;"><span style="color:#000;">${l} (${r} left)</span><input type="number" id="${id}" value="0" min="0" max="${r}" style="width:60px; color:#000; background:#fff; font-weight:bold; font-size:16px;"></div>` : ''; }
+    function renderColRow(l, t, c, id) { let r=(t||0)-(c||0); return r>0 ? `<div class="row" style="justify-content:space-between; border-bottom:1px solid var(--border); padding:10px 0;"><span style="color:var(--text); font-weight:600;">${l} (${r} left)</span><input type="number" id="${id}" value="0" min="0" max="${r}" style="width:70px; margin:0; text-align:center; padding:8px;"></div>` : ''; }
 
     window.calcColValue = () => {
         const ph = +(document.getElementById('in-col-ph')?.value || 0), pb = +(document.getElementById('in-col-pb')?.value || 0), chFull = +(document.getElementById('in-col-chFull')?.value || 0), chUsb = +(document.getElementById('in-col-chUsb')?.value || 0), chHead = +(document.getElementById('in-col-chHead')?.value || 0);
         let sub = (ph * priceConfig.ph) + (pb * priceConfig.pb) + (chFull * priceConfig.chFull) + (chUsb * priceConfig.chUsb) + (chHead * priceConfig.chHead);
         const id = document.getElementById('col-id').value, t = ticketsData.find(x => x.id === id);
         if(t && t.ot > 0 && t.otPrice > 0) { const ot = +(document.getElementById('in-col-ot')?.value || 0); sub += (t.otPrice / t.ot) * ot; }
+        if(t && t.retailCost > 0) { sub += t.retailCost; }
         document.getElementById('col-selected-value').innerText = Math.round(sub); let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); let bal = t.price - amtPaid; let suggestedPay = Math.min(Math.round(sub), bal); document.getElementById('col-pay-now').value = suggestedPay;
     };
 
@@ -1713,7 +1780,7 @@
 
         if((u.colPh>=(t.ph||0))&&(u.colPb>=(t.pb||0))&&(u.colChFull>=(t.chFull||0))&&(u.colChUsb>=(t.chUsb||0))&&(u.colChHead>=(t.chHead||0))&&((u.colCh||0)>=(t.ch||0))&&(u.colOt>=(t.ot||0))) { u.collected=true; u.collDate=new Date().toLocaleDateString(); u.sockets=[]; u.collectedBy = window.currentStaffName; }
         
-        await updateDoc(doc(db,"tickets",id), u); playChaChing(); closeModal('mod-collect'); document.getElementById('tokenNum').value=""; document.getElementById('formAction').innerText="Enter Tag to Start 🔵"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML='';
+        await updateDoc(doc(db,"tickets",id), u); playChaChing(); closeModal('mod-collect'); document.getElementById('tokenNum').value=""; document.getElementById('formAction').innerText="Start a New Ticket"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML='';
     };
 
     window.quickCollectAll = async () => {
@@ -1750,12 +1817,12 @@
 
         await updateDoc(doc(db,"tickets",id), updateObj); 
         
-        playChaChing(); closeModal('mod-collect'); document.getElementById('tokenNum').value=""; document.getElementById('formAction').innerText="Enter Tag to Start 🔵"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML='';
+        playChaChing(); closeModal('mod-collect'); document.getElementById('tokenNum').value=""; document.getElementById('formAction').innerText="Start a New Ticket"; document.getElementById('securityCheckAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML='';
     };
 
     window.openReviews = () => {
         let html = ''; const rated = ticketsData.filter(t => t.rating > 0).sort((a,b) => b.jsDate - a.jsDate);
-        if(rated.length === 0) html = "<p>No reviews yet.</p>"; else { rated.forEach(t => { let stars = '⭐'.repeat(t.rating); html += `<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:10px; border-left:4px solid var(--gold);"><b>${stars}</b><br><small style="color:#666;">Customer: ${t.name}</small><br><p style="margin:5px 0; font-size:14px; font-style:italic;">"${t.reviewText || 'No comment provided.'}"</p></div>`; }); }
+        if(rated.length === 0) html = "<p style='color:var(--text-muted);'>No reviews yet.</p>"; else { rated.forEach(t => { let stars = '⭐'.repeat(t.rating); html += `<div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--gold); box-shadow:var(--shadow-sm);"><b>${stars}</b><br><small style="color:var(--text-muted); font-weight:600;">Customer: ${t.name}</small><br><p style="margin:8px 0 0 0; font-size:14px; font-style:italic; color:var(--text);">"${t.reviewText || 'No comment provided.'}"</p></div>`; }); }
         document.getElementById('reviewsList').innerHTML = html; document.getElementById('modalReviews').style.display = 'flex';
     };
 
@@ -1772,7 +1839,7 @@
 
         const filteredTickets = ticketsData.filter(t => t.jsDate >= filterDate);
 
-        let revPh = 0, revPb = 0, revOt = 0;
+        let revPh = 0, revPb = 0, revOt = 0, revRetail = 0;
         let hoursCount = new Array(24).fill(0);
         let staffStats = {};
 
@@ -1780,6 +1847,7 @@
             revPh += (t.ph || 0) * priceConfig.ph;
             revPb += (t.pb || 0) * priceConfig.pb;
             revOt += (t.otPrice || 0) + ((t.chFull || 0)*priceConfig.chFull) + ((t.chUsb || 0)*priceConfig.chUsb) + ((t.chHead || 0)*priceConfig.chHead);
+            revRetail += (t.retailCost || 0);
 
             if(t.jsDate) hoursCount[t.jsDate.getHours()]++;
 
@@ -1793,18 +1861,18 @@
 
         let staffHtml = Object.keys(staffStats).sort((a,b) => staffStats[b].revenue - staffStats[a].revenue).map((s, index) => {
             let medal = index === 0 ? '🏆' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : '🔹'));
-            return `<div style="display:flex; justify-content:space-between; background:#fff; padding:10px; border-radius:6px; border:1px solid #ccc;">
-                <b>${medal} ${s}</b> <span style="color:var(--success); font-weight:bold;">₦${staffStats[s].revenue.toLocaleString()} <small style="color:#666;">(${staffStats[s].tickets} tix)</small></span>
+            return `<div style="display:flex; justify-content:space-between; background:#f8fafc; padding:12px 15px; border-radius:8px; border:1px solid var(--border);">
+                <b style="color:var(--text);">${medal} ${s}</b> <span style="color:var(--success); font-weight:700;">₦${staffStats[s].revenue.toLocaleString()} <small style="color:var(--text-muted); font-weight:500;">(${staffStats[s].tickets} tix)</small></span>
             </div>`;
         }).join('');
-        if(!staffHtml) staffHtml = '<p style="text-align:center; color:#666; font-size:13px;">No data available for this timeframe.</p>';
+        if(!staffHtml) staffHtml = '<p style="text-align:center; color:var(--text-muted); font-size:13px;">No data available for this timeframe.</p>';
         document.getElementById('staffLeaderboard').innerHTML = staffHtml;
 
         if(deviceChartInstance) deviceChartInstance.destroy();
         const ctxDev = document.getElementById('deviceChart').getContext('2d');
         deviceChartInstance = new Chart(ctxDev, {
             type: 'doughnut',
-            data: { labels: ['Phones', 'P-Banks', 'Others/Acc'], datasets: [{ data: [revPh, revPb, revOt], backgroundColor: ['#007bff', '#28a745', '#ffc107'], borderWidth: 2 }] },
+            data: { labels:['Phones', 'P-Banks', 'Others/Acc', 'Retail (Cables)'], datasets:[{ data:[revPh, revPb, revOt, revRetail], backgroundColor:['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'], borderWidth: 2, borderColor: '#fff' }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
         });
 
@@ -1813,7 +1881,7 @@
         let hourLabels = hoursCount.map((_, i) => (i % 12 || 12) + (i < 12 ? 'AM' : 'PM'));
         hoursChartInstance = new Chart(ctxHrs, {
             type: 'bar',
-            data: { labels: hourLabels, datasets: [{ label: 'Drop-offs', data: hoursCount, backgroundColor: '#6f42c1', borderRadius: 4 }] },
+            data: { labels: hourLabels, datasets:[{ label: 'Drop-offs', data: hoursCount, backgroundColor: '#8b5cf6', borderRadius: 6 }] },
             options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
         });
     };
@@ -1821,8 +1889,8 @@
     function render() {
         const term=document.getElementById('histSearch').value.toLowerCase(), filterDate=document.getElementById('histDate').value, active=ticketsData.filter(t=>!t.collected);
         const history=ticketsData.filter(t=>{ if(!t.collected)return false; const mT=t.name.toLowerCase().includes(term)||String(t.tag).toLowerCase().includes(term); let mD=true; if(filterDate&&t.jsDate) mD=new Date(t.jsDate.getTime()-(t.jsDate.getTimezoneOffset()*60000)).toISOString().split('T')[0]===filterDate; return mT&&mD; });
-        document.getElementById('listActive').innerHTML = active.map(t=>ticketTemplate(t)).join('')||'<div style="text-align:center; padding:20px; color:#666; grid-column:1/-1;">No active devices.</div>';
-        document.getElementById('listHistory').innerHTML = history.slice(0,20).map(t=>historyTemplate(t)).join('')||'<div style="text-align:center; padding:20px; color:#666; grid-column:1/-1;">No history found.</div>';
+        document.getElementById('listActive').innerHTML = active.map(t=>ticketTemplate(t)).join('')||'<div style="text-align:center; padding:30px; color:var(--text-muted); grid-column:1/-1; background:var(--surface); border-radius:12px; border:1px dashed var(--border);">No active devices right now.</div>';
+        document.getElementById('listHistory').innerHTML = history.slice(0,20).map(t=>historyTemplate(t)).join('')||'<div style="text-align:center; padding:30px; color:var(--text-muted); grid-column:1/-1; background:var(--surface); border-radius:12px; border:1px dashed var(--border);">No history found.</div>';
         
         const todayStr=new Date().toLocaleDateString(), stats=ticketsData.reduce((a,t)=>{ 
             let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0);
@@ -1832,7 +1900,7 @@
             return a; 
         }, {cash:0,pending:0,aPh:0,aPb:0,aOt:0});
         
-        document.getElementById('valCash').innerText="₦"+stats.cash.toLocaleString(); document.getElementById('valPending').innerText="₦"+stats.pending.toLocaleString(); document.getElementById('valCount').innerHTML=`<span style="font-size:16px;">${stats.aPh}📱 ${stats.aPb}🔋 ${stats.aOt}📦</span>`; document.getElementById('countActive').innerText=active.length;
+        document.getElementById('valCash').innerText="₦"+stats.cash.toLocaleString(); document.getElementById('valPending').innerText="₦"+stats.pending.toLocaleString(); document.getElementById('valCount').innerHTML=`<span style="font-size:18px;">${stats.aPh}📱 ${stats.aPb}🔋 ${stats.aOt}📦</span>`; document.getElementById('countActive').innerText=active.length;
 
         updateAnalytics();
         
@@ -1847,7 +1915,7 @@
                 window.notifiedChats.delete(t.id); 
             }
             
-            const nowMs = powerData.state === 'OFF' ? powerData.offAt : Date.now();
+            const nowMs = Date.now();
             let activePh = (t.ph || 0) - (t.colPh || 0); let activePb = (t.pb || 0) - (t.colPb || 0); let activeOt = (t.ot || 0) - (t.colOt || 0);
             let isFull = false;
             
@@ -1862,45 +1930,46 @@
     }
 
     function ticketTemplate(t) {
-        const nowMs = powerData.state === 'OFF' ? powerData.offAt : Date.now(); const plan = currentShopData.plan || 'free';
+        const nowMs = Date.now(); const plan = currentShopData.plan || 'free';
         let tc='', sd=(t.sockets&&t.sockets.length>0)?`🔌 <b>${t.sockets.join(',')}</b>`:'🔌 <b>None</b>', cs='', tas='';
-        if(t.shelved){ tc=''; sd=`📦 <b>Shelf</b>`; cs='border-left-color:#28a745;'; tas='background:#d4edda;'; } else if (t.shelfPh || t.shelfPb || t.shelfOt) { sd = `⏳ <b>Partial Shelf</b>`; tas='background:#fff3cd;'; }
+        if(t.shelved){ tc=''; sd=`📦 <b>Shelf</b>`; cs='border-left-color:var(--success);'; tas='background:#f0fdf4;'; } else if (t.shelfPh || t.shelfPb || t.shelfOt) { sd = `⏳ <b>Partial Shelf</b>`; tas='background:#fffbeb;'; }
         
         let actPh=(t.ph||0)-(t.colPh||0), actPb=(t.pb||0)-(t.colPb||0), actOt=(((t.chFull||0)-(t.colChFull||0))+((t.chUsb||0)-(t.colChUsb||0))+((t.chHead||0)-(t.colChHead||0))+((t.ch||0)-(t.colCh||0))+((t.ot||0)-(t.colOt||0)));
-        let photoArray = t.photos || (t.photo ? [t.photo] : []); let hasPhoto = photoArray.length > 0 ? '📸 ' : ''; let photoHtml = '';
-        if(photoArray.length > 0) { photoHtml = '<div style="display:flex; gap:10px; overflow-x:auto; margin-bottom:15px; padding-bottom:5px;">'; photoArray.forEach(img => { photoHtml += `<img src="${img}" class="device-photo" style="width:120px; height:120px; object-fit:cover; border-radius:8px; border:2px solid #eee; flex-shrink:0; box-shadow:0 2px 4px rgba(0,0,0,0.1);">`; }); photoHtml += '</div>'; }
+        let photoArray = t.photos || (t.photo ? [t.photo] :[]); let hasPhoto = photoArray.length > 0 ? '📸 ' : ''; let photoHtml = '';
+        if(photoArray.length > 0) { photoHtml = '<div style="display:flex; gap:8px; overflow-x:auto; margin-bottom:15px; padding-bottom:5px;">'; photoArray.forEach(img => { photoHtml += `<img src="${img}" class="device-photo" style="width:90px; height:90px; object-fit:cover; border-radius:8px; border:1px solid var(--border); flex-shrink:0;">`; }); photoHtml += '</div>'; }
 
         let bars="";
-        if(actPh>0){ let p = getPct(t, 'ph', nowMs); let c='#dc3545'; let txt = `📱 Phones: ${p}%`; if(p>=30)c='#ffc107'; if(p>=80)c='#28a745'; if(p>=100&&!t.shelved&&!t.shelfPh)tc='danger'; if(t.shelved || t.shelfPh) { p=100; c='#28a745'; txt = `📱 Phones: ON SHELF ✅`; } bars+=`<div style="margin:5px 0; width:100%; background:#e0e0e0; border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:900; color:#333;">${txt}</div></div>`; }
-        if(actPb>0){ let p = getPct(t, 'pb', nowMs); let c='#dc3545'; let txt = `🔋 P-Bank: ${p}%`; if(p>=30)c='#ffc107'; if(p>=80)c='#28a745'; if(p>=100&&!t.shelved&&!t.shelfPb)tc='danger'; if(t.shelved || t.shelfPb) { p=100; c='#28a745'; txt = `🔋 P-Bank: ON SHELF ✅`; } bars+=`<div style="margin:5px 0; width:100%; background:#e0e0e0; border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:900; color:#333;">${txt}</div></div>`; }
-        if(actPh<=0 && actPb<=0 && actOt>0){ let p = getPct(t, 'ot', nowMs); let c='#dc3545'; let txt = `⚡ Device: ${p}%`; if(p>=30)c='#ffc107'; if(p>=80)c='#28a745'; if(p>=100&&!t.shelved&&!t.shelfOt)tc='danger'; if(t.shelved || t.shelfOt) { p=100; c='#28a745'; txt = `⚡ Device: ON SHELF ✅`; } bars+=`<div style="margin:5px 0; width:100%; background:#e0e0e0; border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:900; color:#333;">${txt}</div></div>`; }
+        if(actPh>0){ let p = getPct(t, 'ph', nowMs); let c='var(--danger)'; let txt = `📱 Phones: ${p}%`; if(p>=30)c='var(--warning)'; if(p>=80)c='var(--success)'; if(p>=100&&!t.shelved&&!t.shelfPh)tc='danger'; if(t.shelved || t.shelfPh) { p=100; c='var(--success)'; txt = `📱 Phones: ON SHELF ✅`; } bars+=`<div style="margin:6px 0; width:100%; background:var(--border); border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:800; color:var(--text); text-shadow: 0px 0px 2px rgba(255,255,255,0.8);">${txt}</div></div>`; }
+        if(actPb>0){ let p = getPct(t, 'pb', nowMs); let c='var(--danger)'; let txt = `🔋 P-Bank: ${p}%`; if(p>=30)c='var(--warning)'; if(p>=80)c='var(--success)'; if(p>=100&&!t.shelved&&!t.shelfPb)tc='danger'; if(t.shelved || t.shelfPb) { p=100; c='var(--success)'; txt = `🔋 P-Bank: ON SHELF ✅`; } bars+=`<div style="margin:6px 0; width:100%; background:var(--border); border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:800; color:var(--text); text-shadow: 0px 0px 2px rgba(255,255,255,0.8);">${txt}</div></div>`; }
+        if(actPh<=0 && actPb<=0 && actOt>0){ let p = getPct(t, 'ot', nowMs); let c='var(--danger)'; let txt = `⚡ Device: ${p}%`; if(p>=30)c='var(--warning)'; if(p>=80)c='var(--success)'; if(p>=100&&!t.shelved&&!t.shelfOt)tc='danger'; if(t.shelved || t.shelfOt) { p=100; c='var(--success)'; txt = `⚡ Device: ON SHELF ✅`; } bars+=`<div style="margin:6px 0; width:100%; background:var(--border); border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:800; color:var(--text); text-shadow: 0px 0px 2px rgba(255,255,255,0.8);">${txt}</div></div>`; }
 
         let baseTs = t.baseTs || t.jsDate.getTime(); let diffTime = Math.floor((nowMs - baseTs) / 60000); let td = t.shelved ? `✅ Rdy` : `${Math.floor(diffTime/60)}h ${diffTime%60}m`;
         let oS="",rS="",cS=""; const bld=(l,tq,cq)=>{ let r=(tq||0)-(cq||0); if(tq>0)oS+=`${tq}${l} `; if(cq>0)cS+=`${cq}${l} `; if(r>0)rS+=`${r}${l} `; }; bld('📱',t.ph,t.colPh); bld('🔋',t.pb,t.colPb); bld('🔌F',t.chFull,t.colChFull); bld('〰️U',t.chUsb,t.colChUsb); bld('🔌H',t.chHead,t.colChHead); bld('🔌L',t.ch,t.colCh);
-        let cDisp = (t.cond&&t.cond.length>0)?`<span style="color:#dc3545; font-size:11px; display:block; font-weight:bold; margin-bottom:5px;">⚠️ ${t.cond.join(', ')}</span>`:'';
+        let cDisp = (t.cond&&t.cond.length>0)?`<span style="color:var(--danger); font-size:12px; display:block; font-weight:700; margin-bottom:10px; background:#fef2f2; padding:4px 8px; border-radius:6px; border:1px solid #fecaca;">⚠️ ${t.cond.join(', ')}</span>`:'';
         
-        let unreadBadge = t.hasUnread ? `<button onclick="startEdit('${t.id}')" style="background:var(--danger); color:white; width:100%; border:none; padding:10px; margin-bottom:10px; border-radius:8px; font-weight:bold; font-size:14px; cursor:pointer; animation: pulse 1.5s infinite; box-shadow: 0 4px 8px rgba(220,53,69,0.4);">💬 1 New Message! Click to Reply</button>` : '';
-        let onTheWayBadge = (t.onTheWay && !t.onTheWayAck) ? `<div style="background:var(--warning); color:#000; padding:8px; text-align:center; font-weight:bold; border-radius:6px; margin-bottom:10px; animation: pulse 1s infinite; border: 2px solid #000;">🏃‍♂️ CUSTOMER ARRIVING! <br><button onclick="ackOnTheWay('${t.id}')" style="background:#000; color:#fff; padding:6px 12px; margin-top:8px; border-radius:6px; font-size:14px; border:none; cursor:pointer;">✅ Acknowledge & Prepare</button></div>` : '';
+        let unreadBadge = t.hasUnread ? `<button onclick="startEdit('${t.id}')" style="background:var(--danger); color:white; width:100%; border:none; padding:10px; margin-bottom:10px; border-radius:8px; font-weight:700; font-size:14px; cursor:pointer; animation: pulse 1.5s infinite; box-shadow: var(--shadow);">💬 1 New Message! Reply Now</button>` : '';
+        let onTheWayBadge = (t.onTheWay && !t.onTheWayAck) ? `<div style="background:#fef08a; color:#854d0e; padding:12px; text-align:center; font-weight:700; border-radius:8px; margin-bottom:10px; animation: pulse 1s infinite; border: 1px solid #fde047;">🏃‍♂️ CUSTOMER ARRIVING! <br><button onclick="ackOnTheWay('${t.id}')" style="background:var(--dark); color:#fff; padding:8px 14px; margin-top:10px; border-radius:8px; font-size:13px; border:none; cursor:pointer;">✅ Acknowledge</button></div>` : '';
 
         let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); let bal = t.price - amtPaid; let badgeHtml = '';
         
         if(t.isLoyaltyFree) {
-            badgeHtml = `<span style="background:var(--gold); color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; border:1px solid #ffeeba;">🔥 5th FREE!</span>`;
-        } else if(bal <= 0) { badgeHtml = `<span style="background:#d4edda; color:#155724; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; border:1px solid #c3e6cb;">✅ PAID IN FULL</span>`; } else if(amtPaid > 0) { badgeHtml = `<span style="background:#fff3cd; color:#856404; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; border:1px solid #ffeeba;">⏳ OWES ₦${bal}</span>`; } else { badgeHtml = `<span style="background:#f8d7da; color:#721c24; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:12px; border:1px solid #f5c6cb;">⏳ PAY LATER</span>`; }
+            badgeHtml = `<span style="background:#fef08a; color:#854d0e; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; border:1px solid #fde047; text-transform:uppercase;">🔥 5th Free!</span>`;
+        } else if(bal <= 0) { badgeHtml = `<span style="background:#f0fdf4; color:#166534; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; border:1px solid #bbf7d0; text-transform:uppercase;">✅ Paid</span>`; } else if(amtPaid > 0) { badgeHtml = `<span style="background:#fffbeb; color:#b45309; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; border:1px solid #fef08a; text-transform:uppercase;">⏳ Owes ₦${bal}</span>`; } else { badgeHtml = `<span style="background:#fef2f2; color:#b91c1c; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; border:1px solid #fecaca; text-transform:uppercase;">⏳ Pay Later</span>`; }
 
         let whatsappBtnHtml = '';
-        if (plan === 'premium') { whatsappBtnHtml = `<button onclick="sendWhatsApp('${t.id}')" style="background:#25D366; color:white; width:100%; border:none; padding:8px; margin-top:5px; border-radius:8px; font-weight:bold; cursor:pointer;">💬 Send WhatsApp Update</button>`; } else { whatsappBtnHtml = `<button onclick="document.getElementById('modalUpgrade').style.display='flex'" style="background:#ccc; color:#666; width:100%; border:none; padding:8px; margin-top:5px; border-radius:8px; font-weight:bold; cursor:pointer;">🔒 Upgrade to send WhatsApp updates</button>`; }
+        if (plan === 'premium') { whatsappBtnHtml = `<button onclick="sendWhatsApp('${t.id}')" style="background:#10b981; color:white; width:100%; border:none; padding:10px; margin-top:10px; font-weight:600; cursor:pointer;">💬 WhatsApp Update</button>`; } else { whatsappBtnHtml = `<button onclick="document.getElementById('modalUpgrade').style.display='flex'" style="background:var(--bg); color:var(--text-muted); border:1px solid var(--border); width:100%; padding:10px; margin-top:10px; font-weight:600; cursor:pointer; box-shadow:none;">🔒 Upgrade for WhatsApp</button>`; }
 
-        return `<div class="ticket" style="${cs}"><div><div style="display:flex; justify-content:space-between"><b style="color:#000;">${hasPhoto}${t.name} <span class="code-badge">#${t.tag}</span></b>${badgeHtml}</div><div class="timer-area" style="${tas}"><span style="color:#000;">${sd}</span><span class="time-val ${tc}">${td}</span></div>${cDisp}${unreadBadge}${onTheWayBadge}${photoHtml}${bars}<small style="color:#000; font-size:13px; display:block; margin-top:5px;">${cS!==""?`<b style="color:#d32f2f;">Left: ${rS}</b> | <span style="color:#28a745;">✅ Col: ${cS}</span>`:`Items: ${oS}`}</small><small style="color:#666; font-size:11px; display:block; margin-top:2px;">Total: ₦${t.price}</small>${whatsappBtnHtml}</div><div class="row" style="margin-top:10px;">${!t.shelved?`<button class="btn-shelf" onclick="openShelf('${t.id}')" style="flex:1;">📦 SHELF</button>`:''}<button class="btn-edit" onclick="startEdit('${t.id}')" style="flex:1;">✏️ EDIT</button><button style="background:var(--success); flex:1;" onclick="openCollect('${t.id}')">COLLECT</button></div></div>`;
+        return `<div class="ticket" style="${cs}"><div><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;"><b style="color:var(--text); font-size:15px;">${hasPhoto}${t.name} <span class="code-badge">#${t.tag}</span></b>${badgeHtml}</div><div class="timer-area" style="${tas}"><span style="color:var(--text);">${sd}</span><span class="time-val ${tc}">${td}</span></div>${cDisp}${unreadBadge}${onTheWayBadge}${photoHtml}${bars}<small style="color:var(--text); font-size:13px; display:block; margin-top:10px; font-weight:500;">${cS!==""?`<b style="color:var(--danger);">Left: ${rS}</b> | <span style="color:var(--success);">✅ Collected: ${cS}</span>`:`Items Logged: ${oS}`}</small><small style="color:var(--text-muted); font-size:12px; display:block; margin-top:4px; font-weight:600;">Total Bill: ₦${t.price}</small>${whatsappBtnHtml}</div><div class="row" style="margin-top:15px;">${!t.shelved?`<button class="btn-shelf" onclick="openShelf('${t.id}')" style="flex:1;">📦 Shelf</button>`:''}<button class="btn-edit" onclick="startEdit('${t.id}')" style="flex:1;">Edit</button><button style="background:var(--success); flex:1;" onclick="openCollect('${t.id}')">Collect</button></div></div>`;
     }
 
     function historyTemplate(t) {
         let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); 
-        let debtBtn = (amtPaid < t.price && !t.debtSettled) ? `<button onclick="settleDebt('${t.id}')" style="background:var(--warning); color:#000; padding:4px 8px; margin-top:5px; width:100%; border-radius:4px; font-size:12px; font-weight:bold;">💸 Pay Remaining ₦${t.price - amtPaid}</button>` : ''; 
+        let debtBtn = (amtPaid < t.price && !t.debtSettled) ? `<button onclick="settleDebt('${t.id}')" style="background:var(--warning); color:#000; padding:8px; margin-top:8px; width:100%; font-size:13px; font-weight:700;">💸 Pay Remaining ₦${t.price - amtPaid}</button>` : ''; 
         let hasPhoto = (t.photos && t.photos.length > 0) || t.photo ? '📸 ' : '';
-        let pMethodStr = t.colPaymentMethod || (t.payStatus === 'Now' ? 'Cash/Transfer (Creation)' : (t.payStatus === 'Wallet' ? 'Wallet (Creation)' : 'Unknown'));
+        let pMethodStr = t.colPaymentMethod || (t.payStatus === 'Now' ? 'Cash/Transfer' : (t.payStatus === 'Wallet' ? 'Wallet' : 'Unknown'));
+        let retailStr = t.retailCost > 0 ? `<br><span style="color:#b45309; font-weight:600;">Purchased: ${t.retailDesc} (₦${t.retailCost})</span>` : '';
         
-        return `<div class="ticket" style="border-left-color:#ccc; opacity:0.8;"><b style="color:#000;">${hasPhoto}${t.name} (#${t.tag})</b> - <span style="color:#000;">Total: ₦${t.price}</span><br><small style="color:#000;">Out: ${t.collDate}</small><br><small style="color:#28a745; font-weight:bold;">Paid via: ${pMethodStr}</small>${debtBtn}<button onclick="revertCollection('${t.id}')" style="width:100%; padding:4px 8px; margin-top:5px; background:#666; border-radius:4px; color:white; border:none;">Re-activate</button></div>`; 
+        return `<div class="ticket" style="opacity:0.85; background:var(--bg); border:1px solid var(--border); box-shadow:none;"><b style="color:var(--text); font-size:15px; margin-bottom:5px; display:block;">${hasPhoto}${t.name} <span style="color:var(--text-muted);">#${t.tag}</span></b><div style="font-size:13px; color:var(--text); line-height:1.5;"><span style="font-weight:600;">Total:</span> ₦${t.price}${retailStr}<br><span style="font-weight:600;">Out:</span> ${t.collDate}<br><span style="color:var(--success); font-weight:700;">Paid via: ${pMethodStr}</span></div>${debtBtn}<button onclick="revertCollection('${t.id}')" style="width:100%; padding:8px; margin-top:10px; background:transparent; color:var(--text-muted); border:1px solid var(--border); box-shadow:none;">Re-activate Ticket</button></div>`; 
     }
 
     window.settleDebt = async (id) => {
@@ -1916,38 +1985,37 @@
     };
 
     function clearFormFieldsOnly() { 
-        window.pendingClaim = null; window.isFreeEligible = false; stopCam(); currentPhotos = []; renderPhotoGallery(); 
-        ['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','amtPaidInput','syncPh','syncPb','syncOt'].forEach(id => { let el = document.getElementById(id); if(el) el.value=id.includes('Count')||id.includes('Price')||id.includes('amt')||id.includes('sync')?0:""; }); 
+        window.pendingClaim = null; window.isFreeEligible = false; stopCam(); currentPhotos = []; renderPhotoGallery();['custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount','otCount','otPrice','retailDesc','retailCost','amtPaidInput','syncPh','syncPb','syncOt'].forEach(id => { let el = document.getElementById(id); if(el) el.value=id.includes('Count')||id.includes('Price')||id.includes('Cost')||id.includes('amt')||id.includes('sync')?0:""; }); 
         document.getElementById('payStatus').value="Later"; document.getElementById('securityCheckAlert').innerHTML=''; if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML=''; document.getElementById('debtAlert').innerHTML=''; document.getElementById('vipAlert').innerHTML=''; document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); document.getElementById('staffChatArea').style.display='none'; document.getElementById('staffChatHistory').innerHTML=''; document.getElementById('staffChatInput').value=''; 
     }
 
-    // 🌟 CSS-BASED TRUE MODAL IMPLEMENTATION
     window.startEdit = (id) => {
-        const t=ticketsData.find(x=>x.id===id); editId=id; currentSockets=t.sockets||[]; document.getElementById('custName').value=t.name; document.getElementById('tokenNum').value=t.tag; document.getElementById('phCount').value=t.ph||0; document.getElementById('pbCount').value=t.pb||0; document.getElementById('chFullCount').value=t.chFull||0; document.getElementById('chUsbCount').value=t.chUsb||0; document.getElementById('chHeadCount').value=t.chHead||0; document.getElementById('otCount').value=t.ot||0; document.getElementById('otPrice').value=t.otPrice||0; document.getElementById('amtPaidInput').value = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); document.getElementById('custPhone').value = t.phone || "";
+        const t=ticketsData.find(x=>x.id===id); editId=id; currentSockets=t.sockets||[]; document.getElementById('custName').value=t.name; document.getElementById('tokenNum').value=t.tag; document.getElementById('phCount').value=t.ph||0; document.getElementById('pbCount').value=t.pb||0; document.getElementById('chFullCount').value=t.chFull||0; document.getElementById('chUsbCount').value=t.chUsb||0; document.getElementById('chHeadCount').value=t.chHead||0; document.getElementById('otCount').value=t.ot||0; document.getElementById('otPrice').value=t.otPrice||0; 
+        document.getElementById('retailDesc').value=t.retailDesc||""; document.getElementById('retailCost').value=t.retailCost||0;
+        document.getElementById('amtPaidInput').value = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); document.getElementById('custPhone').value = t.phone || "";
         document.querySelectorAll('.cond-chk').forEach(c => c.checked = (t.cond||[]).includes(c.value));
         
-        currentPhotos = t.photos || (t.photo ? [t.photo] : []); renderPhotoGallery();
+        currentPhotos = t.photos || (t.photo ? [t.photo] :[]); renderPhotoGallery();
         if(currentPhotos.length > 0) { document.getElementById('btnStartCam').innerText = "📷 Take More Photos"; } else { document.getElementById('btnStartCam').innerText = "📷 Open Camera"; }
 
         let cT=String(t.tag).replace(/^#+/,''); if(!isNaN(cT)&&cT!=="") cT=String(Number(cT)); const px=secureTagsData[cT]; document.getElementById('displayPin').innerText=px||"No PIN"; document.getElementById('displayPin').style.color='var(--success)';
         
-        const nowMs = powerData.state === 'OFF' ? powerData.offAt : Date.now(); document.getElementById('syncPh').value = getPct(t, 'ph', nowMs); document.getElementById('syncPb').value = getPct(t, 'pb', nowMs); document.getElementById('syncOt').value = getPct(t, 'ot', nowMs);
+        const nowMs = Date.now(); document.getElementById('syncPh').value = getPct(t, 'ph', nowMs); document.getElementById('syncPb').value = getPct(t, 'pb', nowMs); document.getElementById('syncOt').value = getPct(t, 'ot', nowMs);
 
         const plan = currentShopData.plan || 'free';
-        if (plan === 'premium') { document.getElementById('staffChatArea').style.display = 'block'; renderStaffChat(t.chats || []); if(t.hasUnread) updateDoc(doc(db, "tickets", id), { hasUnread: false }); } else { document.getElementById('staffChatArea').style.display = 'none'; }
+        if (plan === 'premium') { document.getElementById('staffChatArea').style.display = 'block'; renderStaffChat(t.chats ||[]); if(t.hasUnread) updateDoc(doc(db, "tickets", id), { hasUnread: false }); } else { document.getElementById('staffChatArea').style.display = 'none'; }
 
         document.getElementById('extendedForm').style.display='block'; 
-        document.getElementById('formAction').innerHTML=`<h3 style="margin:0; color:var(--primary); text-align:center; padding-bottom:10px; border-bottom:2px dashed #ccc; margin-bottom:15px;">Edit #${t.tag} 🟢</h3>`; 
+        document.getElementById('formAction').innerHTML=`<h3 style="margin:0; color:var(--primary); text-align:center; padding-bottom:15px; border-bottom:1px solid var(--border); margin-bottom:20px;">Edit Ticket #${t.tag}</h3>`; 
         document.getElementById('saveBtn').style.display='block'; 
-        document.getElementById('saveBtn').innerText="💾 UPDATE"; 
+        document.getElementById('saveBtn').innerText="💾 Save Updates"; 
         document.getElementById('cancelEditBtn').style.display="block"; 
         
         document.getElementById('custPhone').dispatchEvent(new Event('input'));
         
-        // 👇 TRIGGER CSS-BASED MODAL TO LOCK BACKGROUND SCROLLING 👇
         document.getElementById('editBgOverlay').style.display = 'block';
         document.getElementById('formCard').classList.add('form-modal-mode');
-        document.body.style.overflow = 'hidden'; // Locks the background
+        document.body.style.overflow = 'hidden'; 
         
         window.autoCalc();
         if(plan === 'premium') { setTimeout(() => { const chatBox = document.getElementById('staffChatArea'); chatBox.scrollIntoView({ behavior: 'smooth', block: 'end' }); document.getElementById('staffChatInput').focus(); }, 300); }
@@ -1956,7 +2024,6 @@
     window.cancelEdit = () => { editId=null; currentSockets=[]; window.isFreeEligible = false; resetForm(true); };
     
     function resetForm(cT=false) { 
-        // 👇 CLOSE CSS MODAL AND UNLOCK BACKGROUND 👇
         document.getElementById('editBgOverlay').style.display = 'none';
         const fc = document.getElementById('formCard');
         if (fc) fc.classList.remove('form-modal-mode');
@@ -1966,7 +2033,7 @@
             document.getElementById('tokenNum').value=""; 
             const form = document.getElementById('extendedForm');
             if(form) form.style.display='none'; 
-            document.getElementById('formAction').innerText="Enter Tag 🔵"; 
+            document.getElementById('formAction').innerText="Start a New Ticket"; 
             document.getElementById('saveBtn').style.display='none'; 
             document.getElementById('cancelEditBtn').style.display="none"; 
             document.getElementById('securityCheckAlert').innerHTML=''; 
@@ -1979,12 +2046,13 @@
         window.autoCalc(); 
     }
 
-    window.closeModal = (id) => { document.getElementById(id).style.display='none'; if(id==='modalPrint') document.getElementById('receiptPreview').style.border="2px solid #333"; };
+    window.closeModal = (id) => { document.getElementById(id).style.display='none'; if(id==='modalPrint') document.getElementById('receiptPreview').style.border="1px solid var(--border)"; };
     
-    window.saveSettings = async () => { const np={ ph:+document.getElementById('setPh').value, pb:+document.getElementById('setPb').value, chFull:+document.getElementById('setChFull').value, chUsb:+document.getElementById('setChUsb').value, chHead:+document.getElementById('setChHead').value, maxSockets:+document.getElementById('setMaxSockets').value, loyalty:document.getElementById('setLoyalty').value, closeTime:document.getElementById('setCloseTime').value, bankName:document.getElementById('setBankName').value, accName:document.getElementById('setAccName').value, accNumber:document.getElementById('setAccNumber').value }; await setDoc(doc(db,`shops/${currentShopId}/config/prices`), np); priceConfig=np; alert("Shop Settings Saved!"); };
+    window.saveSettings = async () => { const np={ ph:+document.getElementById('setPh').value, pb:+document.getElementById('setPb').value, chFull:+document.getElementById('setChFull').value, chUsb:+document.getElementById('setChUsb').value, chHead:+document.getElementById('setChHead').value, maxSockets:+document.getElementById('setMaxSockets').value, loyalty:document.getElementById('setLoyalty').value, closeTime:document.getElementById('setCloseTime').value, bankName:document.getElementById('setBankName').value, accName:document.getElementById('setAccName').value, accNumber:document.getElementById('setAccNumber').value }; await setDoc(doc(db,`shops/${currentShopId}/config/prices`), np); priceConfig=np; alert("Shop Settings Saved Successfully!"); };
     
-    window.revertCollection = async (id) => { if(confirm("Re-activate?")) await updateDoc(doc(db,"tickets",id), {collected:false, collDate:null, shelved:false, shelfPh:false, shelfPb:false, shelfOt:false, rating:null, reviewText:null}); };
-    const upSt=() => { const sb = document.getElementById('status'); if(navigator.onLine) { sb.className="status-bar on"; sb.innerText="🟢 CONNECTED & SYNCED"; } else { sb.className="status-bar off"; sb.innerText="📡 OFFLINE (Saving to Phone Memory...)"; } }; window.addEventListener('online', upSt); window.addEventListener('offline', upSt); upSt();
+    window.revertCollection = async (id) => { if(confirm("Re-activate this ticket?")) await updateDoc(doc(db,"tickets",id), {collected:false, collDate:null, shelved:false, shelfPh:false, shelfPb:false, shelfOt:false, rating:null, reviewText:null}); };
+    
+    const upSt=() => { const sb = document.getElementById('status'); if(navigator.onLine) { sb.className="status-bar on"; sb.innerText="🟢 CONNECTED & SECURE"; } else { sb.className="status-bar off"; sb.innerText="📡 OFFLINE - SAVING TO PHONE MEMORY"; } }; window.addEventListener('online', upSt); window.addEventListener('offline', upSt); upSt();
 
     window.printSecureTags = async () => {
         const start = +document.getElementById('tagStart').value||1; const count = +document.getElementById('tagCount').value||5;
@@ -1993,9 +2061,9 @@
         const copies = +document.getElementById('tagCopies').value||25; 
         const tagStyle = document.getElementById('tagStyleOpt').value; 
 
-        const btn = document.getElementById('genBtn'); btn.innerText = "⏳ Saving..."; btn.disabled = true; 
+        const btn = document.getElementById('genBtn'); btn.innerText = "⏳ Generating Assets..."; btn.disabled = true; 
         let html = `<div id="captureArea" style="padding:20px; background:white; width:100%; min-width:1000px; max-width:1122px; margin:0 auto; box-sizing:border-box;">`; 
-        const promises = [];
+        const promises =[];
         let base = globalTrackingUrl; if(!base.endsWith('/')) base += '/';
         
         try {
@@ -2007,40 +2075,36 @@
                 let qrImageHtml = ''; 
                 let infoText = `Keep this tag safe to claim your device.`;
 
-                html += `<div id="st-${i}" style="width:100%; padding:20px 0; background:#fff; margin-bottom:30px; border-bottom:2px dashed #999; text-align:center; page-break-inside:avoid;">`;
+                html += `<div id="st-${i}" style="width:100%; padding:20px 0; background:#fff; margin-bottom:30px; border-bottom:2px dashed #e2e8f0; text-align:center; page-break-inside:avoid;">`;
 
                 if (tagStyle !== 'stickers') {
                     if (tagStyle === 'qr') {
-                        if (plan === 'premium') { 
-                            const qrImage = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(trackLink)}`; 
-                            qrImageHtml = `<div style="text-align:center; margin:15px auto; display:flex; justify-content:center;"><img src="${qrImage}" style="width:180px; height:180px;"></div>`; 
-                            infoText = `Click to view your phone's charging progress:<br><span style="color:var(--primary); font-size:16px; font-weight:900; word-break: break-all;">${base}</span>`;
-                        }
+                        const qrImage = `https://quickchart.io/qr?text=${encodeURIComponent(trackLink)}&size=200`; 
+                        qrImageHtml = `<div style="text-align:center; margin:20px auto; display:flex; justify-content:center;"><img crossorigin="anonymous" src="${qrImage}" style="width:180px; height:180px;"></div>`; 
+                        infoText = `Scan to view charging progress:<br><span style="color:#2563eb; font-size:16px; font-weight:800; word-break: break-all; margin-top:8px; display:inline-block;">${base}</span>`;
                     } else if (tagStyle === 'text') {
-                        qrImageHtml = `<div style="padding:20px; background:#f8f9fa; border:2px dashed #000; margin:15px 0; font-size:26px; font-weight:900; color:#000; letter-spacing: 2px;">PIN: ${pin}</div>`;
-                        if (plan === 'premium') {
-                            infoText = `Track online at:<br><span style="color:var(--primary); font-size:16px; font-weight:900;">${base}</span><br>Use Tag #${i} and your PIN to log in.`;
-                        }
+                        qrImageHtml = `<div style="padding:20px; background:#f8fafc; border:2px dashed #94a3b8; border-radius: 12px; margin:20px 0; font-size:26px; font-weight:900; color:#0f172a; letter-spacing: 3px;">PIN: ${pin}</div>`;
+                        infoText = `Track online at:<br><span style="color:#2563eb; font-size:16px; font-weight:800; display:inline-block; margin:5px 0;">${base}</span><br>Log in with Tag #${i} and your PIN.`;
                     }
-                    html += `<div style="display:block; border:2px solid #000; padding:20px; border-radius:8px; width:280px; box-sizing:border-box; background:#fff; margin:0 auto 20px auto;"><div style="margin:0 0 10px 0; font-size:22px; font-weight:900; font-family:Arial; color:#000; border-bottom:2px solid #ccc; padding-bottom:5px;">⚡ STARBITE</div>${qrImageHtml}<div style="font-size:50px; font-weight:900; margin-top:5px; color:#000; font-family:Arial; line-height:1;">#${i}</div><div style="margin-top:15px; padding-top:10px; border-top:2px dashed #999; font-size:12px; font-weight:bold; color:#000; line-height:1.4;">${infoText}</div></div>`;
+                    html += `<div style="display:block; border:2px solid #0f172a; padding:25px; border-radius:16px; width:300px; box-sizing:border-box; background:#fff; margin:0 auto 25px auto; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);"><div style="margin:0 0 15px 0; font-size:24px; font-weight:900; font-family:'Inter', sans-serif; color:#0f172a; border-bottom:2px solid #e2e8f0; padding-bottom:10px;">⚡ STARBITE</div>${qrImageHtml}<div style="font-size:56px; font-weight:900; margin-top:10px; color:#0f172a; font-family:'Inter', sans-serif; line-height:1;">#${i}</div><div style="margin-top:20px; padding-top:15px; border-top:2px dashed #cbd5e1; font-size:13px; font-weight:600; color:#475569; line-height:1.5;">${infoText}</div></div>`;
                 }
                 
                 if(copies>0) { 
                     html+=`<div style="width:100%; text-align:center; font-size:0;">`; 
                     for(let c=0; c<copies; c++){ 
-                        html+=`<div style="display:inline-block; width:18%; margin:0 1% 10px 1%; border:2px solid #000; padding:10px 2px; background:#fff; font-family:monospace; font-size:14px; font-weight:900; color:#000; box-sizing:border-box; vertical-align:top; text-align:center; white-space:nowrap; overflow:hidden;">📱 #${i} | ${pin}</div>`; 
+                        html+=`<div style="display:inline-block; width:18%; margin:0 1% 10px 1%; border:2px solid #0f172a; border-radius:6px; padding:12px 4px; background:#fff; font-family:monospace; font-size:15px; font-weight:900; color:#0f172a; box-sizing:border-box; vertical-align:top; text-align:center; white-space:nowrap; overflow:hidden;">📱 #${i} | ${pin}</div>`; 
                     } 
                     html+=`</div>`; 
                 }
                 
-                html+=`<button id="bd-${i}" class="single-dl-btn" onclick="downloadSingleTag('st-${i}','${i}')" style="background:#28a745; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-size:16px; font-weight:bold; margin-top:20px;">📥 Save Layout</button></div>`;
+                html+=`<button id="bd-${i}" class="single-dl-btn" onclick="downloadSingleTag('st-${i}','${i}')" style="background:#10b981; color:white; border:none; padding:12px 24px; border-radius:10px; cursor:pointer; font-size:16px; font-weight:700; margin-top:20px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">📥 Save Single Layout</button></div>`;
             } 
             html+=`</div>`; 
             await Promise.all(promises); 
-            btn.innerText = "🖨️ Generate Tags"; btn.disabled = false;
+            btn.innerText = "Generate Assets"; btn.disabled = false;
             document.getElementById('receiptPreview').style.border = "none"; document.getElementById('receiptPreview').innerHTML = html;
             closeModal('modalTagGen'); document.getElementById('modalPrint').style.display='flex';
-        } catch(e) { alert("Error: " + e.message); btn.innerText="🖨️ Generate Tags"; btn.disabled=false; }
+        } catch(e) { alert("Error: " + e.message); btn.innerText="Generate Assets"; btn.disabled=false; }
     };
 
     window.downloadImage = () => { const printArea = document.getElementById('receiptPreview'); html2canvas(printArea, { scale: 2, useCORS: true, allowTaint: true }).then(canvas => { const link = document.createElement('a'); link.download = 'Starbite-Tags-Grid.png'; link.href = canvas.toDataURL('image/png'); link.click(); }); };
@@ -2048,4 +2112,5 @@
     
   </script>
 </body>
-                    </html>
+</html>
+
