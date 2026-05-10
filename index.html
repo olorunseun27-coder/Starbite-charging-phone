@@ -112,9 +112,9 @@
     
     #reader { width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);} #reader video { object-fit: cover; }
     
-    .chat-bubble { padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; max-width: 85%; word-wrap: break-word; clear: both; font-size: 14px;}
+    .chat-bubble { padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; max-width: 85%; word-wrap: break-word; clear: both; font-size: 14px; position: relative;}
     .chat-c { background: var(--primary); color: white; float: right; border-bottom-right-radius: 4px; }
-    .chat-s { background: #f1f5f9; color: var(--text); float: left; border-bottom-left-radius: 4px; }
+    .chat-s { background: #f1f5f9; color: var(--text); float: left; border-bottom-left-radius: 4px; border: 1px solid var(--border);}
     .chat-clear { clear: both; }
     
     .plan-badge { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; margin-left: 10px; letter-spacing: 0.5px;}
@@ -129,7 +129,6 @@
         padding: 8px 14px; border-radius: 8px; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; box-shadow: none; border: 1px solid transparent;
     }
     
-    /* Signature Pad specific styles */
     #sigCanvas { width: 100%; max-width: 400px; height: 120px; border: 2px dashed #cbd5e1; border-radius: 8px; background: #fff; cursor: crosshair; touch-action: none; margin-top: 10px; }
     
     @media print {
@@ -325,7 +324,7 @@
             <div id="vipAlert"></div>
             
             <div id="featureCamera" style="background:#f8fafc; padding:15px; border-radius:12px; margin-bottom:15px; border: 1px dashed var(--border);">
-                <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:10px;">📸 Snapshot Devices</label>
+                <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:10px;">📸 Snapshot Devices (General)</label>
                 <video id="camVideo" autoplay playsinline style="display:none; width:100%; max-height:250px; border-radius:8px; object-fit:cover; margin-bottom:10px;"></video>
                 <canvas id="camCanvas" style="display:none;"></canvas>
                 <div id="photoGallery" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px; margin-bottom:10px;"></div>
@@ -401,12 +400,13 @@
                 <div class="device-box" style="flex:1; background:#f0fdf4; border:2px solid #bbf7d0;"><label style="color:#166534;">Amount Paid (₦)</label><input type="number" id="amtPaidInput" value="0" min="0" style="color:#166534; font-size: 22px; background: transparent; border:none; margin:0; padding:0;"></div>
             </div>
 
+            <!-- 🔋 Individual Battery Sync Update & Device Specific Photos -->
             <div style="background:#eff6ff; padding:15px; border-radius:12px; margin-top:15px; border:1px solid #bfdbfe;">
-                <label style="font-size:12px; font-weight:700; color:#1e40af; text-transform:uppercase; display:block; margin-bottom:10px;">🔋 Manual Battery Sync</label>
-                <div class="row">
-                    <div class="device-box" style="background:#fff; border:none; padding:8px;"><label>Phone %</label><input type="number" id="syncPh" min="0" max="100" placeholder="0" style="background:transparent; border:none; padding:0; margin:0;"></div>
-                    <div class="device-box" style="background:#fff; border:none; padding:8px;"><label>P-Bank %</label><input type="number" id="syncPb" min="0" max="100" placeholder="0" style="background:transparent; border:none; padding:0; margin:0;"></div>
-                    <div class="device-box" style="background:#fff; border:none; padding:8px;"><label>Other %</label><input type="number" id="syncOt" min="0" max="100" placeholder="0" style="background:transparent; border:none; padding:0; margin:0;"></div>
+                <label style="font-size:12px; font-weight:700; color:#1e40af; text-transform:uppercase; display:block; margin-bottom:10px;">🔋 Specific Device Sync & Photos</label>
+                <div id="dynamicSyncArea" style="display: grid; gap: 10px;"></div>
+                <div style="margin-top:15px;">
+                    <label style="font-size:11px; font-weight:700; color:#1e40af; text-transform:uppercase; display:block; margin-bottom:5px;">Extra Device Notes</label>
+                    <input type="text" id="deviceNotes" placeholder="e.g. iPhone (Black case), Samsung (White)" style="background:#fff; margin:0; border: 1px solid #bfdbfe;">
                 </div>
             </div>
 
@@ -414,7 +414,7 @@
             
             <div id="staffChatArea" style="background:#f8fafc; padding:15px; border-radius:12px; margin-top:15px; border:1px solid var(--border); display:none; text-align:left;">
                 <h4 style="margin:0 0 10px 0; color:var(--text); font-size:14px;">💬 Internal Chat</h4>
-                <div id="staffChatHistory" style="max-height:150px; overflow-y:auto; margin-bottom:10px; background:#fff; padding:15px; border-radius:8px; border:1px solid var(--border);"></div>
+                <div id="staffChatHistory" style="max-height:180px; overflow-y:auto; margin-bottom:10px; background:#fff; padding:15px; border-radius:8px; border:1px solid var(--border);"></div>
                 <div style="display:flex; gap:10px;">
                     <input type="text" id="staffChatInput" placeholder="Reply to customer..." style="flex:1; margin:0;">
                     <button type="button" onclick="sendStaffChat()" style="width:auto; margin:0;">Send</button>
@@ -444,7 +444,18 @@
       
       <div id="status" class="status-bar off">OFFLINE</div>
 
-      <!-- ALL MODALS BELOW -->
+      <!-- Device Specific Camera Modal -->
+      <div id="modalSpecificCam" class="modal">
+          <div class="modal-content" style="text-align:center;">
+              <h3 style="margin-top:0;">📸 Capture Device</h3>
+              <p id="specificCamLabel" style="font-size:14px; color:var(--text-muted); margin-bottom:15px; font-weight:bold;"></p>
+              <video id="specVideo" autoplay playsinline style="width:100%; max-height:300px; border-radius:8px; object-fit:cover; margin-bottom:10px; border: 1px solid var(--border);"></video>
+              <canvas id="specCanvas" style="display:none;"></canvas>
+              <button id="btnSpecSnap" onclick="snapSpecificCam()" style="background:var(--success); width:100%; padding:15px; font-size:16px;">📸 Take Photo</button>
+              <button onclick="closeSpecificCam()" style="background:transparent; color:var(--danger); border:1px solid var(--danger); width:100%; margin-top:10px; box-shadow:none;">Cancel</button>
+          </div>
+      </div>
+
       <!-- Customer History Modal -->
       <div id="modalCustomerHistory" class="modal">
           <div class="modal-content">
@@ -596,6 +607,23 @@
     });
     const auth = getAuth(app);
 
+    // --- CONNECTION STATUS TRACKER ---
+    const upSt = () => { 
+        const sb = document.getElementById('status'); 
+        if(!sb) return;
+        if(navigator.onLine) { 
+            sb.className="status-bar on"; 
+            sb.innerText="🟢 CONNECTED & SECURE"; 
+        } else { 
+            sb.className="status-bar off"; 
+            sb.innerText="📡 OFFLINE - SAVING TO PHONE MEMORY"; 
+        } 
+    }; 
+    window.addEventListener('online', upSt); 
+    window.addEventListener('offline', upSt); 
+    setInterval(upSt, 5000); 
+    upSt();
+
     // --- 2. GLOBAL VARIABLES ---
     const SAAS_PRICING = { basic: 5000, premium: 15000 };
     const PLAN_LIMITS = { free: { sockets: 15, tags: 25 }, basic: { sockets: 30, tags: 50 }, premium: { sockets: 999999, tags: 999999 } };
@@ -620,6 +648,13 @@
     let currentShopId = null;
     let currentShopData = null;
     let walletsData = {}; 
+    
+    // Dynamic tracking variables
+    window.prevPh = null;
+    window.prevPb = null;
+    window.prevOt = null;
+    window.devicePhotosMap = {}; // Maps specific devices to photos
+    window.activeCamTarget = null; // Target device key for camera
 
     window.staffMembers =[];
     window.currentStaffName = "Owner";
@@ -754,7 +789,6 @@
         hasSignature = false; 
     };
     
-    // Initialize signature pad safely after 500ms
     setTimeout(initSignature, 500);
 
     // --- 5. GLOBAL CONFIGURATION & AUTH ---
@@ -1246,7 +1280,7 @@
             if(document.getElementById('extendedForm').style.display === 'block') window.autoCalc(); 
             if(editId) { 
                 const t = ticketsData.find(x=>x.id===editId); 
-                if(t) renderStaffChat(t.chats ||[]); 
+                if(t) renderStaffChat(t.chats ||[], t.id); 
             }
             
             let nameOpts = new Set(); 
@@ -1259,7 +1293,7 @@
             
             let dlNames = document.getElementById('pastNames'); 
             if(dlNames) {
-                dlNames.innerHTML = [...nameOpts].map(n => `<option value="${n}">`).join('');
+                dlNames.innerHTML =[...nameOpts].map(n => `<option value="${n}">`).join('');
             }
             
             let dlPhones = document.getElementById('pastPhones'); 
@@ -1430,7 +1464,7 @@
         if(!priceConfig.closeTime) return;
         const now = new Date(); 
         const currentMins = now.getHours() * 60 + now.getMinutes();
-        const [hours, mins] = priceConfig.closeTime.split(':').map(Number); 
+        const[hours, mins] = priceConfig.closeTime.split(':').map(Number); 
         const closeMins = hours * 60 + mins;
         
         const isClosed = currentMins >= closeMins || currentMins < 420; 
@@ -1470,6 +1504,7 @@
     // --- 9. HARDWARE CAMERA APIs ---
     let camStream=null;
 
+    // General Camera
     window.startDeviceCam = async () => { 
         const v = document.getElementById('camVideo'); 
         try { 
@@ -1527,6 +1562,52 @@
         document.getElementById('btnStopCam').style.display='none'; 
     };
 
+    // Specific Device Camera
+    let specCamStream = null;
+    
+    window.openDeviceSpecificCam = async (key) => {
+        window.activeCamTarget = key;
+        let formattedName = key.replace('_', ' ').toUpperCase();
+        document.getElementById('specificCamLabel').innerText = "Taking photo specifically for: " + formattedName;
+        document.getElementById('modalSpecificCam').style.display = 'flex';
+        
+        const v = document.getElementById('specVideo');
+        try {
+            const constraints = { video: { facingMode: { ideal: "environment" } } };
+            specCamStream = await navigator.mediaDevices.getUserMedia(constraints);
+            v.srcObject = specCamStream;
+        } catch(e) {
+            alert("Camera Access Denied.");
+            closeSpecificCam();
+        }
+    };
+    
+    window.snapSpecificCam = () => {
+        const v = document.getElementById('specVideo');
+        const c = document.getElementById('specCanvas');
+        const tW = 300;
+        const tH = (v.videoHeight / v.videoWidth) * tW;
+        c.width = tW; c.height = tH;
+        c.getContext('2d').drawImage(v, 0, 0, tW, tH);
+        
+        window.devicePhotosMap[window.activeCamTarget] = c.toDataURL('image/jpeg', 0.6);
+        closeSpecificCam();
+        window.renderDynamicSync(); 
+    };
+    
+    window.closeSpecificCam = () => {
+        if(specCamStream) specCamStream.getTracks().forEach(t => t.stop());
+        document.getElementById('modalSpecificCam').style.display = 'none';
+    };
+    
+    window.removeSpecificPhoto = (key) => {
+        if(confirm("Remove this device photo?")) {
+            delete window.devicePhotosMap[key];
+            window.renderDynamicSync();
+        }
+    };
+
+    // Pickup Camera
     let pickupCamStream = null;
     window.currentPickupPhoto = null;
 
@@ -1706,12 +1787,45 @@
         }, 50);
     };
     
-    window.renderStaffChat = (chats) => {
-        let chatHtml = chats.map(c => `<div class="chat-bubble ${c.s==='s'?'chat-c':'chat-s'}">${c.msg}</div><div class="chat-clear"></div>`).join('');
+    // --- CHAT EDITING LOGIC ---
+    window.editChatMessage = async (ticketId, chatIdx) => {
+        const t = ticketsData.find(x => x.id === ticketId);
+        if(!t || !t.chats || !t.chats[chatIdx]) return;
+        
+        const oldMsg = t.chats[chatIdx].msg;
+        const newMsg = prompt("Edit message:", oldMsg);
+        
+        if (newMsg !== null && newMsg.trim() !== "") {
+            const newChats =[...t.chats];
+            newChats[chatIdx].msg = newMsg.trim();
+            newChats[chatIdx].edited = true;
+            try {
+                await updateDoc(doc(db, "tickets", ticketId), { chats: newChats });
+                renderStaffChat(newChats, ticketId);
+            } catch(e) {
+                alert("Failed to edit: " + e.message);
+            }
+        }
+    };
+
+    window.renderStaffChat = (chats, ticketId = editId) => {
+        let chatHtml = chats.map((c, idx) => {
+            let timeStr = new Date(c.ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            let editedLabel = c.edited ? ' <span style="font-size:9px; opacity:0.6;">(edited)</span>' : '';
+            let editBtn = ticketId ? `<button type="button" onclick="editChatMessage('${ticketId}', ${idx})" style="background:transparent; border:none; color:inherit; font-size:12px; padding:0; margin-left:8px; cursor:pointer; box-shadow:none; opacity:0.7;" title="Edit message">✏️</button>` : '';
+            
+            return `<div class="chat-bubble ${c.s==='s'?'chat-c':'chat-s'}">
+                <div style="font-size:10px; opacity:0.8; margin-bottom:4px; text-align:${c.s==='s'?'right':'left'};">${timeStr}</div>
+                ${c.msg}${editedLabel} ${editBtn}
+            </div><div class="chat-clear"></div>`;
+        }).join('');
+        
         if(chats.length === 0) chatHtml = '<p style="color:var(--text-muted); text-align:center; font-size:13px;">No messages yet.</p>';
         const box = document.getElementById('staffChatHistory'); 
-        box.innerHTML = chatHtml; 
-        box.scrollTop = box.scrollHeight;
+        if(box) {
+            box.innerHTML = chatHtml; 
+            box.scrollTop = box.scrollHeight;
+        }
     };
 
     // --- 11. TICKET CREATION & HARDWARE SCANNING ---
@@ -1929,6 +2043,54 @@
         document.getElementById('assignedSockets').value = JSON.stringify(a); 
     }
     
+    // --- DYNAMIC SYNC RENDERER ---
+    window.renderDynamicSync = () => {
+        const ph = +(document.getElementById('phCount').value || 0);
+        const pb = +(document.getElementById('pbCount').value || 0);
+        const ot = +(document.getElementById('otCount').value || 0);
+        
+        let html = '';
+        const makeInput = (type, label, idx) => {
+            let val = 0;
+            let existingEl = document.getElementById(`sync_${type}_${idx}`);
+            if(existingEl) {
+                val = existingEl.value;
+            } else if (editId) {
+                if(type==='ph' && window.editPctPh && window.editPctPh[idx] !== undefined) val = window.editPctPh[idx];
+                if(type==='pb' && window.editPctPb && window.editPctPb[idx] !== undefined) val = window.editPctPb[idx];
+                if(type==='ot' && window.editPctOt && window.editPctOt[idx] !== undefined) val = window.editPctOt[idx];
+            }
+
+            let photoKey = `${type}_${idx}`;
+            let photoData = window.devicePhotosMap[photoKey];
+            let imgDisplay = photoData 
+                ? `<img src="${photoData}" style="width:36px; height:36px; object-fit:cover; border-radius:6px; border:1px solid #ccc; cursor:pointer;" onclick="removeSpecificPhoto('${photoKey}')" title="Click to remove">` 
+                : '';
+
+            return `
+            <div class="device-box" style="background:#fff; border:1px solid #bfdbfe; padding:10px; display:flex; flex-direction:column; gap:8px;">
+                <label style="color:#1e40af; margin-bottom:0;">${label} ${idx+1}</label>
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <input type="number" id="sync_${type}_${idx}" min="0" max="100" value="${val}" style="background:#f8fafc; border:1px solid #e2e8f0; padding:8px; margin:0; text-align:center; flex:1;" placeholder="%">
+                    <span style="font-weight:bold; color:var(--text-muted);">%</span>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:5px;">
+                    <button type="button" onclick="openDeviceSpecificCam('${photoKey}')" style="background:var(--bg); color:var(--text); border:1px solid var(--border); padding:6px; font-size:11px; flex:1; box-shadow:none;">📸 Snap</button>
+                    ${imgDisplay}
+                </div>
+            </div>`;
+        };
+
+        for(let i=0; i<ph; i++) html += makeInput('ph', '📱 Phone', i);
+        for(let i=0; i<pb; i++) html += makeInput('pb', '🔋 P-Bank', i);
+        for(let i=0; i<ot; i++) html += makeInput('ot', '⚡ Other', i);
+        
+        if (html === '') html = '<div style="width:100%; text-align:center; font-size:13px; color:var(--text-muted); padding:10px;">Select device quantities above to enter battery percentages.</div>';
+        
+        document.getElementById('dynamicSyncArea').innerHTML = html;
+        document.getElementById('dynamicSyncArea').style.gridTemplateColumns = 'repeat(auto-fill, minmax(130px, 1fr))';
+    };
+
     window.autoCalc = () => { 
         const ph=+(document.getElementById('phCount').value||0);
         const pb=+(document.getElementById('pbCount').value||0);
@@ -1939,6 +2101,13 @@
         const otPrice=+(document.getElementById('otPrice').value||0);
         const retailCost = +(document.getElementById('retailCost').value||0); 
         
+        if (ph !== window.prevPh || pb !== window.prevPb || otCount !== window.prevOt) {
+            window.renderDynamicSync();
+            window.prevPh = ph; 
+            window.prevPb = pb; 
+            window.prevOt = otCount;
+        }
+
         let total = (ph*priceConfig.ph)+(pb*priceConfig.pb)+(chFull*priceConfig.chFull)+(chUsb*priceConfig.chUsb)+(chHead*priceConfig.chHead)+otPrice+retailCost; 
         
         if(window.isFreeEligible) total = retailCost;
@@ -1956,20 +2125,22 @@
         allocateSockets(ph + pb + otCount); 
     }
 
+    function getPctVal(basePct, baseTs, type, t, nowMs) { 
+        let diffMins = Math.floor((nowMs - baseTs) / 60000); 
+        let rate = type === 'pb' ? 600 : 150; 
+        if (t.smartRates && t.smartRates[type]) { rate = t.smartRates[type]; } 
+        return Math.min(100, basePct + Math.floor((diffMins / rate) * 100)); 
+    }
+
     function getPct(t, type, nowMs) { 
         let baseTs = t.baseTs || t.jsDate.getTime(); 
         let diffMins = Math.floor((nowMs - baseTs) / 60000); 
         let rate = type === 'pb' ? 600 : 150; 
-        
-        if (t.smartRates && t.smartRates[type]) { 
-            rate = t.smartRates[type]; 
-        } 
-        
+        if (t.smartRates && t.smartRates[type]) { rate = t.smartRates[type]; } 
         let basePct = 0; 
-        if(type === 'ph') basePct = t.phBasePct || 0; 
-        if(type === 'pb') basePct = t.pbBasePct || 0; 
-        if(type === 'ot') basePct = t.otBasePct || 0; 
-        
+        if(type === 'ph') basePct = (t.pctPh && t.pctPh.length > 0) ? t.pctPh[0] : (t.phBasePct || 0); 
+        if(type === 'pb') basePct = (t.pctPb && t.pctPb.length > 0) ? t.pctPb[0] : (t.pbBasePct || 0); 
+        if(type === 'ot') basePct = (t.pctOt && t.pctOt.length > 0) ? t.pctOt[0] : (t.otBasePct || 0); 
         return Math.min(100, basePct + Math.floor((diffMins / rate) * 100)); 
     }
 
@@ -2001,16 +2172,16 @@
         const chHeadActual = +document.getElementById('chHeadCount').value;
         const finalPrice = +document.getElementById('price').value;
         const payStatusSelection = document.getElementById('payStatus').value;
-
+        
+        const otCount = +document.getElementById('otCount').value;
         const retailDesc = document.getElementById('retailDesc').value.trim();
         const retailCost = +(document.getElementById('retailCost').value || 0);
+        const deviceNotes = document.getElementById('deviceNotes').value.trim();
         
         let signatureData = null;
         if (hasSignature) {
             const canvasEl = document.getElementById('sigCanvas');
-            if (canvasEl) {
-                signatureData = canvasEl.toDataURL('image/png');
-            }
+            if (canvasEl) { signatureData = canvasEl.toDataURL('image/png'); }
         }
         
         if (!editId && payStatusSelection === 'Wallet') {
@@ -2053,9 +2224,9 @@
             }
         }
 
-        const syncPh = parseInt(document.getElementById('syncPh').value) || 0; 
-        const syncPb = parseInt(document.getElementById('syncPb').value) || 0; 
-        const syncOt = parseInt(document.getElementById('syncOt').value) || 0;
+        let pctPh =[]; for(let i=0; i<phActual; i++) pctPh.push(+(document.getElementById(`sync_ph_${i}`)?.value || 0));
+        let pctPb =[]; for(let i=0; i<pbActual; i++) pctPb.push(+(document.getElementById(`sync_pb_${i}`)?.value || 0));
+        let pctOt =[]; for(let i=0; i<otCount; i++) pctOt.push(+(document.getElementById(`sync_ot_${i}`)?.value || 0));
 
         let pastTix = ticketsData.filter(x => x.phone === phoneNum && x.collected && x.shelvedAt && x.baseTs);
         let dynamicRates = { ph: 150, pb: 600, ot: 150 }; 
@@ -2065,7 +2236,7 @@
             let validCharges = 0;
             pastTix.forEach(pt => {
                 let chargeDuration = Math.floor((pt.shelvedAt - pt.baseTs) / 60000);
-                let startPct = pt.phBasePct || 0; 
+                let startPct = (pt.pctPh && pt.pctPh.length>0) ? pt.pctPh[0] : (pt.phBasePct || 0); 
                 let pctCharged = 100 - startPct;  
                 if(pctCharged > 10 && chargeDuration > 10) { 
                     let estimatedFullTime = (chargeDuration / pctCharged) * 100;
@@ -2081,11 +2252,16 @@
         const data = { 
             name, tag, cond, photos: currentPhotos, phone: phoneNum, debtSettled: false, 
             ph: phActual, pb: pbActual, chFull: chFullActual, chUsb: chUsbActual, chHead: chHeadActual, 
-            ot: +document.getElementById('otCount').value, otPrice: +document.getElementById('otPrice').value, 
-            retailDesc: retailDesc, retailCost: retailCost, 
+            ot: otCount, otPrice: +document.getElementById('otPrice').value, 
+            retailDesc: retailDesc, retailCost: retailCost, deviceNotes: deviceNotes,
             price: finalPrice, amountPaid: +document.getElementById('amtPaidInput').value, 
             sockets: JSON.parse(document.getElementById('assignedSockets').value || "[]"), 
-            phBasePct: syncPh, pbBasePct: syncPb, otBasePct: syncOt, baseTs: Date.now(), shopId: currentShopId,
+            
+            pctPh: pctPh, pctPb: pctPb, pctOt: pctOt,
+            phBasePct: pctPh[0]||0, pbBasePct: pctPb[0]||0, otBasePct: pctOt[0]||0, 
+            devicePhotos: window.devicePhotosMap,
+            
+            baseTs: Date.now(), shopId: currentShopId,
             claimedPh: claimedPh, claimedPb: claimedPb, claimedChFull: claimedChFull, claimedChUsb: claimedChUsb, claimedChHead: claimedChHead, 
             hasMismatch: hasMismatch,
             staff: window.currentStaffName,
@@ -2093,9 +2269,7 @@
             smartRates: dynamicRates
         };
         
-        if (signatureData) { 
-            data.signature = signatureData; 
-        }
+        if (signatureData) { data.signature = signatureData; }
         
         try { 
             if (!editId && payStatusSelection === 'Wallet' && finalPrice > 0) {
@@ -2131,11 +2305,7 @@
     };
 
     window.ackOnTheWay = async (id) => { 
-        try { 
-            await updateDoc(doc(db, "tickets", id), { onTheWayAck: true }); 
-        } catch(e) { 
-            alert(e.message); 
-        } 
+        try { await updateDoc(doc(db, "tickets", id), { onTheWayAck: true }); } catch(e) { alert(e.message); } 
     };
 
     window.openShelf = (id) => {
@@ -2668,11 +2838,12 @@
             sd = `⏳ <b>Partial Shelf</b>`; tas='background:#fffbeb;'; 
         }
         
-        let actPh=(t.ph||0)-(t.colPh||0), actPb=(t.pb||0)-(t.colPb||0), actOt=(((t.chFull||0)-(t.colChFull||0))+((t.chUsb||0)-(t.colChUsb||0))+((t.chHead||0)-(t.colChHead||0))+((t.ch||0)-(t.colCh||0))+((t.ot||0)-(t.colOt||0)));
+        let actPh=(t.ph||0)-(t.colPh||0), actPb=(t.pb||0)-(t.colPb||0), actOt=(t.ot||0)-(t.colOt||0);
         let photoArray = t.photos || (t.photo ? [t.photo] :[]); 
-        let hasPhoto = photoArray.length > 0 ? '📸 ' : ''; 
+        let hasPhoto = (photoArray.length > 0 || (t.devicePhotos && Object.keys(t.devicePhotos).length > 0)) ? '📸 ' : ''; 
         let photoHtml = '';
         
+        // General Photos Render
         if(photoArray.length > 0) { 
             photoHtml = '<div style="display:flex; gap:8px; overflow-x:auto; margin-bottom:15px; padding-bottom:5px;">'; 
             photoArray.forEach(img => { 
@@ -2686,24 +2857,77 @@
         }
 
         let bars="";
-        if(actPh>0){ 
-            let p = getPct(t, 'ph', nowMs); let c='var(--danger)'; let txt = `📱 Phones: ${p}%`; 
-            if(p>=30)c='var(--warning)'; if(p>=80)c='var(--success)'; if(p>=100&&!t.shelved&&!t.shelfPh)tc='danger'; 
-            if(t.shelved || t.shelfPh) { p=100; c='var(--success)'; txt = `📱 Phones: ON SHELF ✅`; } 
-            bars+=`<div style="margin:6px 0; width:100%; background:var(--border); border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:800; color:var(--text); text-shadow: 0px 0px 2px rgba(255,255,255,0.8);">${txt}</div></div>`; 
+        for(let i=0; i < actPh; i++) {
+            let basePct = (t.pctPh && t.pctPh.length > i) ? t.pctPh[i] : (t.phBasePct || 0);
+            let rate = (t.smartRates && t.smartRates.ph) ? t.smartRates.ph : 150;
+            let diffMins = Math.floor((nowMs - (t.baseTs || t.jsDate.getTime())) / 60000);
+            let p = Math.min(100, basePct + Math.floor((diffMins / rate) * 100));
+            
+            let c = 'var(--danger)'; let txt = `📱 Phone ${i+1}: ${p}%`; 
+            if(p>=30) c='var(--warning)'; if(p>=80) c='var(--success)'; 
+            if(p>=100 && !t.shelved && !t.shelfPh) tc='danger'; 
+            if(t.shelved || t.shelfPh) { p=100; c='var(--success)'; txt = `📱 Phone ${i+1}: ON SHELF ✅`; } 
+            
+            let specificPhoto = (t.devicePhotos && t.devicePhotos[`ph_${i}`]) ? t.devicePhotos[`ph_${i}`] : null;
+            let specImgHtml = specificPhoto ? `<img src="${specificPhoto}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid var(--border); box-shadow:var(--shadow-sm); flex-shrink:0;">` : '';
+
+            bars += `
+            <div style="display:flex; align-items:center; gap:10px; margin:8px 0;">
+                ${specImgHtml}
+                <div style="flex:1; background:var(--border); border-radius:10px; height:24px; position:relative; overflow:hidden;">
+                    <div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div>
+                    <div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:24px; font-size:11px; font-weight:900; color:var(--text); text-shadow: 0px 0px 3px rgba(255,255,255,0.9);">${txt}</div>
+                </div>
+            </div>`;
         }
-        if(actPb>0){ 
-            let p = getPct(t, 'pb', nowMs); let c='var(--danger)'; let txt = `🔋 P-Bank: ${p}%`; 
-            if(p>=30)c='var(--warning)'; if(p>=80)c='var(--success)'; if(p>=100&&!t.shelved&&!t.shelfPb)tc='danger'; 
-            if(t.shelved || t.shelfPb) { p=100; c='var(--success)'; txt = `🔋 P-Bank: ON SHELF ✅`; } 
-            bars+=`<div style="margin:6px 0; width:100%; background:var(--border); border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:800; color:var(--text); text-shadow: 0px 0px 2px rgba(255,255,255,0.8);">${txt}</div></div>`; 
+        for(let i=0; i < actPb; i++) {
+            let basePct = (t.pctPb && t.pctPb.length > i) ? t.pctPb[i] : (t.pbBasePct || 0);
+            let rate = (t.smartRates && t.smartRates.pb) ? t.smartRates.pb : 600;
+            let diffMins = Math.floor((nowMs - (t.baseTs || t.jsDate.getTime())) / 60000);
+            let p = Math.min(100, basePct + Math.floor((diffMins / rate) * 100));
+            
+            let c = 'var(--danger)'; let txt = `🔋 P-Bank ${i+1}: ${p}%`; 
+            if(p>=30) c='var(--warning)'; if(p>=80) c='var(--success)'; 
+            if(p>=100 && !t.shelved && !t.shelfPb) tc='danger'; 
+            if(t.shelved || t.shelfPb) { p=100; c='var(--success)'; txt = `🔋 P-Bank ${i+1}: ON SHELF ✅`; } 
+            
+            let specificPhoto = (t.devicePhotos && t.devicePhotos[`pb_${i}`]) ? t.devicePhotos[`pb_${i}`] : null;
+            let specImgHtml = specificPhoto ? `<img src="${specificPhoto}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid var(--border); box-shadow:var(--shadow-sm); flex-shrink:0;">` : '';
+
+            bars += `
+            <div style="display:flex; align-items:center; gap:10px; margin:8px 0;">
+                ${specImgHtml}
+                <div style="flex:1; background:var(--border); border-radius:10px; height:24px; position:relative; overflow:hidden;">
+                    <div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div>
+                    <div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:24px; font-size:11px; font-weight:900; color:var(--text); text-shadow: 0px 0px 3px rgba(255,255,255,0.9);">${txt}</div>
+                </div>
+            </div>`;
         }
-        if(actPh<=0 && actPb<=0 && actOt>0){ 
-            let p = getPct(t, 'ot', nowMs); let c='var(--danger)'; let txt = `⚡ Device: ${p}%`; 
-            if(p>=30)c='var(--warning)'; if(p>=80)c='var(--success)'; if(p>=100&&!t.shelved&&!t.shelfOt)tc='danger'; 
-            if(t.shelved || t.shelfOt) { p=100; c='var(--success)'; txt = `⚡ Device: ON SHELF ✅`; } 
-            bars+=`<div style="margin:6px 0; width:100%; background:var(--border); border-radius:10px; height:20px; position:relative; overflow:hidden;"><div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div><div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:20px; font-size:11px; font-weight:800; color:var(--text); text-shadow: 0px 0px 2px rgba(255,255,255,0.8);">${txt}</div></div>`; 
+        for(let i=0; i < actOt; i++) {
+            let basePct = (t.pctOt && t.pctOt.length > i) ? t.pctOt[i] : (t.otBasePct || 0);
+            let rate = (t.smartRates && t.smartRates.ot) ? t.smartRates.ot : 150;
+            let diffMins = Math.floor((nowMs - (t.baseTs || t.jsDate.getTime())) / 60000);
+            let p = Math.min(100, basePct + Math.floor((diffMins / rate) * 100));
+            
+            let c = 'var(--danger)'; let txt = `⚡ Device ${i+1}: ${p}%`; 
+            if(p>=30) c='var(--warning)'; if(p>=80) c='var(--success)'; 
+            if(p>=100 && !t.shelved && !t.shelfOt) tc='danger'; 
+            if(t.shelved || t.shelfOt) { p=100; c='var(--success)'; txt = `⚡ Device ${i+1}: ON SHELF ✅`; } 
+            
+            let specificPhoto = (t.devicePhotos && t.devicePhotos[`ot_${i}`]) ? t.devicePhotos[`ot_${i}`] : null;
+            let specImgHtml = specificPhoto ? `<img src="${specificPhoto}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid var(--border); box-shadow:var(--shadow-sm); flex-shrink:0;">` : '';
+
+            bars += `
+            <div style="display:flex; align-items:center; gap:10px; margin:8px 0;">
+                ${specImgHtml}
+                <div style="flex:1; background:var(--border); border-radius:10px; height:24px; position:relative; overflow:hidden;">
+                    <div style="width:${p}%; background:${c}; height:100%; transition:width 0.5s;"></div>
+                    <div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:24px; font-size:11px; font-weight:900; color:var(--text); text-shadow: 0px 0px 3px rgba(255,255,255,0.9);">${txt}</div>
+                </div>
+            </div>`;
         }
+
+        let notesDisplay = t.deviceNotes ? `<div style="background:#f1f5f9; padding:8px; border-radius:8px; margin:6px 0; font-size:12px; color:var(--text); border:1px solid var(--border);"><b>📝 Device Notes/%:</b> ${t.deviceNotes}</div>` : '';
 
         let baseTs = t.baseTs || t.jsDate.getTime(); 
         let diffTime = Math.floor((nowMs - baseTs) / 60000); 
@@ -2764,6 +2988,7 @@
                 ${onTheWayBadge}
                 ${photoHtml}
                 ${bars}
+                ${notesDisplay}
                 <small style="color:var(--text); font-size:13px; display:block; margin-top:10px; font-weight:500;">
                     ${cS!==""?`<b style="color:var(--danger);">Left: ${rS}</b> | <span style="color:var(--success);">✅ Collected: ${cS}</span>`:`Items Logged: ${oS}`}
                 </small>
@@ -2781,7 +3006,7 @@
     function historyTemplate(t) {
         let amtPaid = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); 
         let debtBtn = (amtPaid < t.price && !t.debtSettled) ? `<button onclick="settleDebt('${t.id}')" style="background:var(--warning); color:#000; padding:8px; margin-top:8px; width:100%; font-size:13px; font-weight:700;">💸 Pay Remaining ₦${t.price - amtPaid}</button>` : ''; 
-        let hasPhoto = (t.photos && t.photos.length > 0) || t.photo ? '📸 ' : '';
+        let hasPhoto = (t.photos && t.photos.length > 0) || t.photo || (t.devicePhotos && Object.keys(t.devicePhotos).length > 0) ? '📸 ' : '';
         let pMethodStr = t.colPaymentMethod || (t.payStatus === 'Now' ? 'Cash/Transfer' : (t.payStatus === 'Wallet' ? 'Wallet' : 'Unknown'));
         let retailStr = t.retailCost > 0 ? `<br><span style="color:#b45309; font-weight:600;">Purchased: ${t.retailDesc} (₦${t.retailCost})</span>` : '';
         
@@ -2835,266 +3060,200 @@
         }
     };
 
-    function clearFormFieldsOnly() { 
-        window.pendingClaim = null; 
-        window.isFreeEligible = false; 
-        stopCam(); 
-        clearSignature(); 
-        currentPhotos =[]; 
-        renderPhotoGallery();
+
+    window.closeModal = (id) => {
+        const el = document.getElementById(id);
+        if(el) el.style.display = 'none';
         
-        const fieldsToClear =[
-            'custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount',
-            'otCount','otPrice','retailDesc','retailCost','amtPaidInput','syncPh','syncPb','syncOt'
-        ];
+        // Prevent camera from staying on in the background if the user cancels out of the collect modal
+        if (id === 'mod-collect' && pickupCamStream) {
+            pickupCamStream.getTracks().forEach(t => t.stop());
+            pickupCamStream = null;
+            if(document.getElementById('pickupVideo')) document.getElementById('pickupVideo').style.display = 'none';
+            if(document.getElementById('btnStartPickupCam')) document.getElementById('btnStartPickupCam').style.display = 'block';
+        }
+    };
+
+    window.clearFormFieldsOnly = () => {
+        document.getElementById('custName').value = '';
+        document.getElementById('custPhone').value = '';
+        document.getElementById('phCount').value = 0;
+        document.getElementById('pbCount').value = 0;
+        document.getElementById('chFullCount').value = 0;
+        document.getElementById('chUsbCount').value = 0;
+        document.getElementById('chHeadCount').value = 0;
+        document.getElementById('otCount').value = 0;
+        document.getElementById('otPrice').value = 0;
+        document.getElementById('retailCost').value = 0;
+        document.getElementById('retailDesc').value = '';
+        document.getElementById('deviceNotes').value = '';
         
-        fieldsToClear.forEach(id => { 
-            let el = document.getElementById(id); 
-            if(el) el.value = id.includes('Count') || id.includes('Price') || id.includes('Cost') || id.includes('amt') || id.includes('sync') ? 0 : ""; 
-        }); 
+        document.querySelectorAll('.cond-chk').forEach(c => c.checked = false);
         
-        document.getElementById('payStatus').value="Later"; 
-        document.getElementById('securityCheckAlert').innerHTML=''; 
-        if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML=''; 
-        document.getElementById('debtAlert').innerHTML=''; 
-        document.getElementById('vipAlert').innerHTML=''; 
-        document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); 
-        document.getElementById('staffChatArea').style.display='none'; 
-        document.getElementById('staffChatHistory').innerHTML=''; 
-        document.getElementById('staffChatInput').value=''; 
-    }
+        currentPhotos =[];
+        window.devicePhotosMap = {};
+        window.renderPhotoGallery();
+        clearSignature();
+    };
+
+    window.resetForm = (hardReset = false) => {
+        if (hardReset) {
+            document.getElementById('tokenNum').value = '';
+        }
+        window.clearFormFieldsOnly();
+        window.autoCalc();
+    };
+
+    window.cancelEdit = () => {
+        editId = null;
+        document.getElementById('extendedForm').style.display = 'none';
+        document.getElementById('cancelEditBtn').style.display = 'none';
+        document.getElementById('formAction').innerText = "Start a New Ticket";
+        document.getElementById('saveBtn').innerText = "Create Ticket";
+        document.getElementById('tokenNum').value = '';
+        document.getElementById('editBgOverlay').style.display = 'none';
+        document.getElementById('formCard').classList.remove('form-modal-mode');
+        document.getElementById('staffChatArea').style.display = 'none';
+        window.resetForm(true);
+    };
 
     window.startEdit = (id) => {
-        const t = ticketsData.find(x=>x.id===id); 
-        editId = id; 
-        currentSockets = t.sockets||[]; 
+        const t = ticketsData.find(x => x.id === id);
+        if (!t) return;
         
-        document.getElementById('custName').value = t.name; 
-        document.getElementById('tokenNum').value = t.tag; 
-        document.getElementById('phCount').value = t.ph||0; 
-        document.getElementById('pbCount').value = t.pb||0; 
-        document.getElementById('chFullCount').value = t.chFull||0; 
-        document.getElementById('chUsbCount').value = t.chUsb||0; 
-        document.getElementById('chHeadCount').value = t.chHead||0; 
-        document.getElementById('otCount').value = t.ot||0; 
-        document.getElementById('otPrice').value = t.otPrice||0; 
-        document.getElementById('retailDesc').value = t.retailDesc||""; 
-        document.getElementById('retailCost').value = t.retailCost||0;
-        document.getElementById('amtPaidInput').value = t.amountPaid !== undefined ? t.amountPaid : (t.payStatus === 'Now' ? t.price : 0); 
-        document.getElementById('custPhone').value = t.phone || "";
+        editId = id;
+        document.getElementById('editBgOverlay').style.display = 'block';
+        document.getElementById('formCard').classList.add('form-modal-mode');
         
-        document.querySelectorAll('.cond-chk').forEach(c => c.checked = (t.cond||[]).includes(c.value));
+        document.getElementById('formAction').innerText = `✏️ Editing Ticket #${t.tag}`;
+        document.getElementById('saveBtn').innerText = "💾 Save Changes";
+        document.getElementById('cancelEditBtn').style.display = 'block';
+        document.getElementById('extendedForm').style.display = 'block';
         
-        currentPhotos = t.photos || (t.photo ?[t.photo] :[]); 
-        renderPhotoGallery();
+        // Populate fields with existing data
+        document.getElementById('custName').value = t.name || '';
+        document.getElementById('custPhone').value = t.phone || '';
+        document.getElementById('tokenNum').value = t.tag || '';
         
-        if(currentPhotos.length > 0) { 
-            document.getElementById('btnStartCam').innerText = "📷 Take More Photos"; 
-        } else { 
-            document.getElementById('btnStartCam').innerText = "📷 Open Camera"; 
-        }
+        document.getElementById('phCount').value = t.ph || 0;
+        document.getElementById('pbCount').value = t.pb || 0;
+        document.getElementById('chFullCount').value = t.chFull || 0;
+        document.getElementById('chUsbCount').value = t.chUsb || 0;
+        document.getElementById('chHeadCount').value = t.chHead || 0;
+        document.getElementById('otCount').value = t.ot || 0;
+        document.getElementById('otPrice').value = t.otPrice || 0;
+        document.getElementById('retailCost').value = t.retailCost || 0;
+        document.getElementById('retailDesc').value = t.retailDesc || '';
+        document.getElementById('deviceNotes').value = t.deviceNotes || '';
+        
+        // Store original percentages to prevent UI from overriding them
+        window.editPctPh = t.pctPh || [];
+        window.editPctPb = t.pctPb ||[];
+        window.editPctOt = t.pctOt ||[];
+        
+        document.querySelectorAll('.cond-chk').forEach(c => {
+            c.checked = (t.cond && t.cond.includes(c.value));
+        });
 
-        clearSignature(); // Staff cannot edit old signatures
-
-        let cT = String(t.tag).replace(/^#+/,''); 
-        if(!isNaN(cT) && cT !== "") cT = String(Number(cT)); 
-        const px = secureTagsData[cT]; 
-        document.getElementById('displayPin').innerText = px || "No PIN"; 
-        document.getElementById('displayPin').style.color = 'var(--success)';
+        currentPhotos = t.photos || (t.photo ? [t.photo] :[]);
+        window.devicePhotosMap = t.devicePhotos || {};
+        window.renderPhotoGallery();
         
-        const nowMs = Date.now(); 
-        document.getElementById('syncPh').value = getPct(t, 'ph', nowMs); 
-        document.getElementById('syncPb').value = getPct(t, 'pb', nowMs); 
-        document.getElementById('syncOt').value = getPct(t, 'ot', nowMs);
-
-        const plan = currentShopData.plan || 'free';
-        if (plan === 'premium') { 
-            document.getElementById('staffChatArea').style.display = 'block'; 
-            renderStaffChat(t.chats ||[]); 
-            if(t.hasUnread) updateDoc(doc(db, "tickets", id), { hasUnread: false }); 
-        } else { 
-            document.getElementById('staffChatArea').style.display = 'none'; 
-        }
-
-        document.getElementById('extendedForm').style.display='block'; 
-        document.getElementById('formAction').innerHTML=`<h3 style="margin:0; color:var(--primary); text-align:center; padding-bottom:15px; border-bottom:1px solid var(--border); margin-bottom:20px;">Edit Ticket #${t.tag}</h3>`; 
-        document.getElementById('saveBtn').style.display='block'; 
-        document.getElementById('saveBtn').innerText="💾 Save Updates"; 
-        document.getElementById('cancelEditBtn').style.display="block"; 
+        // Load Internal Chat History properly formatted
+        document.getElementById('staffChatArea').style.display = 'block';
+        renderStaffChat(t.chats ||[], t.id);
         
-        document.getElementById('custPhone').dispatchEvent(new Event('input'));
-        
-        document.getElementById('editBgOverlay').style.display = 'block'; 
-        document.getElementById('formCard').classList.add('form-modal-mode'); 
-        document.body.style.overflow = 'hidden'; 
-        
+        // Recalculate values and render dynamic sync inputs
         window.autoCalc();
         
-        if(plan === 'premium') { 
-            setTimeout(() => { 
-                const chatBox = document.getElementById('staffChatArea'); 
-                chatBox.scrollIntoView({ behavior: 'smooth', block: 'end' }); 
-                document.getElementById('staffChatInput').focus(); 
-            }, 300); 
+        // Scroll to the top of the form for easy editing
+        document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    // --- REVERT COLLECTION FUNCTION ---
+    window.revertCollection = async (id) => {
+        if(confirm("Are you sure you want to re-activate this ticket?\n\nIt will be moved back to the 'Charging Now' section.")) {
+            try {
+                let resetData = {
+                    collected: false,
+                    collDate: null,
+                    colPh: 0, colPb: 0, colChFull: 0, colChUsb: 0, colChHead: 0, colOt: 0, colCh: 0,
+                    sockets:[] 
+                };
+                await updateDoc(doc(db, "tickets", id), resetData);
+                alert("✅ Ticket re-activated successfully!");
+            } catch(e) {
+                alert("Error re-activating ticket: " + e.message);
+            }
         }
     };
 
-    window.cancelEdit = () => { 
-        editId=null; 
-        currentSockets=[]; 
-        window.isFreeEligible = false; 
-        resetForm(true); 
-    };
-    
-    function resetForm(cT=false) { 
-        document.getElementById('editBgOverlay').style.display = 'none'; 
-        const fc = document.getElementById('formCard'); 
-        if (fc) fc.classList.remove('form-modal-mode'); 
-        document.body.style.overflow = ''; 
-
-        if(cT){ 
-            document.getElementById('tokenNum').value=""; 
-            const form = document.getElementById('extendedForm'); 
-            if(form) form.style.display='none'; 
-            document.getElementById('formAction').innerText="Start a New Ticket"; 
-            document.getElementById('saveBtn').style.display='none'; 
-            document.getElementById('cancelEditBtn').style.display="none"; 
-            document.getElementById('securityCheckAlert').innerHTML=''; 
-            if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML=''; 
-            document.getElementById('debtAlert').innerHTML=''; 
-            document.getElementById('vipAlert').innerHTML=''; 
-        } 
-        currentSockets=[]; 
-        clearFormFieldsOnly(); 
-        window.autoCalc(); 
-    }
-
-    window.closeModal = (id) => { 
-        document.getElementById(id).style.display='none'; 
-        if(id === 'modalPrint') {
-            document.getElementById('receiptPreview').style.border = "1px solid var(--border)"; 
-        }
-    };
-    
-    window.saveSettings = async () => { 
-        const np={ 
-            ph:+document.getElementById('setPh').value, 
-            pb:+document.getElementById('setPb').value, 
-            chFull:+document.getElementById('setChFull').value, 
-            chUsb:+document.getElementById('setChUsb').value, 
-            chHead:+document.getElementById('setChHead').value, 
-            maxSockets:+document.getElementById('setMaxSockets').value, 
-            loyalty:document.getElementById('setLoyalty').value, 
-            closeTime:document.getElementById('setCloseTime').value, 
-            bankName:document.getElementById('setBankName').value, 
-            accName:document.getElementById('setAccName').value, 
-            accNumber:document.getElementById('setAccNumber').value 
-        }; 
-        await setDoc(doc(db,`shops/${currentShopId}/config/prices`), np); 
-        priceConfig=np; 
-        alert("Shop Settings Saved Successfully!"); 
-    };
-    
-    window.revertCollection = async (id) => { 
-        if(confirm("Re-activate this ticket?")) {
-            await updateDoc(doc(db,"tickets",id), {
-                collected:false, collDate:null, shelved:false, 
-                shelfPh:false, shelfPb:false, shelfOt:false, 
-                rating:null, reviewText:null
-            }); 
-        }
-    };
-    
-    const upSt = () => { 
-        const sb = document.getElementById('status'); 
-        if(navigator.onLine) { 
-            sb.className="status-bar on"; 
-            sb.innerText="🟢 CONNECTED & SECURE"; 
-        } else { 
-            sb.className="status-bar off"; 
-            sb.innerText="📡 OFFLINE - SAVING TO PHONE MEMORY"; 
-        } 
-    }; 
-    window.addEventListener('online', upSt); 
-    window.addEventListener('offline', upSt); 
-    upSt();
-
-    window.printSecureTags = async () => {
-        const start = +document.getElementById('tagStart').value||1; 
-        const count = +document.getElementById('tagCount').value||5;
-        const plan = currentShopData.plan || 'free'; 
-        const limit = PLAN_LIMITS[plan].tags;
+    // --- SAVE SETTINGS FUNCTION ---
+    window.saveSettings = async () => {
+        const btn = document.querySelector('button[onclick="saveSettings()"]');
+        btn.innerText = "⏳ Saving...";
+        btn.disabled = true;
         
-        if ((start + count - 1) > limit) { 
-            alert(`🔒 UPGRADE REQUIRED!\nYour ${plan.toUpperCase()} plan only allows generating up to Tag #${limit}.\nPlease upgrade to generate more.`); 
-            return; 
-        }
-        
-        const copies = +document.getElementById('tagCopies').value||25; 
-        const tagStyle = document.getElementById('tagStyleOpt').value; 
-
-        const btn = document.getElementById('genBtn'); 
-        btn.innerText = "⏳ Generating Assets..."; 
-        btn.disabled = true; 
-        
-        let html = `<div id="captureArea" style="padding:20px; background:white; width:100%; min-width:1000px; max-width:1122px; margin:0 auto; box-sizing:border-box;">`; 
-        const promises =[];
-        let base = globalTrackingUrl; 
-        if(!base.endsWith('/')) base += '/';
+        const newConfig = {
+            ph: +(document.getElementById('setPh').value || 0),
+            pb: +(document.getElementById('setPb').value || 0),
+            chFull: +(document.getElementById('setChFull').value || 0),
+            chUsb: +(document.getElementById('setChUsb').value || 0),
+            chHead: +(document.getElementById('setChHead').value || 0),
+            maxSockets: +(document.getElementById('setMaxSockets').value || 50),
+            loyalty: document.getElementById('setLoyalty').value,
+            closeTime: document.getElementById('setCloseTime').value,
+            bankName: document.getElementById('setBankName').value.trim(),
+            accName: document.getElementById('setAccName').value.trim(),
+            accNumber: document.getElementById('setAccNumber').value.trim()
+        };
         
         try {
-            for(let i=start; i<start+count; i++) {
-                const id=String(i); 
-                let pin = secureTagsData[id] || (String(i)+"-"+Math.random().toString(36).substring(2,6).toUpperCase()); 
-                
-                if(!secureTagsData[id]) promises.push(setDoc(doc(db, `shops/${currentShopId}/secure_tags`, id), {pin}));
-                
-                const trackLink = base + "?shop=" + currentShopId + "&track=" + id;
-                let qrImageHtml = ''; 
-                let infoText = `Keep this tag safe to claim your device.`;
-
-                html += `<div id="st-${i}" style="width:100%; padding:20px 0; background:#fff; margin-bottom:30px; border-bottom:2px dashed #e2e8f0; text-align:center; page-break-inside:avoid;">`;
-
-                if (tagStyle !== 'stickers') {
-                    if (tagStyle === 'qr') {
-                        const qrImage = `https://quickchart.io/qr?text=${encodeURIComponent(trackLink)}&size=200`; 
-                        qrImageHtml = `<div style="text-align:center; margin:20px auto; display:flex; justify-content:center;"><img crossorigin="anonymous" src="${qrImage}" style="width:180px; height:180px;"></div>`; 
-                        infoText = `Scan to view charging progress:<br><span style="color:#2563eb; font-size:16px; font-weight:800; word-break: break-all; margin-top:8px; display:inline-block;">${base}</span>`;
-                    } else if (tagStyle === 'text') {
-                        qrImageHtml = `<div style="padding:20px; background:#f8fafc; border:2px dashed #94a3b8; border-radius: 12px; margin:20px 0; font-size:26px; font-weight:900; color:#0f172a; letter-spacing: 3px;">PIN: ${pin}</div>`; 
-                        infoText = `Track online at:<br><span style="color:#2563eb; font-size:16px; font-weight:800; display:inline-block; margin:5px 0;">${base}</span><br>Log in with Tag #${i} and your PIN.`;
-                    }
-                    html += `<div style="display:block; border:2px solid #0f172a; padding:25px; border-radius:16px; width:300px; box-sizing:border-box; background:#fff; margin:0 auto 25px auto; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);"><div style="margin:0 0 15px 0; font-size:24px; font-weight:900; font-family:'Inter', sans-serif; color:#0f172a; border-bottom:2px solid #e2e8f0; padding-bottom:10px;">⚡ STARBITE</div>${qrImageHtml}<div style="font-size:56px; font-weight:900; margin-top:10px; color:#0f172a; font-family:'Inter', sans-serif; line-height:1;">#${i}</div><div style="margin-top:20px; padding-top:15px; border-top:2px dashed #cbd5e1; font-size:13px; font-weight:600; color:#475569; line-height:1.5;">${infoText}</div></div>`;
-                }
-                
-                if(copies>0) { 
-                    html+=`<div style="width:100%; text-align:center; font-size:0;">`; 
-                    for(let c=0; c<copies; c++){ 
-                        html+=`<div style="display:inline-block; width:18%; margin:0 1% 10px 1%; border:2px solid #0f172a; border-radius:6px; padding:12px 4px; background:#fff; font-family:monospace; font-size:15px; font-weight:900; color:#0f172a; box-sizing:border-box; vertical-align:top; text-align:center; white-space:nowrap; overflow:hidden;">📱 #${i} | ${pin}</div>`; 
-                    } 
-                    html+=`</div>`; 
-                }
-                
-                html+=`<button id="bd-${i}" class="single-dl-btn" onclick="downloadSingleTag('st-${i}','${i}')" style="background:#10b981; color:white; border:none; padding:12px 24px; border-radius:10px; cursor:pointer; font-size:16px; font-weight:700; margin-top:20px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">📥 Save Single Layout</button></div>`;
-            } 
-            
-            html+=`</div>`; 
-            await Promise.all(promises); 
-            btn.innerText = "Generate Assets"; 
-            btn.disabled = false; 
-            document.getElementById('receiptPreview').style.border = "none"; 
-            document.getElementById('receiptPreview').innerHTML = html; 
-            closeModal('modalTagGen'); 
-            document.getElementById('modalPrint').style.display='flex';
-            
-        } catch(e) { 
-            alert("Error: " + e.message); 
-            btn.innerText="Generate Assets"; 
-            btn.disabled=false; 
+            await setDoc(doc(db, `shops/${currentShopId}/config/prices`), newConfig, { merge: true });
+            alert("✅ Settings saved successfully!");
+            document.getElementById('settingsCard').removeAttribute('open'); 
+        } catch(e) {
+            alert("Error saving settings: " + e.message);
         }
+        
+        btn.innerText = "💾 Save All Settings";
+        btn.disabled = false;
     };
 
-    window.downloadImage = () => { 
+    // --- GENERATE AND PRINT SECURE TAGS ---
+    window.printSecureTags = async () => {
+        const start = +document.getElementById('tagStart').value||1, count = +document.getElementById('tagCount').value||5, copies = +document.getElementById('tagCopies').value||25, btn = document.getElementById('genBtn');
+        btn.innerText = "⏳ Saving..."; btn.disabled = true; let html = `<div id="captureArea" style="padding:20px; background:white; width:100%; min-width:1000px; max-width:1122px; margin:0 auto; box-sizing:border-box;">`;
+        const promises = [];
+        
+        let base = priceConfig.trackingUrl || "https://trackingmydevice.netlify.app/";
+        if(!base.endsWith('/')) base += '/';
+
+        try {
+            for(let i=start; i<start+count; i++) {
+                const id=String(i); let pin = secureTagsData[id] || (String(i)+"-"+Math.random().toString(36).substring(2,6).toUpperCase()); if(!secureTagsData[id]) promises.push(setDoc(doc(db,"secure_tags",id), {pin}));
+                
+                const trackLink = base + "?track=" + id;
+                const qrImage = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(trackLink)}`;
+                
+                html+=`<div id="st-${i}" style="width:100%; padding:20px 0; background:#fff; margin-bottom:30px; border-bottom:2px dashed #999; text-align:center; page-break-inside:avoid;">
+                    <div style="display:block; border:2px solid #000; padding:20px; border-radius:8px; width:280px; box-sizing:border-box; background:#fff; margin:0 auto 20px auto;">
+                        <div style="margin:0 0 10px 0; font-size:22px; font-weight:900; font-family:Arial; color:#000; border-bottom:2px solid #ccc; padding-bottom:5px;">⚡ STARBITE</div>
+                        <div style="text-align:center; margin:15px auto; display:flex; justify-content:center;">
+                            <img src="${qrImage}" style="width:180px; height:180px;">
+                        </div>
+                        <div style="font-size:50px; font-weight:900; margin-top:5px; color:#000; font-family:Arial; line-height:1;">#${i}</div>
+                        <div style="margin-top:15px; padding-top:10px; border-top:2px dashed #999; font-size:12px; font-weight:bold; color:#000; line-height:1.4;">Click to view your phone's charging progress:<br><span style="color:var(--primary); font-size:10px; word-break: break-all;">${base}</span></div>
+                    </div>`;
+                if(copies>0) { html+=`<div style="width:100%; text-align:center; font-size:0;">`; for(let c=0; c<copies; c++){ html+=`<div style="display:inline-block; width:18%; margin:0 1% 10px 1%; border:2px solid #000; padding:10px 2px; background:#fff; font-family:monospace; font-size:14px; font-weight:900; color:#000; box-sizing:border-box; vertical-align:top; text-align:center; white-space:nowrap; overflow:hidden;">📱 #${i} | ${pin}</div>`; } html+=`</div>`; }
+                html+=`<button id="bd-${i}" class="single-dl-btn" onclick="downloadSingleTag('st-${i}','${i}')" style="background:#28a745; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-size:16px; font-weight:bold; margin-top:20px;">📥 Save Layout</button></div>`;
+            } html+=`</div>`; await Promise.all(promises); btn.innerText = "🖨️ Generate Tags"; btn.disabled = false;
+            document.getElementById('receiptPreview').style.border = "none"; document.getElementById('receiptPreview').innerHTML = html;
+            closeModal('modalTagGen'); document.getElementById('modalPrint').style.display='flex';
+        } catch(e) { alert("Error."); btn.innerText="🖨️ Generate Tags"; btn.disabled=false; }
+    };
+    // --- DOWNLOAD PRINT PREVIEW AS IMAGE ---
+window.downloadImage = () => { 
         const printArea = document.getElementById('receiptPreview'); 
         html2canvas(printArea, { scale: 2, useCORS: true, allowTaint: true }).then(canvas => { 
             const link = document.createElement('a'); 
@@ -3114,6 +3273,7 @@
         }); 
     };
     
+
   </script>
 </body>
-                </html>
+  </html>
