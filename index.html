@@ -129,7 +129,7 @@
         padding: 8px 14px; border-radius: 8px; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; box-shadow: none; border: 1px solid transparent;
     }
     
-    #sigCanvas { width: 100%; max-width: 400px; height: 120px; border: 2px dashed #cbd5e1; border-radius: 8px; background: #fff; cursor: crosshair; touch-action: none; margin-top: 10px; }
+
     
     @media print {
         @page { size: A3 portrait; margin: 10mm; }
@@ -358,40 +358,33 @@
                 </div>
             </div>
 
-            <!-- ✍️ SIGNATURE PAD UI -->
-            <div style="background:#f8fafc; padding:15px; border-radius:12px; margin:15px 0; border: 1px dashed var(--border); text-align:center;">
-                <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:10px;">✍️ Customer Signature (Liability Waiver)</label>
-                <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Customer agrees to the conditions logged above.</p>
-                <canvas id="sigCanvas" width="400" height="150"></canvas>
-                <br>
-                <button type="button" onclick="clearSignature()" style="background:transparent; color:var(--danger); border:1px solid var(--danger); padding:8px 16px; margin-top:10px; font-size:13px; box-shadow:none;">Clear Signature</button>
-            </div>
 
-            <div class="row">
-              <div class="device-box"><label>Phones</label><input type="number" id="phCount" value="0" min="0" onchange="window.autoCalc()"></div>
-              <div class="device-box"><label>P-Banks</label><input type="number" id="pbCount" value="0" min="0" onchange="window.autoCalc()"></div>
+<div class="row">
+              <div class="device-box"><label>Phones</label><input type="number" id="phCount" placeholder="0" min="0" onchange="window.autoCalc()"></div>
+              <div class="device-box"><label>P-Banks</label><input type="number" id="pbCount" placeholder="0" min="0" onchange="window.autoCalc()"></div>
             </div>
             <div class="row">
-              <div class="device-box"><label>Full Chrg</label><input type="number" id="chFullCount" value="0" min="0" onchange="window.autoCalc()"></div>
-              <div class="device-box"><label>USB Cable</label><input type="number" id="chUsbCount" value="0" min="0" onchange="window.autoCalc()"></div>
-              <div class="device-box"><label>Chrg Head</label><input type="number" id="chHeadCount" value="0" min="0" onchange="window.autoCalc()"></div>
+              <div class="device-box"><label>Full Chrg</label><input type="number" id="chFullCount" placeholder="0" min="0" onchange="window.autoCalc()"></div>
+              <div class="device-box"><label>USB Cable</label><input type="number" id="chUsbCount" placeholder="0" min="0" onchange="window.autoCalc()"></div>
+              <div class="device-box"><label>Chrg Head</label><input type="number" id="chHeadCount" placeholder="0" min="0" onchange="window.autoCalc()"></div>
             </div>
             <div class="row" style="background:#f8fafc; padding:10px; border-radius:12px; margin-top:10px; border: 1px solid var(--border);">
-              <div class="device-box" style="background:transparent; border:none; padding:0;"><label>Other QTY</label><input type="number" id="otCount" value="0" min="0" onchange="window.autoCalc()"></div>
-              <div class="device-box" style="background:transparent; border:none; padding:0; flex:2;"><label>Other Price (₦)</label><input type="number" id="otPrice" value="0" min="0" onchange="window.autoCalc()"></div>
+              <div class="device-box" style="background:transparent; border:none; padding:0;"><label>Other QTY</label><input type="number" id="otCount" placeholder="0" min="0" onchange="window.autoCalc()"></div>
+              <div class="device-box" style="background:transparent; border:none; padding:0; flex:2;"><label>Other Price (₦)</label><input type="number" id="otPrice" placeholder="0" min="0" onchange="window.autoCalc()"></div>
             </div>
 
             <!-- 🛒 Retail / Tab System -->
             <div class="row" style="background:#fffbeb; padding:12px; border-radius:12px; margin-top:10px; border: 1px dashed #f59e0b;">
               <div class="device-box" style="background:transparent; border:none; padding:0; flex:2;">
-                  <label style="color:#b45309;">🛒 Items Bought</label>
-                  <input type="text" id="retailDesc" placeholder="e.g. USB Cable" style="margin-bottom:0;">
+                  <label style="color:#b45309;">🛒 Items Bought (Pay Later/Now)</label>
+                  <input type="text" id="retailDesc" placeholder="e.g. USB Cable, Pepsi" style="margin-bottom:0;">
               </div>
               <div class="device-box" style="background:transparent; border:none; padding:0; flex:1;">
                   <label style="color:#b45309;">Cost (₦)</label>
-                  <input type="number" id="retailCost" value="0" min="0" onchange="window.autoCalc()" style="margin-bottom:0;">
+                  <input type="number" id="retailCost" placeholder="0" min="0" onchange="window.autoCalc()" style="margin-bottom:0;">
               </div>
             </div>
+      
             
             <div id="socketUI" class="socket-display">🔌 Assigning Sockets...</div><input type="hidden" id="assignedSockets">
             
@@ -726,70 +719,6 @@
         }
     };
 
-    // --- 4. SIGNATURE PAD LOGIC ---
-    let sigCanvas, sigCtx;
-    let isDrawing = false;
-    let hasSignature = false;
-    
-    function initSignature() {
-        sigCanvas = document.getElementById('sigCanvas');
-        if(!sigCanvas) return;
-        sigCtx = sigCanvas.getContext('2d');
-        sigCtx.lineWidth = 3; 
-        sigCtx.lineCap = "round"; 
-        sigCtx.strokeStyle = "#0f172a";
-        
-        const getPos = (e) => {
-            let rect = sigCanvas.getBoundingClientRect();
-            let clientX = e.clientX || (e.touches && e.touches[0].clientX);
-            let clientY = e.clientY || (e.touches && e.touches[0].clientY);
-            let scaleX = sigCanvas.width / rect.width;
-            let scaleY = sigCanvas.height / rect.height;
-            return { 
-                x: (clientX - rect.left) * scaleX, 
-                y: (clientY - rect.top) * scaleY 
-            };
-        };
-
-        const startDraw = (e) => { 
-            e.preventDefault(); 
-            isDrawing = true; 
-            hasSignature = true; 
-            let pos = getPos(e); 
-            sigCtx.beginPath(); 
-            sigCtx.moveTo(pos.x, pos.y); 
-        };
-        
-        const draw = (e) => { 
-            if(!isDrawing) return; 
-            e.preventDefault(); 
-            let pos = getPos(e); 
-            sigCtx.lineTo(pos.x, pos.y); 
-            sigCtx.stroke(); 
-        };
-        
-        const stopDraw = (e) => { 
-            e.preventDefault(); 
-            isDrawing = false; 
-            sigCtx.closePath(); 
-        };
-
-        sigCanvas.addEventListener('mousedown', startDraw); 
-        sigCanvas.addEventListener('mousemove', draw); 
-        sigCanvas.addEventListener('mouseup', stopDraw); 
-        sigCanvas.addEventListener('mouseout', stopDraw);
-        sigCanvas.addEventListener('touchstart', startDraw, {passive:false}); 
-        sigCanvas.addEventListener('touchmove', draw, {passive:false}); 
-        sigCanvas.addEventListener('touchend', stopDraw);
-    }
-    
-    window.clearSignature = () => { 
-        if(!sigCtx) return; 
-        sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); 
-        hasSignature = false; 
-    };
-    
-    setTimeout(initSignature, 500);
 
     // --- 5. GLOBAL CONFIGURATION & AUTH ---
     document.getElementById('priceBasicDisplay').innerText = `₦${SAAS_PRICING.basic.toLocaleString()}`;
@@ -1828,8 +1757,7 @@
         }
     };
 
-    // --- 11. TICKET CREATION & HARDWARE SCANNING ---
-    document.getElementById('tokenNum').addEventListener('input', (e) => {
+document.getElementById('tokenNum').addEventListener('input', (e) => {
         let rawText = e.target.value;
         let tagVal = rawText;
 
@@ -1840,7 +1768,8 @@
         tagVal = tagVal.replace(/\D/g, ''); 
         e.target.value = tagVal; 
 
-        if (!tagVal) return cancelEdit(); 
+        if (!tagVal) return cancelEdit(); // Closes modal if input is empty
+        
         editId = null; 
         currentSockets =[]; 
 
@@ -1848,11 +1777,22 @@
         const f = document.getElementById('extendedForm');
         const act = document.getElementById('formAction');
         const btn = document.getElementById('saveBtn');
+        const cancelBtn = document.getElementById('cancelEditBtn');
+        
+        // 🌟 NEW: INSTANTLY POP UP THE FORM AS A MODAL
+        document.getElementById('editBgOverlay').style.display = 'block';
+        document.getElementById('formCard').classList.add('form-modal-mode');
+        document.body.style.overflow = 'hidden'; 
         
         if (t) {
+            // Tag is already Active
             f.style.display = 'none'; 
             act.style.display = 'block'; 
             btn.style.display = 'none'; 
+            
+            cancelBtn.style.display = 'block';
+            cancelBtn.innerText = "Close";
+            
             document.getElementById('securityCheckAlert').innerHTML = ''; 
             document.getElementById('vipAlert').innerHTML = ''; 
             
@@ -1867,6 +1807,7 @@
                     </div>
                 </div>`;
         } else {
+            // New Ticket
             f.style.display = 'block'; 
             const p = secureTagsData[tagVal]; 
             document.getElementById('displayPin').innerText = p || "UNREGISTERED"; 
@@ -1881,10 +1822,13 @@
             } 
             document.getElementById('securityCheckAlert').innerHTML = histHTML;
             
-            act.innerHTML = p ? `New Entry for #${tagVal}` : `<span style="color:var(--danger);">❌ Print/Generate this tag first!</span>`; 
+            act.innerHTML = p ? `<h3 style="margin:0; color:var(--text);">New Ticket: #${tagVal}</h3>` : `<h3 style="margin:0; color:var(--danger);">❌ Print/Generate this tag first!</h3>`; 
             btn.style.display = p ? 'block' : 'none'; 
             btn.innerText = "Create Ticket"; 
-            document.getElementById('cancelEditBtn').style.display = "none"; 
+            
+            cancelBtn.style.display = "block"; 
+            cancelBtn.innerText = "Cancel";
+            
             clearFormFieldsOnly(); 
             window.autoCalc();
         }
@@ -2177,12 +2121,7 @@
         const retailDesc = document.getElementById('retailDesc').value.trim();
         const retailCost = +(document.getElementById('retailCost').value || 0);
         const deviceNotes = document.getElementById('deviceNotes').value.trim();
-        
-        let signatureData = null;
-        if (hasSignature) {
-            const canvasEl = document.getElementById('sigCanvas');
-            if (canvasEl) { signatureData = canvasEl.toDataURL('image/png'); }
-        }
+  
         
         if (!editId && payStatusSelection === 'Wallet') {
             let bal = walletsData[phoneNum] ? walletsData[phoneNum].balance : 0;
@@ -2268,10 +2207,7 @@
             isLoyaltyFree: window.isFreeEligible,
             smartRates: dynamicRates
         };
-        
-        if (signatureData) { data.signature = signatureData; }
-        
-        try { 
+    try { 
             if (!editId && payStatusSelection === 'Wallet' && finalPrice > 0) {
                 const currentBal = walletsData[phoneNum].balance;
                 await setDoc(doc(db, `shops/${currentShopId}/wallets`, phoneNum), { balance: currentBal - finalPrice }, { merge: true });
@@ -2279,7 +2215,7 @@
             
             if(editId) { 
                 await updateDoc(doc(db, "tickets", editId), data); 
-                cancelEdit(); 
+                window.cancelEdit(); 
             } else { 
                 data.ts = serverTimestamp(); 
                 data.colPh = 0; data.colPb = 0; data.colChFull = 0; data.colChUsb = 0; data.colChHead = 0; data.colOt = 0; 
@@ -2287,7 +2223,7 @@
                 data.hasUnread = false; data.onTheWay = false; data.onTheWayAck = false; 
                 
                 await addDoc(collection(db, "tickets"), data); 
-                resetForm(true); 
+                window.cancelEdit(); // <--- This closes the form automatically!
                 
                 if(mismatchMsg && phoneNum.length >= 10) {
                     let cleanPhone = phoneNum.replace(/\D/g, ''); 
@@ -2302,7 +2238,7 @@
         } catch(e) { 
             alert("Error: " + e.message); 
         }
-    };
+    }; 
 
     window.ackOnTheWay = async (id) => { 
         try { await updateDoc(doc(db, "tickets", id), { onTheWayAck: true }); } catch(e) { alert(e.message); } 
@@ -2851,10 +2787,6 @@
             }); 
             photoHtml += '</div>'; 
         }
-        
-        if(t.signature) { 
-            photoHtml += `<div style="margin-bottom:10px;"><span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">✍️ Signed Waiver</span><br><img src="${t.signature}" style="height:40px; background:#fff; border:1px solid var(--border); border-radius:6px;"></div>`; 
-        }
 
         let bars="";
         for(let i=0; i < actPh; i++) {
@@ -3074,47 +3006,55 @@
         }
     };
 
-    window.clearFormFieldsOnly = () => {
-        document.getElementById('custName').value = '';
-        document.getElementById('custPhone').value = '';
-        document.getElementById('phCount').value = 0;
-        document.getElementById('pbCount').value = 0;
-        document.getElementById('chFullCount').value = 0;
-        document.getElementById('chUsbCount').value = 0;
-        document.getElementById('chHeadCount').value = 0;
-        document.getElementById('otCount').value = 0;
-        document.getElementById('otPrice').value = 0;
-        document.getElementById('retailCost').value = 0;
-        document.getElementById('retailDesc').value = '';
-        document.getElementById('deviceNotes').value = '';
+    function clearFormFieldsOnly() { 
+        window.pendingClaim = null; 
+        window.isFreeEligible = false; 
+        stopCam(); 
+        currentPhotos =[]; 
+        renderPhotoGallery();
         
-        document.querySelectorAll('.cond-chk').forEach(c => c.checked = false);
+        const fieldsToClear =[
+            'custName','custPhone','phCount','pbCount','chFullCount','chUsbCount','chHeadCount',
+            'otCount','otPrice','retailDesc','retailCost','amtPaidInput','syncPh','syncPb','syncOt'
+        ];
         
-        currentPhotos =[];
-        window.devicePhotosMap = {};
-        window.renderPhotoGallery();
-        clearSignature();
-    };
-
-    window.resetForm = (hardReset = false) => {
-        if (hardReset) {
-            document.getElementById('tokenNum').value = '';
-        }
-        window.clearFormFieldsOnly();
+        fieldsToClear.forEach(id => { 
+            let el = document.getElementById(id); 
+            if(el) el.value = ""; // Changed to empty string to keep inputs plain
+        }); 
+        
+        document.getElementById('payStatus').value="Later"; 
+        document.getElementById('securityCheckAlert').innerHTML=''; 
+        if(document.getElementById('walletAlert')) document.getElementById('walletAlert').innerHTML=''; 
+        document.getElementById('debtAlert').innerHTML=''; 
+        document.getElementById('vipAlert').innerHTML=''; 
+        document.querySelectorAll('.cond-chk').forEach(c=>c.checked=false); 
+        document.getElementById('staffChatArea').style.display='none'; 
+        document.getElementById('staffChatHistory').innerHTML=''; 
+        document.getElementById('staffChatInput').value=''; 
+    }
+    window.resetForm = (recalculate = false) => {
+    // 1. Call your existing clear form function
+    clearFormFieldsOnly(); 
+    
+    // 2. If requested, recalculate the totals back to ₦0
+    if (recalculate && typeof window.autoCalc === 'function') {
         window.autoCalc();
-    };
-
+    }
+};
     window.cancelEdit = () => {
-        editId = null;
         document.getElementById('extendedForm').style.display = 'none';
+        editId = null;
         document.getElementById('cancelEditBtn').style.display = 'none';
         document.getElementById('formAction').innerText = "Start a New Ticket";
         document.getElementById('saveBtn').innerText = "Create Ticket";
         document.getElementById('tokenNum').value = '';
         document.getElementById('editBgOverlay').style.display = 'none';
         document.getElementById('formCard').classList.remove('form-modal-mode');
+        document.getElementById('saveBtn').innerText="💾 Save Updates"; 
         document.getElementById('staffChatArea').style.display = 'none';
-        window.resetForm(true);
+        document.body.style.overflow = '';
+       window.resetForm(true);
     };
 
     window.startEdit = (id) => {
@@ -3134,17 +3074,15 @@
         document.getElementById('custName').value = t.name || '';
         document.getElementById('custPhone').value = t.phone || '';
         document.getElementById('tokenNum').value = t.tag || '';
-        
-        document.getElementById('phCount').value = t.ph || 0;
-        document.getElementById('pbCount').value = t.pb || 0;
-        document.getElementById('chFullCount').value = t.chFull || 0;
-        document.getElementById('chUsbCount').value = t.chUsb || 0;
-        document.getElementById('chHeadCount').value = t.chHead || 0;
-        document.getElementById('otCount').value = t.ot || 0;
-        document.getElementById('otPrice').value = t.otPrice || 0;
-        document.getElementById('retailCost').value = t.retailCost || 0;
-        document.getElementById('retailDesc').value = t.retailDesc || '';
-        document.getElementById('deviceNotes').value = t.deviceNotes || '';
+document.getElementById('phCount').value = t.ph || ''; 
+        document.getElementById('pbCount').value = t.pb || ''; 
+        document.getElementById('chFullCount').value = t.chFull || ''; 
+        document.getElementById('chUsbCount').value = t.chUsb || ''; 
+        document.getElementById('chHeadCount').value = t.chHead || ''; 
+        document.getElementById('otCount').value = t.ot || ''; 
+        document.getElementById('otPrice').value = t.otPrice || ''; 
+        document.getElementById('retailDesc').value = t.retailDesc || ""; 
+        document.getElementById('retailCost').value = t.retailCost || '';
         
         // Store original percentages to prevent UI from overriding them
         window.editPctPh = t.pctPh || [];
@@ -3276,4 +3214,4 @@ window.downloadImage = () => {
 
   </script>
 </body>
-  </html>
+</html>
