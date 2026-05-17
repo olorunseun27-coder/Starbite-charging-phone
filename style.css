@@ -1,0 +1,115 @@
+  :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --bg: #f4f7f6; --dark: #343a40; --gold: #ffd700; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; background-color: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; }
+    .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; margin-bottom: 20px;}
+    h2 { margin-top: 0; font-size: 32px; color: var(--primary); margin-bottom: 5px; font-weight: 900; letter-spacing: 1px;}
+    p.subtitle { color: #666; font-size: 14px; margin-top: 0; margin-bottom: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+    input { padding: 15px; margin: 10px 0; border: 2px solid #ccc; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 18px; text-align: center; font-weight: bold; transition: 0.3s; }
+    input:focus { border-color: var(--primary); outline: none; }
+    button { cursor: pointer; background-color: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; width: 100%; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,123,255,0.2); }
+    button:hover { filter: brightness(90%); } button:active { transform: scale(0.98); }
+    button:disabled { background: #999; cursor: not-allowed; box-shadow: none; }
+    .btn-secondary { background: #6c757d; box-shadow: 0 4px 6px rgba(108,117,125,0.2); margin-top: 10px; }
+    .result-card { border: 2px solid var(--primary); padding: 20px; border-radius: 12px; text-align: left; margin-bottom: 20px; background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative;}
+    .photo-gallery { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; scroll-snap-type: x mandatory; }
+    .photo-gallery::-webkit-scrollbar { height: 6px; }
+    .photo-gallery::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+    .gallery-img { max-height: 250px; object-fit: cover; border-radius: 8px; border: 2px solid #eee; flex-shrink: 0; scroll-snap-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .status-badge { display: inline-block; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px;}
+    .battery-top { width: 40px; height: 12px; background: var(--dark); margin: 0 auto; border-radius: 6px 6px 0 0; }
+    .battery-body { width: 110px; height: 180px; border: 5px solid var(--dark); border-radius: 15px; position: relative; overflow: hidden; background: #e9ecef; margin: 0 auto; box-shadow: inset 0 2px 8px rgba(0,0,0,0.1); }
+    .liquid { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; transition: height 1.5s ease-in-out, background-color 1s ease; }
+    .liquid::before, .liquid::after { content: ""; position: absolute; width: 250px; height: 250px; background: rgba(255, 255, 255, 0.4); bottom: 95%; left: 50%; transform: translateX(-50%); border-radius: 40%; animation: spin 4s linear infinite; }
+    .liquid::after { background: rgba(255, 255, 255, 0.7); border-radius: 45%; animation: spin 6s linear infinite; }
+    @keyframes spin { 0% { transform: translateX(-50%) rotate(0deg); } 100% { transform: translateX(-50%) rotate(360deg); } }
+    .battery-percentage { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 26px; font-weight: 900; color: #000; z-index: 10; text-shadow: 0px 0px 8px rgba(255,255,255,1); }
+    .price-box { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+    .chat-bubble { padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; max-width: 85%; word-wrap: break-word; clear: both; font-size: 14px; line-height: 1.4; position: relative;}
+    .chat-c { background: var(--primary); color: white; float: right; border-bottom-right-radius: 2px; }
+    .chat-s { background: #e2e3e5; color: black; float: left; border-bottom-left-radius: 2px; border: 1px solid #ccc; }
+    .chat-clear { clear: both; }
+    .capacity-badge { background: #e3f2fd; color: var(--primary); padding: 8px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; border: 2px solid var(--primary); display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+    .punch-card { background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%); border: 2px dashed #ffeeba; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);}
+    .star-rating { font-size: 40px; cursor: pointer; color: #ddd; display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
+    .star-rating .star:hover, .star-rating .star.active { color: var(--gold); text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); transform: scale(1.1); transition: 0.2s;}
+    #loading { display: none; margin-top: 15px; font-weight: bold; color: var(--primary); }
+    .modal { display: none; position: fixed; z-index: 200; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
+    .modal-content { background: #fff; padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; overflow-x: auto; box-sizing: border-box;}
+/* =========================================
+   📱 MODERN MOBILE UI APP LAYOUT
+   ========================================= */
+@media (max-width: 768px) {
+    
+    /* 1. Fix the Header Title so the Free Plan badge aligns right */
+    h2 {
+        font-size: 24px !important;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* 2. Turn the 11 Header Buttons into a Modern Swipeable Row! */
+    .header-actions {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        justify-content: flex-start !important;
+        padding-bottom: 10px;
+        width: 100%;
+        -webkit-overflow-scrolling: touch; /* Smooth swipe on iPhone/Android */
+        scrollbar-width: none; /* Hides scrollbar on Firefox */
+    }
+    .header-actions::-webkit-scrollbar {
+        display: none; /* Hides scrollbar on Chrome/Safari */
+    }
+    .header-actions button, .header-actions span {
+        flex: 0 0 auto !important; /* Stops buttons from squishing */
+        white-space: nowrap !important;
+        margin-right: 5px;
+    }
+
+    /* 3. Dashboard Stats (Cash & Pending on top, Active on bottom) */
+    .dash-row {
+        flex-wrap: wrap !important;
+        gap: 12px !important;
+    }
+    .dash-card {
+        flex: 1 1 45% !important; /* Two cards side-by-side */
+        padding: 15px 10px !important;
+    }
+    .dash-card:last-child {
+        flex: 1 1 100% !important; /* 'Active Items' takes full width below them */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .dash-val {
+        font-size: 22px !important;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    /* 4. Fix Input Boxes & Device rows */
+    .row {
+        flex-wrap: wrap !important;
+    }
+    .device-box {
+        flex: 1 1 45% !important;
+        min-width: 80px !important;
+        padding: 8px !important;
+    }
+
+    /* 5. Fix the "Start a New Ticket" Input & Camera */
+    #tokenNum {
+        font-size: 16px !important;
+        padding: 12px !important;
+    }
+    button[onclick="openScanner()"] {
+        width: 60px !important;
+        flex: 0 0 60px !important;
+    }
+    
+    /* 6. Make Tickets stack neatly */
+    .ticket-grid {
+        grid-template-columns: 1fr !important;
+    }
+                  }
