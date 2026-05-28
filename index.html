@@ -3122,8 +3122,20 @@ window.clearFormFieldsOnly = () => {
     window.renderPhotoGallery();
     
     // Load Internal Chat History properly formatted
+    // Load Internal Chat History properly formatted
+    // Load Internal Chat History properly formatted
     document.getElementById('staffChatArea').style.display = 'block';
-    renderStaffChat(t.chats ||[], t.id);
+    window.renderStaffChat(t.chats || [], t.id);
+    
+    // 🌟 FIX: Automatically clear the "Unread Message" badge when staff opens it!
+    if (t.hasUnread) {
+        updateDoc(doc(db, "tickets", id), { hasUnread: false }).catch(e => console.error(e));
+    }
+    
+    // 🌟 FIX: Automatically clear the "Unread Message" badge when staff opens it!
+    if (t.hasUnread) {
+        updateDoc(doc(db, "tickets", id), { hasUnread: false }).catch(e => console.error(e));
+    }
     
     // Recalculate values and render dynamic sync inputs
     window.autoCalc();
