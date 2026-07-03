@@ -1879,7 +1879,7 @@ document.getElementById('tokenNum').addEventListener('input', (e) => {
             act.innerHTML = `
                 <div style="background:#eff6ff; padding:20px; border-radius:12px; border:1px solid #bfdbfe; text-align:left;">
                     <h4 style="margin:0 0 15px 0; color:var(--primary); text-align:center; font-size:16px;">📱 Tag #${tagVal} is Active</h4>
-                    <p style="margin:0 0 8px 0; color:var(--text);"><strong>Customer:</strong> ${t.name}</p>
+                    <p style="margin:0 0 8px 0; color:var(--text); strong>Customer:</strong> ${t.name}</p>
                     ${generateSmartStatusHTML(t)}
                     <div style="display:flex; gap:10px; margin-top:15px;">
                         <button onclick="startEdit('${t.id}')" style="flex:1; background:var(--bg); color:var(--text); border:1px solid var(--border); box-shadow:none;">Edit Data</button>
@@ -1934,28 +1934,40 @@ document.getElementById('tokenNum').addEventListener('input', (e) => {
     let html5QrCode = null;
     window.openScanner = () => { 
         document.getElementById('modalScanner').style.display = 'flex'; 
+        
+        if (html5QrCode) {
+            try { html5QrCode.clear(); } catch(e){}
+        }
+        
         html5QrCode = new Html5Qrcode("reader"); 
         
-        Html5Qrcode.getCameras().then(devices => {
-            if (devices && devices.length) {
-                let camId = devices[0].id; 
-                for (let i = 0; i < devices.length; i++) { 
-                    if (devices[i].label.toLowerCase().includes("back") || devices[i].label.toLowerCase().includes("environment")) { 
-                        camId = devices[i].id; 
-                        break; 
-                    } 
-                }
-                html5QrCode.start(camId, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess).catch(err => { 
-                    alert("Scanner failed to start."); 
+        // Start directly with back camera constraints - bypasses permission enumeration blocks on mobile browsers
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            { fps: 10, qrbox: { width: 250, height: 250 } }, 
+            onScanSuccess
+        ).catch(err => {
+            console.warn("Direct constraints start failed, using fallback enumeration...", err);
+            // Fallback: enumerate devices if constraint start fails
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices && devices.length) {
+                    let camId = devices[0].id; 
+                    for (let i = 0; i < devices.length; i++) { 
+                        if (devices[i].label.toLowerCase().includes("back") || devices[i].label.toLowerCase().includes("environment")) { 
+                            camId = devices[i].id; 
+                            break; 
+                        } 
+                    }
+                    html5QrCode.start(camId, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess).catch(e => { 
+                        alert("Camera blocked or failed to initialize."); 
+                        closeScanner(); 
+                    });
+                } else { 
+                    alert("No cameras detected on this device."); 
                     closeScanner(); 
-                });
-            } else { 
-                alert("No cameras found."); 
-                closeScanner(); 
-            }
-        }).catch(err => { 
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess).catch(e => { 
-                alert("Scanner blocked."); 
+                }
+            }).catch(e => { 
+                alert("Camera permission denied or scanner blocked."); 
                 closeScanner(); 
             }); 
         }); 
@@ -3273,4 +3285,5 @@ window.downloadImage = () => {
 
   </script>
 </body>
-                      </html>
+</html>
+
