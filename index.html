@@ -1064,7 +1064,6 @@
         return streak;
     }
 
-// 🌟 FIX: Added this variable to stop the app from freezing during plan changes!
     let hasInitializedData = false;
 
     onAuthStateChanged(auth, async (user) => {
@@ -1105,7 +1104,6 @@
                         
                         window.applyPlanRestrictions(); 
                         
-                        // 🌟 FIX: Only initialize database listeners ONCE!
                         if (!hasInitializedData) {
                             initShopData(); 
                             hasInitializedData = true;
@@ -1269,7 +1267,6 @@
                 if(data.chUsb > 0) devStr += `${data.chUsb}〰️USB `;
                 if(data.chHead > 0) devStr += `${data.chHead}🔌Head `;
 
-                // 🌟 INJECTING CUSTOMER'S PHOTOS INTO THE PENDING CARD
                 let photoHtml = '';
                 if(data.photos && data.photos.length > 0) {
                     photoHtml = '<div style="display:flex; gap:8px; overflow-x:auto; margin-bottom:10px; padding-bottom:5px;">';
@@ -1367,7 +1364,6 @@
     });
 
     window.acceptDropoff = async (docId, tag, name, phone, ph, pb, chFull, chUsb, chHead) => {
-        // 🌟 LOAD CUSTOMER'S PHOTOS SO THEY TRANSFER TO THE NEW TICKET
         const pendingItem = window.pendingQueue.find(p => p.docId === docId);
         
         document.getElementById('tokenNum').value = tag;
@@ -1386,7 +1382,6 @@
             document.getElementById('chUsbCount').value = chUsb || 0;
             document.getElementById('chHeadCount').value = chHead || 0;
             
-            // Assign the customer's photos to the form's gallery!
             if(pendingItem && pendingItem.photos && pendingItem.photos.length > 0) {
                 currentPhotos = [...pendingItem.photos];
                 renderPhotoGallery();
@@ -1837,7 +1832,7 @@
         }
     };
 
-document.getElementById('tokenNum').addEventListener('input', (e) => {
+    document.getElementById('tokenNum').addEventListener('input', (e) => {
         let rawText = e.target.value;
         let tagVal = rawText;
 
@@ -1848,7 +1843,7 @@ document.getElementById('tokenNum').addEventListener('input', (e) => {
         tagVal = tagVal.replace(/\D/g, ''); 
         e.target.value = tagVal; 
 
-        if (!tagVal) return cancelEdit(); // Closes modal if input is empty
+        if (!tagVal) return cancelEdit(); 
         
         editId = null; 
         currentSockets =[]; 
@@ -1859,13 +1854,11 @@ document.getElementById('tokenNum').addEventListener('input', (e) => {
         const btn = document.getElementById('saveBtn');
         const cancelBtn = document.getElementById('cancelEditBtn');
         
-        // 🌟 NEW: INSTANTLY POP UP THE FORM AS A MODAL
         document.getElementById('editBgOverlay').style.display = 'block';
         document.getElementById('formCard').classList.add('form-modal-mode');
         document.body.style.overflow = 'hidden'; 
         
         if (t) {
-            // Tag is already Active
             f.style.display = 'none'; 
             act.style.display = 'block'; 
             btn.style.display = 'none'; 
@@ -1879,7 +1872,7 @@ document.getElementById('tokenNum').addEventListener('input', (e) => {
             act.innerHTML = `
                 <div style="background:#eff6ff; padding:20px; border-radius:12px; border:1px solid #bfdbfe; text-align:left;">
                     <h4 style="margin:0 0 15px 0; color:var(--primary); text-align:center; font-size:16px;">📱 Tag #${tagVal} is Active</h4>
-                    <p style="margin:0 0 8px 0; color:var(--text); strong>Customer:</strong> ${t.name}</p>
+                    <p style="margin:0 0 8px 0; color:var(--text);"><strong>Customer:</strong> ${t.name}</p>
                     ${generateSmartStatusHTML(t)}
                     <div style="display:flex; gap:10px; margin-top:15px;">
                         <button onclick="startEdit('${t.id}')" style="flex:1; background:var(--bg); color:var(--text); border:1px solid var(--border); box-shadow:none;">Edit Data</button>
@@ -1887,7 +1880,6 @@ document.getElementById('tokenNum').addEventListener('input', (e) => {
                     </div>
                 </div>`;
         } else {
-            // New Ticket
             f.style.display = 'block'; 
             const p = secureTagsData[tagVal]; 
             document.getElementById('displayPin').innerText = p || "UNREGISTERED"; 
@@ -1932,46 +1924,137 @@ document.getElementById('tokenNum').addEventListener('input', (e) => {
     };
 
     let html5QrCode = null;
+
+    // Corrected closeScanner logic bound globally
+    const closeScanner = () => {
+        if (html5QrCode) {
+            if (html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('modalScanner').style.display = 'none';
+                }).catch(err => {
+                    console.error("Failed to stop scanner stream:", err);
+                    document.getElementById('modalScanner').style.display = 'none';
+                });
+            } else {
+                document.getElementById('modalScanner').style.display = 'none';
+            }
+        } else {
+            document.getElementById('modalScanner').style.display = 'none';
+        }
+    };
+    window.closeScanner = closeScanner;
+
     window.openScanner = () => { 
         document.getElementById('modalScanner').style.display = 'flex'; 
         
-        if (html5QrCode) {
-            try { html5QrCode.clear(); } catch(e){}
+        // Prevent duplicate instances to stop element binding conflict errors
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader"); 
         }
         
-        html5QrCode = new Html5Qrcode("reader"); 
-        
-        // Start directly with back camera constraints - bypasses permission enumeration blocks on mobile browsers
-        html5QrCode.start(
-            { facingMode: "environment" }, 
-            { fps: 10, qrbox: { width: 250, height: 250 } }, 
-            onScanSuccess
-        ).catch(err => {
-            console.warn("Direct constraints start failed, using fallback enumeration...", err);
-            // Fallback: enumerate devices if constraint start fails
-            Html5Qrcode.getCameras().then(devices => {
-                if (devices && devices.length) {
-                    let camId = devices[0].id; 
-                    for (let i = 0; i < devices.length; i++) { 
-                        if (devices[i].label.toLowerCase().includes("back") || devices[i].label.toLowerCase().includes("environment")) { 
-                            camId = devices[i].id; 
-                            break; 
-                        } 
-                    }
-                    html5QrCode.start(camId, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess).catch(e => { 
-                        alert("Camera blocked or failed to initialize."); 
-                        closeScanner(); 
-                    });
-                } else { 
-                    alert("No cameras detected on this device."); 
-                    closeScanner(); 
+        Html5Qrcode.getCameras().then(devices => {
+            if (devices && devices.length) {
+                let camId = devices[0].id; 
+                for (let i = 0; i < devices.length; i++) { 
+                    if (devices[i].label.toLowerCase().includes("back") || devices[i].label.toLowerCase().includes("environment")) { 
+                        camId = devices[i].id; 
+                        break; 
+                    } 
                 }
-            }).catch(e => { 
-                alert("Camera permission denied or scanner blocked."); 
+                html5QrCode.start(camId, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess).catch(err => { 
+                    alert("Scanner failed to start."); 
+                    closeScanner(); 
+                });
+            } else { 
+                alert("No cameras found."); 
+                closeScanner(); 
+            }
+        }).catch(err => { 
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess).catch(e => { 
+                alert("Scanner blocked."); 
                 closeScanner(); 
             }); 
         }); 
     };
+
+    function generateSmartStatusHTML(t) { 
+        let oStr="", rStr="", cStr=""; 
+        const bld = (l, tq, cq) => { 
+            let r=(tq||0)-(cq||0); 
+            if(tq>0) oStr+=`${tq}${l} `; 
+            if(cq>0) cStr+=`${cq}${l} `; 
+            if(r>0) rStr+=`${r}${l} `; 
+        }; 
+        bld('📱',t.ph,t.colPh); 
+        bld('🔋',t.pb,t.colPb); 
+        bld('🔌F',t.chFull,t.colChFull); 
+        bld('〰️U',t.chUsb,t.colChUsb); 
+        bld('🔌H',t.chHead,t.colChHead); 
+        bld('🔌L',t.ch,t.colCh); 
+        
+        let html = `<p style="margin:0 0 5px 0; font-size:13px; color:var(--text-muted);"><strong>Total Logged:</strong> ${oStr}</p>`; 
+        if(cStr!=="") html+=`<p style="margin:0 0 5px 0; font-size:13px; color:var(--success);"><strong>✅ Collected:</strong> ${cStr}</p>`; 
+        if(rStr!=="") html+=`<p style="margin:0 0 10px 0; font-size:15px; color:var(--text);"><strong>${t.shelved?'<span style="color:var(--success);">📦 ON SHELF (Ready)</span>':(t.shelfPh||t.shelfPb||t.shelfOt?'<span style="color:var(--warning);">⏳ PARTIALLY READY</span>':'<span style="color:var(--primary);">⚡ CHARGING</span>')}:</strong> <b>${rStr}</b></p>`; 
+        return html; 
+    }
+
+    function onScanSuccess(text) { 
+        playBeep(); 
+        closeScanner(); 
+        
+        let tag = text; 
+        scannedPinMemory = ""; 
+        
+        if(text.includes('track=')) {
+            tag = text.split('track=')[1].split('&')[0];
+        } else if(text.startsWith('http')) {
+            alert("⚠️ Invalid Tag Scanned!\nThis QR code is a generic website link, it does not have a Tag Number attached to it.");
+            return;
+        } else if(text.includes(':')) {
+            let p = text.split(':'); 
+            tag = p[0]; 
+            scannedPinMemory = p[1];
+        }
+        
+        tag = tag.replace(/\D/g, ''); 
+        if (tag === "") { 
+            alert("⚠️ Could not read a valid Tag Number from this QR code."); 
+            return; 
+        }
+        
+        const t = ticketsData.find(x => String(x.tag) === tag && !x.collected); 
+        if (t) {
+            let photoArray = t.photos || (t.photo ?[t.photo] :[]); 
+            let imgHTML = '';
+            
+            if(photoArray.length > 0) { 
+                imgHTML = '<div style="display:flex; gap:10px; overflow-x:auto; margin-bottom:15px; padding-bottom:5px;">'; 
+                photoArray.forEach(img => { 
+                    imgHTML += `<img src="${img}" style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:1px solid var(--border); flex-shrink:0;">`; 
+                }); 
+                imgHTML += '</div>'; 
+            }
+            
+            document.getElementById('scanMatchDetails').innerHTML = `${imgHTML}<p style="margin:0 0 8px 0;"><strong>Customer:</strong> ${t.name}</p><p style="margin:0 0 8px 0;"><strong>Tag:</strong> #${t.tag}</p>${generateSmartStatusHTML(t)}<p style="margin:0 0 5px 0; font-size:14px; color:var(--text-muted); font-weight:600;"><strong>Amount:</strong> ₦${t.price}</p>`; 
+            
+            document.getElementById('btnScanCollect').onclick = () => { closeModal('modalScanMatch'); openCollect(t.id, true); }; 
+            document.getElementById('btnScanEdit').onclick = () => { closeModal('modalScanMatch'); startEdit(t.id); }; 
+            document.getElementById('modalScanMatch').style.display = 'flex'; 
+            return; 
+        } 
+
+        if (window.pendingQueue) {
+            const pending = window.pendingQueue.find(x => String(x.tag) === tag);
+            if (pending) {
+                window.acceptDropoff(pending.docId, pending.tag, pending.name, pending.phone, pending.ph, pending.pb, pending.chFull, pending.chUsb, pending.chHead);
+                return;
+            }
+        }
+
+        const inp = document.getElementById('tokenNum'); 
+        inp.value = tag; 
+        inp.dispatchEvent(new Event('input')); 
+    }
 
     function allocateSockets(req) { 
         let u = new Set(); 
@@ -2213,7 +2296,7 @@ document.getElementById('tokenNum').addEventListener('input', (e) => {
             isLoyaltyFree: window.isFreeEligible,
             smartRates: dynamicRates
         };
-    try { 
+        try { 
             if (!editId && payStatusSelection === 'Wallet' && finalPrice > 0) {
                 const currentBal = walletsData[phoneNum].balance;
                 await setDoc(doc(db, `shops/${currentShopId}/wallets`, phoneNum), { balance: currentBal - finalPrice }, { merge: true });
@@ -2229,7 +2312,7 @@ document.getElementById('tokenNum').addEventListener('input', (e) => {
                 data.hasUnread = false; data.onTheWay = false; data.onTheWayAck = false; 
                 
                 await addDoc(collection(db, "tickets"), data); 
-                window.cancelEdit(); // <--- This closes the form automatically!
+                window.cancelEdit(); 
                 
                 if(mismatchMsg && phoneNum.length >= 10) {
                     let cleanPhone = phoneNum.replace(/\D/g, ''); 
@@ -2584,7 +2667,6 @@ document.getElementById('tokenNum').addEventListener('input', (e) => {
         let rangeEnd = null;
         let isRangeSearch = false;
 
-        // Date Range Search Logic ("DD/MM to DD/MM")
         const rangeRegex = /(\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?)\s+to\s+(\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?)/i;
         const match = term.match(rangeRegex);
         
@@ -2785,7 +2867,6 @@ document.getElementById('tokenNum').addEventListener('input', (e) => {
         let hasPhoto = (photoArray.length > 0 || (t.devicePhotos && Object.keys(t.devicePhotos).length > 0)) ? '📸 ' : ''; 
         let photoHtml = '';
         
-        // General Photos Render
         if(photoArray.length > 0) { 
             photoHtml = '<div style="display:flex; gap:8px; overflow-x:auto; margin-bottom:15px; padding-bottom:5px;">'; 
             photoArray.forEach(img => { 
@@ -3003,7 +3084,6 @@ document.getElementById('tokenNum').addEventListener('input', (e) => {
         const el = document.getElementById(id);
         if(el) el.style.display = 'none';
         
-        // Prevent camera from staying on in the background if the user cancels out of the collect modal
         if (id === 'mod-collect' && pickupCamStream) {
             pickupCamStream.getTracks().forEach(t => t.stop());
             pickupCamStream = null;
@@ -3011,17 +3091,16 @@ document.getElementById('tokenNum').addEventListener('input', (e) => {
             if(document.getElementById('btnStartPickupCam')) document.getElementById('btnStartPickupCam').style.display = 'block';
         }
     };
-window.clearFormFieldsOnly = () => { 
+
+    window.clearFormFieldsOnly = () => { 
         window.pendingClaim = null; 
         window.isFreeEligible = false; 
         if (typeof window.stopCam === 'function') window.stopCam(); 
         
-        // 🌟 FIX: Clear General Photos array AND wipe them from the screen!
         currentPhotos = []; 
         if(document.getElementById('photoGallery')) document.getElementById('photoGallery').innerHTML = '';
         if(document.getElementById('btnStartCam')) document.getElementById('btnStartCam').innerText = '📷 Open Camera';
         
-        // Clear the specific device photos and percentages from memory
         window.devicePhotosMap = {}; 
         window.editPctPh = [];
         window.editPctPb = [];
@@ -3049,92 +3128,73 @@ window.clearFormFieldsOnly = () => {
         if(document.getElementById('staffChatHistory')) document.getElementById('staffChatHistory').innerHTML=''; 
         if(document.getElementById('staffChatInput')) document.getElementById('staffChatInput').value=''; 
         
-        // Visually clear the specific device sync area
         if(document.getElementById('dynamicSyncArea')) document.getElementById('dynamicSyncArea').innerHTML = '';
     };
     
-  window.cancelEdit = () => {
-    document.getElementById('extendedForm').style.display = 'none';
-    editId = null;
-    document.getElementById('cancelEditBtn').style.display = 'none';
-    document.getElementById('formAction').innerText = "Start a New Ticket";
-    document.getElementById('saveBtn').innerText = "Create Ticket"; 
-    document.getElementById('tokenNum').value = '';
-    document.getElementById('editBgOverlay').style.display = 'none';
-    document.getElementById('formCard').classList.remove('form-modal-mode');
-    document.getElementById('staffChatArea').style.display = 'none';
-    document.body.style.overflow = '';
-    
-    // Call the correct clearing function instead of resetForm
-    window.clearFormFieldsOnly();
-}; 
+    window.cancelEdit = () => {
+        document.getElementById('extendedForm').style.display = 'none';
+        editId = null;
+        document.getElementById('cancelEditBtn').style.display = 'none';
+        document.getElementById('formAction').innerText = "Start a New Ticket";
+        document.getElementById('saveBtn').innerText = "Create Ticket"; 
+        document.getElementById('tokenNum').value = '';
+        document.getElementById('editBgOverlay').style.display = 'none';
+        document.getElementById('formCard').classList.remove('form-modal-mode');
+        document.getElementById('staffChatArea').style.display = 'none';
+        document.body.style.overflow = '';
+        
+        window.clearFormFieldsOnly();
+    }; 
 
     window.startEdit = (id) => {
-    const t = ticketsData.find(x => x.id === id);
-    if (!t) return;
-    
-    editId = id;
-    document.getElementById('editBgOverlay').style.display = 'block';
-    document.getElementById('formCard').classList.add('form-modal-mode');
-    
-    document.getElementById('formAction').innerText = `✏️ Editing Ticket #${t.tag}`;
-    
-    // 👇 ADD THIS LINE TO ENSURE THE SAVE BUTTON IS SHOWN
-    document.getElementById('saveBtn').style.display = 'block'; 
-    
-    document.getElementById('saveBtn').innerText = "💾 Save Changes";
-    document.getElementById('cancelEditBtn').style.display = 'block';
-    document.getElementById('extendedForm').style.display = 'block';
-    
-    // Populate fields with existing data
-    document.getElementById('custName').value = t.name || '';
-    document.getElementById('custPhone').value = t.phone || '';
-    document.getElementById('tokenNum').value = t.tag || '';
-    document.getElementById('phCount').value = t.ph || ''; 
-    document.getElementById('pbCount').value = t.pb || ''; 
-    document.getElementById('chFullCount').value = t.chFull || ''; 
-    document.getElementById('chUsbCount').value = t.chUsb || ''; 
-    document.getElementById('chHeadCount').value = t.chHead || ''; 
-    document.getElementById('otCount').value = t.ot || ''; 
-    document.getElementById('otPrice').value = t.otPrice || ''; 
-    document.getElementById('retailDesc').value = t.retailDesc || ""; 
-    document.getElementById('retailCost').value = t.retailCost || '';
-    
-    // Store original percentages to prevent UI from overriding them
-    window.editPctPh = t.pctPh || [];
-    window.editPctPb = t.pctPb ||[];
-    window.editPctOt = t.pctOt ||[];
-    
-    document.querySelectorAll('.cond-chk').forEach(c => {
-        c.checked = (t.cond && t.cond.includes(c.value));
-    });
+        const t = ticketsData.find(x => x.id === id);
+        if (!t) return;
+        
+        editId = id;
+        document.getElementById('editBgOverlay').style.display = 'block';
+        document.getElementById('formCard').classList.add('form-modal-mode');
+        
+        document.getElementById('formAction').innerText = `✏️ Editing Ticket #${t.tag}`;
+        document.getElementById('saveBtn').style.display = 'block'; 
+        document.getElementById('saveBtn').innerText = "💾 Save Changes";
+        document.getElementById('cancelEditBtn').style.display = 'block';
+        document.getElementById('extendedForm').style.display = 'block';
+        
+        document.getElementById('custName').value = t.name || '';
+        document.getElementById('custPhone').value = t.phone || '';
+        document.getElementById('tokenNum').value = t.tag || '';
+        document.getElementById('phCount').value = t.ph || ''; 
+        document.getElementById('pbCount').value = t.pb || ''; 
+        document.getElementById('chFullCount').value = t.chFull || ''; 
+        document.getElementById('chUsbCount').value = t.chUsb || ''; 
+        document.getElementById('chHeadCount').value = t.chHead || ''; 
+        document.getElementById('otCount').value = t.ot || ''; 
+        document.getElementById('otPrice').value = t.otPrice || ''; 
+        document.getElementById('retailDesc').value = t.retailDesc || ""; 
+        document.getElementById('retailCost').value = t.retailCost || '';
+        
+        window.editPctPh = t.pctPh || [];
+        window.editPctPb = t.pctPb ||[];
+        window.editPctOt = t.pctOt ||[];
+        
+        document.querySelectorAll('.cond-chk').forEach(c => {
+            c.checked = (t.cond && t.cond.includes(c.value));
+        });
 
-    currentPhotos = t.photos || (t.photo ? [t.photo] :[]);
-    window.devicePhotosMap = t.devicePhotos || {};
-    window.renderPhotoGallery();
-    
-    // Load Internal Chat History properly formatted
-    // Load Internal Chat History properly formatted
-    // Load Internal Chat History properly formatted
-    document.getElementById('staffChatArea').style.display = 'block';
-    window.renderStaffChat(t.chats || [], t.id);
-    
-    // 🌟 FIX: Automatically clear the "Unread Message" badge when staff opens it!
-    if (t.hasUnread) {
-        updateDoc(doc(db, "tickets", id), { hasUnread: false }).catch(e => console.error(e));
-    }
-    
-    // 🌟 FIX: Automatically clear the "Unread Message" badge when staff opens it!
-    if (t.hasUnread) {
-        updateDoc(doc(db, "tickets", id), { hasUnread: false }).catch(e => console.error(e));
-    }
-    
-    // Recalculate values and render dynamic sync inputs
-    window.autoCalc();
-    
-    // Scroll to the top of the form for easy editing
-    document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-};
+        currentPhotos = t.photos || (t.photo ? [t.photo] :[]);
+        window.devicePhotosMap = t.devicePhotos || {};
+        window.renderPhotoGallery();
+        
+        document.getElementById('staffChatArea').style.display = 'block';
+        window.renderStaffChat(t.chats || [], t.id);
+        
+        if (t.hasUnread) {
+            updateDoc(doc(db, "tickets", id), { hasUnread: false }).catch(e => console.error(e));
+        }
+        
+        window.autoCalc();
+        document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
 
     // --- REVERT COLLECTION FUNCTION ---
     window.revertCollection = async (id) => {
@@ -3186,13 +3246,12 @@ window.clearFormFieldsOnly = () => {
         btn.disabled = false;
     };
 
-   window.printSecureTags = async () => {
+    window.printSecureTags = async () => {
         const s = +(document.getElementById('tagStart').value) || 1; 
         const c = +(document.getElementById('tagCount').value) || 5; 
         const p = currentShopData.plan || 'free'; 
         const maxTags = PLAN_LIMITS[p].tags;
         
-        // 🌟 FIX: Strict Plan Enforcement
         if ((s + c - 1) > maxTags) { 
             alert(`🔒 PLAN LIMIT REACHED!\n\nYour shop is currently on the ${p.toUpperCase()} Plan, which only allows you to generate up to Tag #${maxTags}.\n\nPlease ask the Admin to upgrade your plan to generate more tags.`); 
             return; 
@@ -3261,8 +3320,9 @@ window.clearFormFieldsOnly = () => {
             btn.disabled=false; 
         }
     };
+
     // --- DOWNLOAD PRINT PREVIEW AS IMAGE ---
-window.downloadImage = () => { 
+    window.downloadImage = () => { 
         const printArea = document.getElementById('receiptPreview'); 
         html2canvas(printArea, { scale: 2, useCORS: true, allowTaint: true }).then(canvas => { 
             const link = document.createElement('a'); 
@@ -3282,8 +3342,6 @@ window.downloadImage = () => {
         }); 
     };
     
-
   </script>
 </body>
 </html>
-
