@@ -23,7 +23,6 @@
         --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
     }
-    
     body { 
         font-family: 'Inter', sans-serif; 
         margin: 0; padding: 15px; 
@@ -32,16 +31,12 @@
         padding-bottom: 70px; display: flex; flex-direction: column; 
         align-items: center; justify-content: flex-start; min-height: 90vh; 
     }
-    
     .container { background: var(--surface); padding: 30px; border-radius: 16px; box-shadow: var(--shadow); width: 100%; max-width: 400px; text-align: center; margin-top: 20px; border: 1px solid var(--border);}
-    
     .auth-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
     .auth-box { background: var(--surface); padding: 40px 30px; border-radius: 16px; box-shadow: var(--shadow-lg); border: 1px solid var(--border); width: 90%; max-width: 380px; text-align: center; }
     .toggle-link { color: var(--primary); font-weight: 600; cursor: pointer; font-size: 14px; margin-top: 15px; display: inline-block; transition: 0.2s;}
     .toggle-link:hover { color: var(--primary-hover); text-decoration: underline; }
-
     #mainApp, #paywallScreen { width: 100%; max-width: 900px; }
-    
     .dash-row { display: flex; gap: 15px; margin-bottom: 20px; }
     .dash-card { flex: 1; background: var(--surface); padding: 20px; border-radius: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); text-align: center; transition: 0.3s; }
     .dash-card h4 { margin: 0 0 5px 0; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;}
@@ -49,12 +44,9 @@
     .d-green .dash-val { color: var(--success); }
     .d-blue .dash-val { color: var(--primary); }
     .d-purp .dash-val { color: #8b5cf6; }
-    
     .card { background: var(--surface); padding: 20px; border-radius: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); margin-bottom: 20px; }
     .settings-card { background: #fefce8; border: 1px solid #fef08a; }
-    
     h2, h3 { color: var(--text); margin: 0 0 15px 0; font-weight: 700; letter-spacing: -0.5px;}
-    
     input, select { 
         padding: 12px 16px; margin: 5px 0 15px 0; 
         border: 1px solid var(--border); border-radius: 10px; 
@@ -63,7 +55,6 @@
         transition: all 0.2s; font-family: 'Inter', sans-serif;
     }
     input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); background: #fff;}
-    
     button { 
         cursor: pointer; background-color: var(--primary); color: white; 
         border: none; font-weight: 600; border-radius: 10px;
@@ -72,63 +63,46 @@
     }
     button:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow);} 
     button:active { transform: translateY(0); }
-    
     .btn-print { background-color: var(--dark); } 
     .btn-download { background-color: #8b5cf6; }
     .btn-edit { background-color: var(--bg); color: var(--text); border: 1px solid var(--border); box-shadow: none;} 
     .btn-edit:hover { background-color: #e2e8f0; }
     .btn-shelf { background-color: var(--text-muted); } 
-    
     .row { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
     .device-box { flex: 1; text-align: center; background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid var(--border); }
     .device-box label { font-size: 11px; display: block; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px;}
     .device-box input { margin: 0; text-align: center; padding: 8px; font-weight: bold;}
-    
     .ticket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 15px; }
     .ticket { border: 1px solid var(--border); padding: 16px; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;}
     .ticket::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary); }
-    
     .timer-area { background: #f1f5f9; padding: 12px; border-radius: 8px; margin: 12px 0; font-size: 14px; display: flex; justify-content: space-between; align-items: center; font-weight: 500;}
     .time-val { font-family: 'ui-monospace', 'SFMono-Regular', Menlo, Monaco, Consolas, monospace; font-size: 16px; font-weight: 700; color: var(--text); }
     .time-val.danger { color: var(--danger); animation: pulse 2s infinite; }
-    
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-    
     .code-badge { background: var(--text); color: #fff; padding: 3px 8px; border-radius: 6px; font-family: monospace; font-size: 13px; font-weight: 700; }
-    
     .modal { display: none; position: fixed; z-index: 200; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box;}
     .modal-content { background: var(--surface); padding: 24px; border-radius: 16px; box-shadow: var(--shadow-lg); width: 100%; max-width: 420px; max-height: 85vh; overflow-y: auto; overflow-x: hidden; border: 1px solid rgba(255,255,255,0.1);}
-    
     .status-bar { position: fixed; bottom: 0; left: 0; width: 100%; padding: 8px; text-align: center; font-size: 12px; font-weight: 700; z-index: 100; letter-spacing: 0.5px;}
     .status-bar.on { background: var(--success); color: white; } .status-bar.off { background: var(--danger); color: white; }
-    
     #receiptPreview { font-family: 'Inter', sans-serif; text-align: center; border: 1px solid var(--border); border-radius: 8px; padding: 15px; background: #fff; color: black; overflow-x: auto; }
-    
     .pin-display-box { background: #f8fafc; padding: 15px; text-align: center; border-radius: 10px; margin: 15px 0; font-weight: 600; border: 1px dashed var(--border); color: var(--text); }
     .pin-text { font-family: monospace; font-size: 24px; color: var(--primary); letter-spacing: 3px; font-weight: 900;}
-    
     .verify-box { margin: 15px 0; padding: 15px; background: #fefce8; border: 1px solid #fef08a; border-radius: 10px; text-align: center; }
     .socket-display { font-size: 16px; font-weight: 700; color: #8b5cf6; padding: 12px; background: #f5f3ff; border-radius: 10px; margin-top: 10px; text-align: center; border: 1px solid #ede9fe; }
-    
     #reader { width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);} #reader video { object-fit: cover; }
-    
     .chat-bubble { padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; max-width: 85%; word-wrap: break-word; clear: both; font-size: 14px; position: relative;}
     .chat-c { background: var(--primary); color: white; float: right; border-bottom-right-radius: 4px; }
     .chat-s { background: #f1f5f9; color: var(--text); float: left; border-bottom-left-radius: 4px; border: 1px solid var(--border);}
     .chat-clear { clear: both; }
-    
     .plan-badge { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; margin-left: 10px; letter-spacing: 0.5px;}
     .plan-free { background: #f1f5f9; color: var(--text-muted); }
     .plan-basic { background: #dbeafe; color: #1e40af; }
     .plan-premium { background: #fef08a; color: #854d0e; }
-
     #editBgOverlay { display: none; position: fixed; z-index: 199; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px);}
    .form-modal-mode { position: fixed !important; z-index: 200 !important; left: 50% !important; top: 3% !important; transform: translateX(-50%) !important; width: 90% !important; max-width: 450px !important; max-height: 94vh !important; overflow-y: auto !important; margin: 0 !important; box-shadow: var(--shadow-lg) !important; padding: 25px 25px 50px 25px !important; }
-
     .header-actions button {
         padding: 8px 14px; border-radius: 8px; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; box-shadow: none; border: 1px solid transparent;
     }
-    
     @media print {
         @page { size: A3 portrait; margin: 10mm; }
         body * { visibility: hidden; } #printArea, #printArea * { visibility: visible; }
@@ -279,6 +253,51 @@
         <div class="dash-card d-purp"><h4>Active Items</h4><div class="dash-val" id="valCount">0</div></div>
       </div>
 
+      <!-- NEW: CHARGING INTELLIGENCE DASHBOARD -->
+      <details class="card" id="intelligenceDashboard" style="border-color: var(--primary);">
+          <summary style="font-weight:700; cursor:pointer; color: var(--primary); font-size: 16px; list-style: none; display: flex; align-items: center; justify-content: space-between;">
+              <span>🧠 Charging Intelligence Insights</span>
+              <span style="font-size:11px; background:#dbeafe; color:#1e40af; padding: 2px 6px; border-radius: 4px;">ACTIVE</span>
+          </summary>
+          <div style="padding-top:20px;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                  <div class="dash-card" style="background: #eff6ff; border-color: #bfdbfe; padding:15px;">
+                      <h4 style="color: #1e40af; font-size:11px;">Returning Customers</h4>
+                      <div class="dash-val" id="intelReturningCust" style="color: #1e40af; font-size:20px;">0</div>
+                  </div>
+                  <div class="dash-card" style="background: #f0fdf4; border-color: #bbf7d0; padding:15px;">
+                      <h4 style="color: #15803d; font-size:11px;">Returning Devices</h4>
+                      <div class="dash-val" id="intelReturningDev" style="color: #15803d; font-size:20px;">0</div>
+                  </div>
+                  <div class="dash-card" style="background: #faf5ff; border-color: #e9d5ff; padding:15px;">
+                      <h4 style="color: #7e22ce; font-size:11px;">Avg Charge Duration</h4>
+                      <div class="dash-val" id="intelAvgTime" style="color: #7e22ce; font-size:20px;">0m</div>
+                  </div>
+                  <div class="dash-card" style="background: #fffbeb; border-color: #fef08a; padding:15px;">
+                      <h4 style="color: #b45309; font-size:11px;">Today's Avg duration</h4>
+                      <div class="dash-val" id="intelTodayAvgTime" style="color: #b45309; font-size:20px;">0m</div>
+                  </div>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom: 10px; font-size:14px;">
+                  <div style="background:#f8fafc; padding:15px; border-radius:12px; border:1px solid var(--border);">
+                      <h4 style="margin:0 0 10px 0; font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:700;">📈 Device Trends & Speed Records</h4>
+                      <p style="margin:5px 0;"><b>Most Charged Model:</b> <span id="intelMostChargedModel" style="font-weight:600; color:var(--text);">N/A</span></p>
+                      <p style="margin:5px 0;"><b>Fastest Charging Phone:</b> <span id="intelFastestPhone" style="font-weight:600; color:var(--success);">N/A</span></p>
+                      <p style="margin:5px 0;"><b>Slowest Charging Phone:</b> <span id="intelSlowestPhone" style="font-weight:600; color:var(--danger);">N/A</span></p>
+                  </div>
+                  <div style="background:#f8fafc; padding:15px; border-radius:12px; border:1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;">
+                      <h4 style="margin:0 0 10px 0; font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:700;">💾 Safety & Backup Tools</h4>
+                      <p style="font-size:12px; color:var(--text-muted); margin:0 0 10px 0;">Download completed sessions or restore from a JSON backup file securely.</p>
+                      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                          <button onclick="window.backupChargingHistory()" style="background:var(--dark); font-size:12px; padding:8px 12px; flex:1;">📥 Backup JSON</button>
+                          <button onclick="window.triggerRestoreChargingHistory()" style="background:var(--primary); font-size:12px; padding:8px 12px; flex:1;">📤 Restore JSON</button>
+                          <input type="file" id="restoreFile" style="display:none;" onchange="window.restoreChargingHistory(event)">
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </details>
+
       <div id="pendingDropoffsArea"></div>
 
       <!-- Analytics Dashboard -->
@@ -307,6 +326,9 @@
               </div>
           </div>
       </details>
+
+      <!-- NEW: DYNAMIC INTELLIGENCE SYSTEM CARD (TRIPPED ON RETURNING DEVICE MATCH) -->
+      <div id="intelligentHistoryCard" style="display:none; margin-bottom:15px; transition: all 0.3s ease;"></div>
 
       <!-- Ticket Creation Form -->
       <div class="card" id="formCard">
@@ -346,6 +368,10 @@
                     <option value="Wallet">Wallet</option>
                 </select>
             </div>
+
+            <!-- Note: brand/model datalists are populated globally inside pastBrands and pastModels datalists. Details now entered per-device under Dynamic Sync below -->
+            <datalist id="pastBrands"></datalist>
+            <datalist id="pastModels"></datalist>
             
             <div style="background:#fef2f2; padding:15px; border-radius:12px; margin:15px 0; border: 1px solid #fecaca;">
                 <label style="font-size:12px; font-weight:700; color:#b91c1c; text-transform:uppercase; margin-bottom:8px; display:block;">⚠️ Device Condition Check</label>
@@ -391,9 +417,9 @@
                 <div class="device-box" style="flex:1; background:#f0fdf4; border:2px solid #bbf7d0;"><label style="color:#166534;">Amount Paid (₦)</label><input type="number" id="amtPaidInput" value="0" min="0" style="color:#166534; font-size: 22px; background: transparent; border:none; margin:0; padding:0;"></div>
             </div>
 
-            <!-- 🔋 Individual Battery Sync Update & Device Specific Photos -->
+            <!-- 🔋 Individual Battery Sync Update, DEVICE SPECS & Device Specific Photos -->
             <div style="background:#eff6ff; padding:15px; border-radius:12px; margin-top:15px; border:1px solid #bfdbfe;">
-                <label style="font-size:12px; font-weight:700; color:#1e40af; text-transform:uppercase; display:block; margin-bottom:10px;">🔋 Specific Device Sync & Photos</label>
+                <label style="font-size:12px; font-weight:700; color:#1e40af; text-transform:uppercase; display:block; margin-bottom:10px;">🔋 Specific Device Sync, Specs & Photos</label>
                 <div id="dynamicSyncArea" style="display: grid; gap: 10px;"></div>
                 <div style="margin-top:15px;">
                     <label style="font-size:11px; font-weight:700; color:#1e40af; text-transform:uppercase; display:block; margin-bottom:5px;">Extra Device Notes</label>
@@ -420,6 +446,37 @@
       <!-- Active Tickets Area -->
       <h3 style="margin-top: 30px; font-size: 16px; color: var(--text-muted); text-transform: uppercase;">Charging Now (<span id="countActive">0</span>)</h3>
       <div id="listActive" class="ticket-grid">Loading shop database...</div>
+
+      <!-- NEW: CHARGING INTELLIGENCE PAGE (TAB-STYLE ACCORDION) -->
+      <details class="card" style="margin-bottom: 30px; margin-top: 25px; background: transparent; border: none; box-shadow: none; padding: 0;">
+          <summary style="background: var(--primary); color: white; padding: 15px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between;">
+              <span>🧠 Charging Intelligence Logs & Trends</span>
+              <span style="font-size: 12px; background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px;">VIEW DATA</span>
+          </summary>
+          <div style="padding-top:15px; background: var(--surface); border: 1px solid var(--border); border-radius:12px; padding:20px; margin-top:10px;">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                  <input type="text" id="intelSearchQuery" placeholder="Search by Customer, Phone Model, Ticket ID..." oninput="window.renderIntelHistory()" style="flex: 2; min-width: 200px; background: var(--bg); margin:0;">
+                  <select id="intelSortBy" onchange="window.renderIntelHistory()" style="flex: 1; min-width: 120px; background: var(--bg); margin:0;">
+                      <option value="recent">Most Recent</option>
+                      <option value="longest">Longest Sessions</option>
+                      <option value="fastest">Fastest Sessions</option>
+                  </select>
+              </div>
+              
+              <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+                  <div style="flex: 1; min-width: 250px; background: var(--bg); padding: 15px; border-radius: 10px; border: 1px solid var(--border);">
+                      <h4 style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight:700;">📊 Intelligence Summary</h4>
+                      <div id="intelTrendsStats" style="font-size:13px; line-height: 1.6;"></div>
+                  </div>
+                  <div style="flex: 1.5; min-width: 250px; background: var(--bg); padding: 15px; border-radius: 10px; border: 1px solid var(--border); text-align: center;">
+                      <h4 style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight:700;">📈 Charging Durations (Last 10 completed)</h4>
+                      <canvas id="intelSessionsChart" style="max-height: 160px; width: 100%;"></canvas>
+                  </div>
+              </div>
+
+              <div id="intelHistoryList" class="ticket-grid"></div>
+          </div>
+      </details>
 
       <!-- Search History -->
       <details class="card" style="margin-bottom: 30px; margin-top: 25px; background: transparent; border: none; box-shadow: none; padding: 0;">
@@ -561,6 +618,12 @@
                 </div>
             </div>
 
+            <!-- NEW: BATTERY PERCENT AT COLLECTION FOR INTELLIGENT TRAINING -->
+            <div style="background:#f8fafc; padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid var(--border);">
+                <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:5px;">🔋 Battery % at Collection</label>
+                <input type="number" id="colBatteryPct" value="100" min="0" max="100" style="background:#fff; margin:0; text-align:center; font-weight:bold; font-size:16px;">
+            </div>
+
             <div style="background:#f8fafc; padding:15px; border-radius:12px; margin-top:15px; border: 1px dashed var(--border);">
                 <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:10px;">📸 Capture "After" Photo</label>
                 <video id="pickupVideo" autoplay playsinline style="display:none; width:100%; max-height:200px; border-radius:8px; object-fit:cover; margin-bottom:10px;"></video>
@@ -645,6 +708,7 @@
     let currentPhotos =[];
     let deviceChartInstance = null;
     let hoursChartInstance = null;
+    let intelChartInstance = null; // NEW: Session Trends chart
 
     let ticketsData =[];
     let secureTagsData = {};
@@ -973,9 +1037,512 @@
         }
     };
 
-    // --- 6B. CUSTOMER HISTORY DETAILS LOGIC ---
+    // --- NEW: CHARGING HISTORY UTILS (LOCALSTORAGE & FIREBASE SYNC) ---
+    window.getChargingHistory = () => {
+        try {
+            return JSON.parse(localStorage.getItem(`starbite_charging_history_${currentShopId}`)) || [];
+        } catch(e) {
+            return [];
+        }
+    };
+
+    window.saveChargingHistory = (history) => {
+        localStorage.setItem(`starbite_charging_history_${currentShopId}`, JSON.stringify(history));
+    };
+
+    window.logCompletedSession = async (t, endPct = 100, notes = "") => {
+        const endTime = Date.now();
+        const startTime = t.baseTs || (t.jsDate ? t.jsDate.getTime() : endTime);
+        const duration = endTime - startTime;
+        
+        const history = window.getChargingHistory();
+        const sessionsToSave = [];
+        
+        if (t.devices) {
+            const processList = (list, type) => {
+                if (!list) return;
+                list.forEach((dev, idx) => {
+                    if (!dev.brand || !dev.model) return;
+                    sessionsToSave.push({
+                        id: `${t.id}_session_${type}_${idx}`,
+                        ticketId: t.id,
+                        custName: t.name || "Customer",
+                        custPhone: t.phone || "N/A",
+                        brand: dev.brand,
+                        model: dev.model,
+                        deviceId: `${t.phone}_${dev.brand.toLowerCase()}_${dev.model.toLowerCase()}`,
+                        batteryCap: dev.cap || 0,
+                        startPct: dev.startPct || 0,
+                        endPct: endPct,
+                        startTime: startTime,
+                        endTime: endTime,
+                        duration: duration,
+                        chargerType: type === 'pb' ? "P-Bank" : "Phone",
+                        notes: notes || t.deviceNotes || "",
+                        socket: (t.sockets && t.sockets.length > 0) ? t.sockets[0] : 0,
+                        cost: t.price || 0,
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                });
+            };
+            processList(t.devices.ph, 'ph');
+            processList(t.devices.pb, 'pb');
+            processList(t.devices.ot, 'ot');
+        } else if (t.brand && t.model) {
+            sessionsToSave.push({
+                id: `${t.id}_session`,
+                ticketId: t.id,
+                custName: t.name || "Customer",
+                custPhone: t.phone || "N/A",
+                brand: t.brand,
+                model: t.model,
+                deviceId: `${t.phone}_${t.brand.toLowerCase()}_${t.model.toLowerCase()}`,
+                batteryCap: t.batteryCap || 0,
+                startPct: t.phBasePct || 0,
+                endPct: endPct,
+                startTime: startTime,
+                endTime: endTime,
+                duration: duration,
+                chargerType: t.chFull > 0 ? "Full Charge" : (t.chUsb > 0 ? "USB Cable" : "Normal"),
+                notes: notes || t.deviceNotes || "",
+                socket: (t.sockets && t.sockets.length > 0) ? t.sockets[0] : 0,
+                cost: t.price || 0,
+                date: new Date().toISOString().split('T')[0]
+            });
+        }
+        
+        for (let sessionObj of sessionsToSave) {
+            if (!history.some(s => s.id === sessionObj.id)) {
+                history.push(sessionObj);
+            }
+            if (currentShopId) {
+                try {
+                    await setDoc(doc(db, `shops/${currentShopId}/charging_history`, sessionObj.id), sessionObj);
+                } catch(e) {
+                    console.error("Firebase sync pending:", e);
+                }
+            }
+        }
+        
+        window.saveChargingHistory(history);
+        window.updateIntelDashboard();
+        window.renderIntelHistory();
+    };
+
+    // --- NEW: LIVE COUNTDOWN ESTIMATES (DYNAMIC MULTI-DEVICE SUPPORT) ---
+    window.getDeviceEstimate = (t) => {
+        const history = window.getChargingHistory();
+        let longestMs = 150 * 60 * 1000; // default 2h 30m
+        
+        if (t.devices) {
+            const evaluateDevice = (dev, defaultFallbackMin) => {
+                if (!dev.brand || !dev.model) return;
+                const deviceId = `${t.phone}_${dev.brand.toLowerCase()}_${dev.model.toLowerCase()}`;
+                const sessions = history.filter(s => s.deviceId === deviceId);
+                let devDuration = defaultFallbackMin * 60 * 1000;
+                if (sessions.length > 0) {
+                    const durations = sessions.map(s => s.duration).filter(d => d > 0);
+                    if (durations.length > 0) {
+                        devDuration = durations.reduce((sum, d) => sum + d, 0) / durations.length;
+                    }
+                }
+                if (devDuration > longestMs) longestMs = devDuration;
+            };
+            
+            if (t.devices.ph) t.devices.ph.forEach(d => evaluateDevice(d, 150));
+            if (t.devices.pb) t.devices.pb.forEach(d => evaluateDevice(d, 600));
+            if (t.devices.ot) t.devices.ot.forEach(d => evaluateDevice(d, 150));
+        } else if (t.brand && t.model) {
+            let fallback = 150;
+            if (t.pb > 0 && (t.ph === 0 || t.ph === undefined)) fallback = 600;
+            const deviceId = `${t.phone}_${t.brand.toLowerCase()}_${t.model.toLowerCase()}`;
+            const sessions = history.filter(s => s.deviceId === deviceId);
+            if (sessions.length > 0) {
+                const durations = sessions.map(s => s.duration).filter(d => d > 0);
+                if (durations.length > 0) {
+                    longestMs = durations.reduce((sum, d) => sum + d, 0) / durations.length;
+                }
+            } else {
+                longestMs = fallback * 60 * 1000;
+            }
+        }
+        return longestMs;
+    };
+
+    setInterval(() => {
+        const boxes = document.querySelectorAll('.live-est-box');
+        const now = Date.now();
+        boxes.forEach(box => {
+            const id = box.id.split('-')[1];
+            const start = parseInt(box.dataset.start);
+            const duration = parseInt(box.dataset.duration);
+            const estimatedEnd = start + duration;
+            
+            const endStr = new Date(estimatedEnd).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+            const finishEl = document.getElementById(`est-finish-${id}`);
+            if (finishEl) finishEl.innerText = endStr;
+            
+            const remMs = estimatedEnd - now;
+            const remEl = document.getElementById(`est-rem-${id}`);
+            if (remEl) {
+                if (remMs <= 0) {
+                    remEl.innerText = "Completed! 🎉";
+                    remEl.style.color = "var(--success)";
+                } else {
+                    const totalSecs = Math.floor(remMs / 1000);
+                    const hrs = Math.floor(totalSecs / 3600);
+                    const mins = Math.floor((totalSecs % 3600) / 60);
+                    const secs = totalSecs % 60;
+                    remEl.innerText = `${hrs > 0 ? hrs + 'h ' : ''}${mins}m ${secs}s`;
+                    remEl.style.color = "var(--primary)";
+                }
+            }
+        });
+    }, 1000);
+
+    // --- NEW: RETURNING RECOGNITION POPUP (MULTI-DEVICE INTUITIVE SYSTEM) ---
+    window.checkIntelligentHistory = () => {
+        const phone = document.getElementById('custPhone').value.trim();
+        const container = document.getElementById('intelligentHistoryCard');
+        
+        if (!phone) {
+            container.style.display = 'none';
+            return;
+        }
+        
+        const history = window.getChargingHistory();
+        let matchesFound = [];
+        
+        const ph = +(document.getElementById('phCount').value || 0);
+        const pb = +(document.getElementById('pbCount').value || 0);
+        const ot = +(document.getElementById('otCount').value || 0);
+        
+        const gatherSpecs = (type, count) => {
+            for (let i = 0; i < count; i++) {
+                const brand = document.getElementById(`sync_brand_${type}_${i}`)?.value.trim() || '';
+                const model = document.getElementById(`sync_model_${type}_${i}`)?.value.trim() || '';
+                if (brand && model) {
+                    matchesFound.push({ type, brand, model });
+                }
+            }
+        };
+        gatherSpecs('ph', ph);
+        gatherSpecs('pb', pb);
+        gatherSpecs('ot', ot);
+        
+        if (matchesFound.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+        
+        let cardHTML = '';
+        matchesFound.forEach((m, idx) => {
+            const deviceId = `${phone}_${m.brand.toLowerCase()}_${m.model.toLowerCase()}`;
+            const deviceSessions = history.filter(s => s.deviceId === deviceId);
+            
+            if (deviceSessions.length === 0) return;
+            
+            const visits = deviceSessions.length;
+            const durations = deviceSessions.map(s => s.duration).filter(d => d > 0);
+            
+            const formatDurationStr = (ms) => {
+                if (!ms) return "N/A";
+                const totalMins = Math.floor(ms / 60000);
+                const h = Math.floor(totalMins / 60);
+                const m = totalMins % 60;
+                return h > 0 ? `${h}h ${m}m` : `${m}m`;
+            };
+            
+            let avgFullChargeTime = "N/A";
+            let minCharge = "N/A";
+            let maxCharge = "N/A";
+            let estFinishTodayStr = "N/A";
+            
+            if (durations.length > 0) {
+                const avgMs = durations.reduce((sum, d) => sum + d, 0) / durations.length;
+                avgFullChargeTime = formatDurationStr(avgMs);
+                minCharge = formatDurationStr(Math.min(...durations));
+                maxCharge = formatDurationStr(Math.max(...durations));
+                estFinishTodayStr = new Date(Date.now() + avgMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            deviceSessions.sort((a,b) => b.endTime - a.endTime);
+            const lastSession = deviceSessions[0];
+            const lastChargedDateStr = lastSession ? new Date(lastSession.endTime).toLocaleDateString() : "N/A";
+            
+            let confidence = 50;
+            let confidenceMsg = "Estimate based on one previous visit.";
+            if (visits > 5) {
+                confidence = 95;
+                confidenceMsg = "High confidence based on multiple previous visits.";
+            } else if (visits > 1) {
+                confidence = 70 + (visits * 5);
+                confidenceMsg = `Estimate based on ${visits} previous visits.`;
+            }
+            
+            cardHTML += `
+            <div class="card" style="background: #eff6ff; border: 2px solid #3b82f6; text-align: left; padding: 15px; border-radius: 12px; margin-bottom: 10px; box-shadow: var(--shadow);">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #bfdbfe; padding-bottom:5px; margin-bottom:10px;">
+                    <b style="color:#1e40af; font-size:13px;">🧠 Returning Device Recognized (#${idx+1})</b>
+                    <span style="font-size:11px; background:#3b82f6; color:white; padding:2px 8px; border-radius:12px; font-weight:bold;">${m.brand} ${m.model}</span>
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:5px; font-size:12px; color:var(--text);">
+                    <div><b>Customer:</b> ${lastSession.custName}</div>
+                    <div><b>Previous Visits:</b> ${visits}</div>
+                    <div><b>Last Charged:</b> ${lastChargedDateStr}</div>
+                    <div style="grid-column: 1 / -1; border-top:1px dashed #bfdbfe; margin-top:3px; padding-top:3px;"></div>
+                    <div><b>Avg Charge Duration:</b> <span style="color:#2563eb; font-weight:700;">${avgFullChargeTime}</span></div>
+                    <div><b>Fastest Session:</b> <span style="color:var(--success); font-weight:700;">${minCharge}</span></div>
+                    <div><b>Longest Session:</b> <span style="color:var(--danger); font-weight:700;">${maxCharge}</span></div>
+                    <div style="grid-column: 1 / -1; border-top:1px dashed #bfdbfe; margin-top:3px; padding-top:3px;"></div>
+                    <div style="grid-column: 1 / -1; font-size:13px; font-weight:bold; color:#1e40af;">
+                        Estimated Finish Today: <span style="font-size:15px; color:var(--success);">${estFinishTodayStr}</span>
+                        <br><span style="font-size:10px; font-weight:normal; color:var(--text-muted);">${confidenceMsg} (Confidence: ${confidence}%)</span>
+                    </div>
+                </div>
+            </div>`;
+        });
+        
+        if (cardHTML !== '') {
+            container.innerHTML = cardHTML;
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
+    };
+
+    // --- NEW: BACKUP & RESTORE UTILS ---
+    window.backupChargingHistory = () => {
+        const history = window.getChargingHistory();
+        const blob = new Blob([JSON.stringify(history, null, 2)], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `Starbite_Charging_Intelligence_Backup_${currentShopId}_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    window.triggerRestoreChargingHistory = () => {
+        document.getElementById('restoreFile').click();
+    };
+
+    window.restoreChargingHistory = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const parsed = JSON.parse(e.target.result);
+                if (!Array.isArray(parsed)) {
+                    alert("Invalid backup file. Must be a JSON array.");
+                    return;
+                }
+                const localHistory = window.getChargingHistory();
+                const mergedMap = {};
+                localHistory.forEach(s => { mergedMap[s.id] = s; });
+                parsed.forEach(s => { if (s.id) mergedMap[s.id] = s; });
+                
+                const mergedList = Object.values(mergedMap);
+                window.saveChargingHistory(mergedList);
+                
+                if (currentShopId) {
+                    for (let s of mergedList) {
+                        await setDoc(doc(db, `shops/${currentShopId}/charging_history`, s.id), s);
+                    }
+                }
+                
+                alert("✅ Charging intelligence logs restored and synchronized!");
+                window.updateIntelDashboard();
+                window.renderIntelHistory();
+            } catch(err) {
+                alert("Error restoring data: " + err.message);
+            }
+        };
+        reader.readAsText(file);
+    };
+
+    // --- NEW: RENDER INTELLIGENCE PANEL & TIMERS ---
+    window.updateIntelDashboard = () => {
+        const history = window.getChargingHistory();
+        
+        const custSessionCounts = {};
+        history.forEach(s => {
+            const k = s.custPhone || s.custName;
+            custSessionCounts[k] = (custSessionCounts[k] || 0) + 1;
+        });
+        document.getElementById('intelReturningCust').innerText = Object.values(custSessionCounts).filter(c => c > 1).length;
+        
+        const devSessionCounts = {};
+        history.forEach(s => { devSessionCounts[s.deviceId] = (devSessionCounts[s.deviceId] || 0) + 1; });
+        document.getElementById('intelReturningDev').innerText = Object.values(devSessionCounts).filter(c => c > 1).length;
+        
+        const durations = history.map(s => s.duration).filter(d => d > 0);
+        const avgMins = durations.length > 0 ? Math.round((durations.reduce((a,b)=>a+b, 0) / durations.length) / 60000) : 0;
+        document.getElementById('intelAvgTime').innerText = `${avgMins}m`;
+        
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todaySessions = history.filter(s => s.date === todayStr);
+        const todayDurations = todaySessions.map(s => s.duration).filter(d => d > 0);
+        const todayAvgMins = todayDurations.length > 0 ? Math.round((todayDurations.reduce((a,b)=>a+b, 0) / todayDurations.length) / 60000) : 0;
+        document.getElementById('intelTodayAvgTime').innerText = `${todayAvgMins}m`;
+        
+        const modelCounts = {};
+        history.forEach(s => {
+            const k = `${s.brand} ${s.model}`;
+            modelCounts[k] = (modelCounts[k] || 0) + 1;
+        });
+        let maxModel = "N/A";
+        let maxCount = 0;
+        Object.keys(modelCounts).forEach(m => {
+            if (modelCounts[m] > maxCount) {
+                maxCount = modelCounts[m];
+                maxModel = `${m} (${maxCount}x)`;
+            }
+        });
+        document.getElementById('intelMostChargedModel').innerText = maxModel;
+        
+        const deviceDurations = {};
+        history.forEach(s => {
+            if (s.duration > 0) {
+                const k = `${s.brand} ${s.model}`;
+                if (!deviceDurations[k]) deviceDurations[k] = [];
+                deviceDurations[k].push(s.duration);
+            }
+        });
+        
+        let fastestPhone = "N/A";
+        let minAvgMs = Infinity;
+        let slowestPhone = "N/A";
+        let maxAvgMs = -Infinity;
+        
+        Object.keys(deviceDurations).forEach(k => {
+            const avg = deviceDurations[k].reduce((a,b)=>a+b,0) / deviceDurations[k].length;
+            if (avg < minAvgMs) {
+                minAvgMs = avg;
+                fastestPhone = `${k} (~${Math.round(avg/60000)}m)`;
+            }
+            if (avg > maxAvgMs) {
+                maxAvgMs = avg;
+                slowestPhone = `${k} (~${Math.round(avg/60000)}m)`;
+            }
+        });
+        
+        document.getElementById('intelFastestPhone').innerText = fastestPhone;
+        document.getElementById('intelSlowestPhone').innerText = slowestPhone;
+
+        const brands = new Set(history.map(s => s.brand).filter(Boolean));
+        const models = new Set(history.map(s => s.model).filter(Boolean));
+        
+        const dlBrands = document.getElementById('pastBrands');
+        if (dlBrands) dlBrands.innerHTML = Array.from(brands).map(b => `<option value="${b}">`).join('');
+        const dlModels = document.getElementById('pastModels');
+        if (dlModels) dlModels.innerHTML = Array.from(models).map(m => `<option value="${m}">`).join('');
+    };
+
+    window.renderIntelHistory = () => {
+        const query = document.getElementById('intelSearchQuery').value.toLowerCase().trim();
+        const sortBy = document.getElementById('intelSortBy').value;
+        const historyList = document.getElementById('intelHistoryList');
+        
+        const history = window.getChargingHistory();
+        
+        let filtered = history.filter(s => {
+            return (s.custName || "").toLowerCase().includes(query) ||
+                   (s.custPhone || "").toLowerCase().includes(query) ||
+                   (s.ticketId || "").toLowerCase().includes(query) ||
+                   (s.brand || "").toLowerCase().includes(query) ||
+                   (s.model || "").toLowerCase().includes(query);
+        });
+        
+        if (sortBy === 'recent') {
+            filtered.sort((a,b) => b.endTime - a.endTime);
+        } else if (sortBy === 'longest') {
+            filtered.sort((a,b) => (b.duration || 0) - (a.duration || 0));
+        } else if (sortBy === 'fastest') {
+            filtered.sort((a,b) => (a.duration || 0) - (b.duration || 0));
+        }
+        
+        const visits = history.length;
+        const durations = history.map(s => s.duration).filter(d => d > 0);
+        const totalMins = durations.reduce((sum, d) => sum + d / 60000, 0);
+        const avgMins = visits > 0 ? Math.round(totalMins / visits) : 0;
+        
+        const firstVisit = history.length > 0 ? new Date(Math.min(...history.map(s => s.startTime))).toLocaleDateString() : "N/A";
+        const lastVisit = history.length > 0 ? new Date(Math.max(...history.map(s => s.endTime))).toLocaleDateString() : "N/A";
+        
+        document.getElementById('intelTrendsStats').innerHTML = `
+            <p style="margin:5px 0;"><b>Total Sessions:</b> ${visits}</p>
+            <p style="margin:5px 0;"><b>Average Duration:</b> ${avgMins} mins</p>
+            <p style="margin:5px 0;"><b>First Session:</b> ${firstVisit}</p>
+            <p style="margin:5px 0;"><b>Last Session:</b> ${lastVisit}</p>
+        `;
+        
+        historyList.innerHTML = filtered.map(s => {
+            const durationMins = Math.floor((s.duration || 0) / 60000);
+            return `
+            <div class="ticket" style="border-left-color: var(--primary); opacity: 0.95;">
+                <div style="display:flex; justify-content:space-between;">
+                    <b style="color:var(--text);">${s.custName}</b>
+                    <span style="font-size:11px; background:#bfdbfe; color:#1e40af; padding:2px 6px; border-radius:4px; font-weight:bold;">#${s.ticketId ? s.ticketId.substring(0,6) : 'N/A'}</span>
+                </div>
+                <div style="font-size:13px; color:var(--text); margin-top:8px;">
+                    <div><b>Device:</b> ${s.brand} ${s.model}</div>
+                    <div><b>Phone:</b> ${s.custPhone}</div>
+                    <div><b>Session:</b> ${s.startPct}% to ${s.endPct}%</div>
+                    <div><b>Duration:</b> ${durationMins} minutes</div>
+                    <div><b>Date:</b> ${new Date(s.endTime).toLocaleString()}</div>
+                </div>
+            </div>`;
+        }).join('') || '<p style="text-align:center; color:var(--text-muted); padding:20px; grid-column:1/-1;">No matching records found.</p>';
+        
+        window.renderIntelChart();
+    };
+
+    window.renderIntelChart = () => {
+        const history = window.getChargingHistory();
+        if (history.length === 0) return;
+        
+        const last10 = [...history].sort((a,b) => a.endTime - b.endTime).slice(-10);
+        const labels = last10.map(s => `${s.custName} (${s.brand})`);
+        const data = last10.map(s => Math.round((s.duration || 0) / 60000));
+        
+        const ctx = document.getElementById('intelSessionsChart');
+        if (!ctx) return;
+        
+        if (intelChartInstance) intelChartInstance.destroy();
+        
+        intelChartInstance = new Chart(ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Duration (Mins)',
+                    data: data,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    };
+
+    // --- ENRICHED CLIENT PROFILE ---
     window.viewCustomerHistory = (phone, name) => {
-        let custTickets =[];
+        const history = window.getChargingHistory();
+        const deviceSessions = history.filter(s => {
+            if (phone && phone.length > 5) return s.custPhone === phone;
+            return (s.custName || '').toLowerCase() === name.toLowerCase();
+        });
+        
+        let custTickets = [];
         if (phone && phone.length > 5) {
             custTickets = ticketsData.filter(t => t.phone === phone);
         } else {
@@ -995,7 +1562,7 @@
             let owed = t.price - amtPaid;
             if (owed > 0 && !t.debtSettled) totalOwes += owed;
             
-            let items =[];
+            let items = [];
             if(t.ph > 0) items.push(`${t.ph}📱`);
             if(t.pb > 0) items.push(`${t.pb}🔋`);
             if(t.chFull > 0) items.push(`${t.chFull}🔌Full`);
@@ -1025,12 +1592,41 @@
                 </div>
             </div>`;
         });
+
+        const ownedDevicesSet = new Set(deviceSessions.map(s => `${s.brand} ${s.model}`));
+        const ownedDevices = Array.from(ownedDevicesSet).join(', ') || "N/A";
+        const totalSessions = deviceSessions.length;
+        const dur = deviceSessions.map(s => s.duration).filter(d => d > 0);
+        const avgMins = dur.length > 0 ? Math.round((dur.reduce((a,b)=>a+b, 0) / dur.length) / 60000) : 0;
+        const lastVisitDate = deviceSessions.length > 0 ? new Date(Math.max(...deviceSessions.map(s => s.endTime))).toLocaleDateString() : "N/A";
+        
+        const ports = deviceSessions.map(s => s.socket).filter(p => p > 0);
+        const portCounts = {};
+        let favPort = "None";
+        let maxCount = 0;
+        ports.forEach(p => {
+            portCounts[p] = (portCounts[p] || 0) + 1;
+            if (portCounts[p] > maxCount) {
+                maxCount = portCounts[p];
+                favPort = `Socket #${p}`;
+            }
+        });
+
+        let intelPanelHTML = `
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px; margin-bottom: 20px; font-size:13px; color:var(--text); line-height:1.5;">
+            <h4 style="margin:0 0 10px 0; color:#1e40af; font-size:11px; text-transform:uppercase; font-weight:700;">🧠 Intelligence Customer Profile</h4>
+            <p style="margin:4px 0;"><b>Devices Owned:</b> ${ownedDevices}</p>
+            <p style="margin:4px 0;"><b>Total Sessions:</b> ${totalSessions}</p>
+            <p style="margin:4px 0;"><b>Avg Charging Duration:</b> ${avgMins} minutes</p>
+            <p style="margin:4px 0;"><b>Last Visit:</b> ${lastVisitDate}</p>
+            <p style="margin:4px 0;"><b>Favourite Socket:</b> ${favPort}</p>
+        </div>`;
         
         document.getElementById('custHistName').innerText = name;
         document.getElementById('custHistVisits').innerText = totalVisits;
         document.getElementById('custHistSpent').innerText = `₦${totalSpent.toLocaleString()}`;
         document.getElementById('custHistOwes').innerText = `₦${totalOwes.toLocaleString()}`;
-        document.getElementById('custHistList').innerHTML = html || '<p style="text-align:center; color:var(--text-muted);">No history found.</p>';
+        document.getElementById('custHistList').innerHTML = intelPanelHTML + (html || '<p style="text-align:center; color:var(--text-muted);">No history found.</p>');
         
         document.getElementById('modalCustomerHistory').style.display = 'flex';
     };
@@ -1167,6 +1763,23 @@
         onSnapshot(collection(db, `shops/${currentShopId}/wallets`), (snap) => {
             walletsData = {};
             snap.forEach(d => walletsData[d.id] = d.data());
+        });
+
+        // Load and sync intelligence completed session logs
+        onSnapshot(collection(db, `shops/${currentShopId}/charging_history`), (snap) => {
+            const fbHistory = [];
+            snap.forEach(doc => { fbHistory.push(doc.data()); });
+            
+            const localHistory = window.getChargingHistory();
+            const mergedMap = {};
+            localHistory.forEach(s => { mergedMap[s.id] = s; });
+            fbHistory.forEach(s => { mergedMap[s.id] = s; });
+            
+            const mergedList = Object.values(mergedMap);
+            window.saveChargingHistory(mergedList);
+            
+            window.updateIntelDashboard();
+            window.renderIntelHistory();
         });
 
         onSnapshot(collection(db, `shops/${currentShopId}/staff`), (snap) => {
@@ -1366,6 +1979,7 @@
                 dAlert.innerHTML = `<div style="background:#fef2f2; color:#b91c1c; padding:15px; border:1px solid #fecaca; margin-bottom:15px; border-radius:12px; font-size:14px;"><b>🚨 UNPAID DEBT DETECTED</b><br>This number owes <b style="font-size:16px;">₦${owed}</b> from past visits!</div>`; 
             } 
         } 
+        window.checkIntelligentHistory();
         window.autoCalc();
     });
 
@@ -1388,15 +2002,35 @@
             document.getElementById('chUsbCount').value = chUsb || 0;
             document.getElementById('chHeadCount').value = chHead || 0;
             
-            if(pendingItem && pendingItem.photos && pendingItem.photos.length > 0) {
-                currentPhotos = [...pendingItem.photos];
-                renderPhotoGallery();
-            } else {
-                currentPhotos = [];
-                renderPhotoGallery();
-            }
-            
             window.autoCalc();
+
+            setTimeout(() => {
+                if (pendingItem) {
+                    const processPendingDeviceSpecs = (type) => {
+                        const count = type === 'ph' ? ph : pb;
+                        for (let i = 0; i < count; i++) {
+                            const specBrand = document.getElementById(`sync_brand_${type}_${i}`);
+                            const specModel = document.getElementById(`sync_model_${type}_${i}`);
+                            const specCap = document.getElementById(`sync_cap_${type}_${i}`);
+                            
+                            if (specBrand && pendingItem.brand) specBrand.value = pendingItem.brand;
+                            if (specModel && pendingItem.model) specModel.value = pendingItem.model;
+                            if (specCap && pendingItem.batteryCap) specCap.value = pendingItem.batteryCap;
+                        }
+                    };
+                    processPendingDeviceSpecs('ph');
+                    processPendingDeviceSpecs('pb');
+                }
+
+                if(pendingItem && pendingItem.photos && pendingItem.photos.length > 0) {
+                    currentPhotos = [...pendingItem.photos];
+                    renderPhotoGallery();
+                } else {
+                    currentPhotos = [];
+                    renderPhotoGallery();
+                }
+                window.checkIntelligentHistory();
+            }, 100);
 
             try { 
                 const q = query(collection(db, "pending_dropoffs"), where("shopId", "==", currentShopId), where("tag", "==", tag));
@@ -1642,7 +2276,7 @@
 
             let msg = `Hello ${lastUsage.name}! 👋\n\nThis is ${currentShopData.shopName || "our charging shop"}.\n\nWe are currently verifying our physical charging tags and noticed that Tag #${tagNum} (which you used on ${dateStr} at ${timeStr}) was not returned. \n\nKindly check if our physical tag is still with you, in your bag, or pocket. If it is, please kindly drop it off at our counter whenever you can. Thank you so much for your understanding! 😊`;
             let waLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
-            waBtn = `<a href="${waLink}" target="_blank" style="background:#10b981; color:#fff; padding:12px; border-radius:8px; font-weight:bold; font-size:14px; text-decoration:none; text-align:center; display:block; margin-top:15px; box-shadow: var(--shadow-sm);">💬 Politely Message via WhatsApp</a>`;
+            waBtn = `<a href="${waLink}" target="_blank" style="background:#10b981; color:#fff; padding:12px; border-radius:8px; font-weight:bold; font-size:14px; text-decoration:none; text-align:center; display:block; margin-top:15px; box-shadow: var(--shadow-sm); ">💬 Politely Message via WhatsApp</a>`;
         } else {
             waBtn = `<p style="color:var(--danger); font-size:13px; text-align:center; margin-top:10px;">⚠️ No phone number on record for this customer.</p>`;
         }
@@ -1892,13 +2526,13 @@
             document.getElementById('displayPin').style.color = p ? 'var(--success)' : 'var(--danger)';
             
             const pastUses = ticketsData.filter(x => String(x.tag) === tagVal && x.collected).sort((a,b) => b.jsDate - a.jsDate); 
-            let histHTML = ''; 
+            let htmlHistory = ''; 
             
             if(pastUses.length > 0) { 
                 const lu = pastUses[0]; 
-                histHTML = `<div style="background:#fffbeb; color:#854d0e; padding:15px; border:1px solid #fef08a; margin-bottom:20px; border-radius:10px; font-size:13px;"><b>🕵️ Anti-Fraud Memory:</b><br>This tag was last used by <b>${lu.name}</b>.<br>Collected on: ${lu.collDate}.</div>`; 
+                htmlHistory = `<div style="background:#fffbeb; color:#854d0e; padding:15px; border:1px solid #fef08a; margin-bottom:20px; border-radius:10px; font-size:13px;"><b>🕵️ Anti-Fraud Memory:</b><br>This tag was last used by <b>${lu.name}</b>.<br>Collected on: ${lu.collDate}.</div>`; 
             } 
-            document.getElementById('securityCheckAlert').innerHTML = histHTML;
+            document.getElementById('securityCheckAlert').innerHTML = htmlHistory;
             
             act.innerHTML = p ? `<h3 style="margin:0; color:var(--text);">New Ticket: #${tagVal}</h3>` : `<h3 style="margin:0; color:var(--danger);">❌ Print/Generate this tag first!</h3>`; 
             btn.style.display = p ? 'block' : 'none'; 
@@ -2080,7 +2714,7 @@
         document.getElementById('assignedSockets').value = JSON.stringify(a); 
     }
     
-    // --- DYNAMIC SYNC RENDERER ---
+    // --- DYNAMIC SYNC RENDERER (NOW HOUSES MULTI-SPECIFICATION INPUTS PER DEVICE) ---
     window.renderDynamicSync = () => {
         const ph = +(document.getElementById('phCount').value || 0);
         const pb = +(document.getElementById('pbCount').value || 0);
@@ -2088,16 +2722,36 @@
         
         let html = '';
         const makeInput = (type, label, idx) => {
-            let val = 0;
-            let existingEl = document.getElementById(`sync_${type}_${idx}`);
-            if(existingEl) {
-                val = existingEl.value;
-            } else if (editId) {
-                if(type==='ph' && window.editPctPh && window.editPctPh[idx] !== undefined) val = window.editPctPh[idx];
-                if(type==='pb' && window.editPctPb && window.editPctPb[idx] !== undefined) val = window.editPctPb[idx];
-                if(type==='ot' && window.editPctOt && window.editPctOt[idx] !== undefined) val = window.editPctOt[idx];
+            let brandVal = '';
+            let modelVal = '';
+            let capVal = '';
+            let pctVal = 0;
+            
+            if (editId) {
+                const t = ticketsData.find(x => x.id === editId);
+                if (t && t.devices && t.devices[type] && t.devices[type][idx]) {
+                    const dev = t.devices[type][idx];
+                    brandVal = dev.brand || '';
+                    modelVal = dev.model || '';
+                    capVal = dev.cap || '';
+                } else if (t) {
+                    if (idx === 0) {
+                        brandVal = t.brand || '';
+                        modelVal = t.model || '';
+                        capVal = t.batteryCap || '';
+                    }
+                }
             }
-
+            
+            let pctEl = document.getElementById(`sync_${type}_${idx}`);
+            if (pctEl) {
+                pctVal = pctEl.value;
+            } else if (editId) {
+                if (type === 'ph' && window.editPctPh && window.editPctPh[idx] !== undefined) pctVal = window.editPctPh[idx];
+                if (type === 'pb' && window.editPctPb && window.editPctPb[idx] !== undefined) pctVal = window.editPctPb[idx];
+                if (type === 'ot' && window.editPctOt && window.editPctOt[idx] !== undefined) pctVal = window.editPctOt[idx];
+            }
+            
             let photoKey = `${type}_${idx}`;
             let photoData = window.devicePhotosMap[photoKey];
             
@@ -2109,13 +2763,33 @@
                 : '';
 
             return `
-            <div class="device-box" style="background:#fff; border:1px solid #bfdbfe; padding:10px; display:flex; flex-direction:column; gap:8px;">
-                <label style="color:#1e40af; margin-bottom:0;">${label} ${idx+1}</label>
-                <div style="display:flex; align-items:center; gap:5px;">
-                    <input type="number" id="sync_${type}_${idx}" min="0" max="100" value="${val}" style="background:#f8fafc; border:1px solid #e2e8f0; padding:8px; margin:0; text-align:center; flex:1;" placeholder="%">
-                    <span style="font-weight:bold; color:var(--text-muted);">%</span>
+            <div class="device-box" style="background:#fff; border:1px solid #bfdbfe; padding:12px; display:flex; flex-direction:column; gap:8px; text-align:left;">
+                <label style="color:#1e40af; margin-bottom:0; font-weight:700;">${label} ${idx+1}</label>
+                
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <label style="font-size:10px; color:var(--text-muted); margin:0;">Brand</label>
+                    <input type="text" id="sync_brand_${type}_${idx}" placeholder="e.g. Samsung" value="${brandVal}" oninput="window.checkIntelligentHistory()" list="pastBrands" style="padding:6px; font-size:12px; margin:0; background:#fff;">
                 </div>
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:5px;">
+                
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <label style="font-size:10px; color:var(--text-muted); margin:0;">Model</label>
+                    <input type="text" id="sync_model_${type}_${idx}" placeholder="e.g. A15" value="${modelVal}" oninput="window.checkIntelligentHistory()" list="pastModels" style="padding:6px; font-size:12px; margin:0; background:#fff;">
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <label style="font-size:10px; color:var(--text-muted); margin:0;">Cap (mAh)</label>
+                    <input type="number" id="sync_cap_${type}_${idx}" placeholder="5000" value="${capVal}" style="padding:6px; font-size:12px; margin:0; background:#fff;">
+                </div>
+                
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <label style="font-size:10px; color:var(--text-muted); margin:0;">Start Pct</label>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="number" id="sync_${type}_${idx}" min="0" max="100" value="${pctVal}" style="background:#f8fafc; border:1px solid #e2e8f0; padding:6px; margin:0; text-align:center; flex:1; font-size:12px;" placeholder="%">
+                        <span style="font-weight:bold; color:var(--text-muted); font-size:12px;">%</span>
+                    </div>
+                </div>
+                
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:5px; margin-top:5px;">
                     <button type="button" onclick="openDeviceSpecificCam('${photoKey}')" style="background:var(--bg); color:var(--text); border:1px solid var(--border); padding:6px; font-size:11px; flex:1; box-shadow:none;">📸 Snap</button>
                     ${imgDisplay}
                 </div>
@@ -2285,6 +2959,35 @@
             if (validCharges > 0) dynamicRates.ph = Math.round(totalEstimatedFullTime / validCharges); 
         }
 
+        // --- NEW: EXTRACT SPECIFICATIONS FOR MULTIPLE INDEPENDENT DEVICES ---
+        const devices = { ph: [], pb: [], ot: [] };
+        for (let i = 0; i < phActual; i++) {
+            devices.ph.push({
+                brand: document.getElementById(`sync_brand_ph_${i}`)?.value.trim() || '',
+                model: document.getElementById(`sync_model_ph_${i}`)?.value.trim() || '',
+                cap: +(document.getElementById(`sync_cap_ph_${i}`)?.value || 0),
+                startPct: +(document.getElementById(`sync_ph_${i}`)?.value || 0)
+            });
+        }
+        for (let i = 0; i < pbActual; i++) {
+            devices.pb.push({
+                brand: document.getElementById(`sync_brand_pb_${i}`)?.value.trim() || '',
+                model: document.getElementById(`sync_model_pb_${i}`)?.value.trim() || '',
+                cap: +(document.getElementById(`sync_cap_pb_${i}`)?.value || 0),
+                startPct: +(document.getElementById(`sync_pb_${i}`)?.value || 0)
+            });
+        }
+        for (let i = 0; i < otCount; i++) {
+            devices.ot.push({
+                brand: document.getElementById(`sync_brand_ot_${i}`)?.value.trim() || '',
+                model: document.getElementById(`sync_model_ot_${i}`)?.value.trim() || '',
+                cap: +(document.getElementById(`sync_cap_ot_${i}`)?.value || 0),
+                startPct: +(document.getElementById(`sync_ot_${i}`)?.value || 0)
+            });
+        }
+
+        const firstDev = devices.ph[0] || devices.pb[0] || devices.ot[0] || {};
+
         const data = { 
             name, tag, cond, photos: currentPhotos, phone: phoneNum, debtSettled: false, 
             ph: phActual, pb: pbActual, chFull: chFullActual, chUsb: chUsbActual, chHead: chHeadActual, 
@@ -2302,7 +3005,15 @@
             hasMismatch: hasMismatch,
             staff: window.currentStaffName,
             isLoyaltyFree: window.isFreeEligible,
-            smartRates: dynamicRates
+            smartRates: dynamicRates,
+            
+            // Legacy single device root assignments for backwards compatibility
+            brand: firstDev.brand || '',
+            model: firstDev.model || '',
+            batteryCap: firstDev.cap || 0,
+            
+            // Multitasking specs object
+            devices: devices
         };
         try { 
             if (!editId && payStatusSelection === 'Wallet' && finalPrice > 0) {
@@ -2519,6 +3230,9 @@
             u.collDate=new Date().toLocaleDateString(); 
             u.sockets=[]; 
             u.collectedBy = window.currentStaffName; 
+            
+            const colBatteryPct = +(document.getElementById('colBatteryPct')?.value || 100);
+            window.logCompletedSession(t, colBatteryPct);
         }
         
         await updateDoc(doc(db,"tickets",id), u); 
@@ -2569,6 +3283,7 @@
         if (payNow > 0) updateObj.colPaymentMethod = payMethod;
 
         await updateDoc(doc(db,"tickets",id), updateObj); 
+        window.logCompletedSession(t, 100);
         playChaChing(); 
         closeModal('mod-collect'); 
         document.getElementById('tokenNum').value=""; 
@@ -2586,7 +3301,7 @@
             html = "<p style='color:var(--text-muted);'>No reviews yet.</p>"; 
         } else { 
             rated.forEach(t => { 
-                let stars = '⭐'.repeat(t.rating); 
+                                let stars = '⭐'.repeat(t.rating); 
                 html += `<div style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid var(--gold); box-shadow:var(--shadow-sm);"><b>${stars}</b><br><small style="color:var(--text-muted); font-weight:600;">Customer: ${t.name}</small><br><p style="margin:8px 0 0 0; font-size:14px; font-style:italic; color:var(--text);">"${t.reviewText || 'No comment provided.'}"</p></div>`; 
             }); 
         }
@@ -3381,3 +4096,4 @@
   </script>
 </body>
 </html>
+
